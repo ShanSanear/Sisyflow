@@ -11,7 +11,7 @@ Użytkownicy systemów typu "issue tracker" często zgłaszają problemy/zadania
 - AI odpowiadający w komentarzu na ticket z prośbą o rozszerzenie kontekstu jeśli jest on niewyczerpujący
 - Załadowanie dokumentacji projektu by AI miało kontekst do dodawania komentarzy do ticketów
 - Możliwość zmiany przez zgłaszającego wszystkich aspektów ticketa - prócz komentarzy od innych oraz kto go zgłosił
-- 5-gwiazdkowy feedback do komentarza od LLMa od zgłaszającego i wykonującego oceniający jak trafne były wymogi rozszerzenia opisu
+- zgłaszający oraz wykonujący ticket ma możliwość oceny komentarza od LLMa w formie gwiazdek - od 1 do 5, oceniając trafność wymogu rozszerzenia opisu
 
 ## Co NIE wchodzi w zakres MVP
 
