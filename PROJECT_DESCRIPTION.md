@@ -8,14 +8,15 @@ Użytkownicy systemów typu "issue tracker" często zgłaszają problemy/zadania
 
 - Tworzenie ticketów 3 typów - bug, improvement, task
 - Tickety zawierające: tytuł, opis, typ, załączniki (pliki txt i md), osobę zgłaszającą, osobę przypisaną, komentarze
-- AI odpowiadający w komentarzu na ticket z prośbą o rozszerzenie kontekstu jeśli jest on niewyczerpujący
-- Załadowanie dokumentacji projektu by AI miało kontekst do dodawania komentarzy do ticketów
+- Podczas tworzenia ticketa użytkownik ma możliwość poproszenia AI o listę punktów które zgodnie z kontekstem projektu mogą być istotne dla osoby implementującej - taki ticket jest dodatkowo oznaczony jeśli użytkownik użył podanego przez AI kontekstu
+- Zgłaszający ma możliwość oceny jakości podpowiedzi w formie gwiazdek - od 1 do 5,  oceniając trafność wymogu rozszerzenia opisu
+- Podpowiedź pojawia się tylko gdy AI wykryje potrzebę dodatkowego opisu, w przeciwnym razie informuje użytkownika że nie widzi potrzeby zmian
+- Załadowanie dokumentacji projektu by AI miało kontekst tego czego może brakować w ticketach lub co wymaga doprecyzowania
 - Możliwość zmiany przez zgłaszającego wszystkich aspektów ticketa - prócz komentarzy od innych oraz kto go zgłosił
-- zgłaszający oraz wykonujący ticket ma możliwość oceny komentarza od LLMa w formie gwiazdek - od 1 do 5, oceniając trafność wymogu rozszerzenia opisu
 
 ## Co NIE wchodzi w zakres MVP
 
-- powtarzalne wywoływanie AI po kolejnych iteracjach
+- powtarzalne wywoływanie AI przy kolejnych iteracjach opisu
 - utrzymywanie referencji do więcej niż jednego projektu
 - więcej niż jeden administrator (pierwszy użytkownik jest zarazem administratorem)
 - integracje z innymi issue trackerami badz systemami wersjonowania kodu
@@ -24,5 +25,5 @@ Użytkownicy systemów typu "issue tracker" często zgłaszają problemy/zadania
 
 ## Kryteria sukcesu
 
-- 70% wygenerowanych przez AI komentarzy ma ocenę 4 lub 5
+- 70% wygenerowanych przez AI podpowiedzi ma ocenę 4 lub 5
 - 90% ticketów w których AI wykryło potrzebę doprecyzowania opisu zostało zmodyfikowanych i rozszerzonych
