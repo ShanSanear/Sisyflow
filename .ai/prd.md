@@ -16,7 +16,7 @@ W obecnych systemach do śledzenia zadań, użytkownicy często tworzą zgłosze
 -   Administrator jest odpowiedzialny za ręczne dodawanie nowych użytkowników i ustawianie im haseł początkowych.
 -   System uniemożliwia dodanie użytkownika z adresem e-mail, który już istnieje w bazie danych.
 -   Uprawnienia:
-    -   *Użytkownik*: Może tworzyć tickety, edytować własne tickety (poza osobą zgłaszającą), komentować wszystkie tickety, przypisywać się do ticketów bez przypisanej osoby, zmieniać statusy ticketów, których jest autorem lub osobą przypisaną.
+    -   *Użytkownik*: Może tworzyć tickety, edytować zgłoszone przez siebie tickety (z wyjątkiem pola "Osoba zgłaszająca"), komentować wszystkie tickety, przypisywać się do ticketów bez przypisanej osoby, zmieniać statusy ticketów, których jest autorem lub osobą przypisaną.
     -   *Administrator*: Posiada pełne uprawnienia użytkownika oraz dodatkowo może modyfikować wszystkie pola każdego ticketa, zarządzać dokumentacją projektu, dodawać/usuwać użytkowników oraz usuwać dowolne tickety i komentarze.
 
 ### 3.2. Zarządzanie ticketami (CRUD)
@@ -59,7 +59,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
 -   Możliwość istnienia więcej niż jednego Administratora.
 -   Integracje z zewnętrznymi systemami (np. Git, inne issue trackery).
 -   Aplikacje desktopowe lub mobilne (MVP jest wyłącznie aplikacją webową).
--   Importowanie dokumentacji w formatach innych niż .md oraz .txt.
+-   Obsługa załączników w formatach innych niż .md oraz .txt.
 -   System powiadomień (np. e-mail, w aplikacji).
 -   Zaawansowane wyszukiwanie i filtrowanie na tablicy Kanban.
 
@@ -91,9 +91,9 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
 -   Opis: Jako Administrator, chcę móc dodać nowego użytkownika do systemu, podając jego adres e-mail i hasło początkowe, aby mógł on zacząć korzystać z aplikacji.
 -   Kryteria akceptacji:
     1.  W panelu Administratora znajduje się formularz do dodawania użytkowników.
-    2.  Formularz wymaga podania adresu e-mail i hasła.
+    2.  Formularz wymaga podania adresu e-mail, nazwy użytkownika i hasła.
     3.  Po zatwierdzeniu formularza, w systemie tworzone jest nowe konto z rolą "Użytkownik".
-    4.  Nie można utworzyć użytkownika z adresem e-mail, który już istnieje w systemie. W takim przypadku wyświetlany jest błąd.
+    4.  Nie można utworzyć użytkownika z adresem e-mail, bądź nazwą użytkownika które już istnieją w systemie. W takim przypadku wyświetlany jest błąd.
     5.  Nowy użytkownik pojawia się na liście użytkowników w panelu Administratora.
 
 -   ID: US-004
@@ -123,7 +123,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
 -   Kryteria akceptacji:
     1.  Głównym widokiem aplikacji jest tablica z kolumnami: `Otwarty`, `W toku`, `Zamknięty`.
     2.  Wszystkie istniejące tickety są wyświetlane jako karty w odpowiednich kolumnach.
-    3.  Każda karta na tablicy wyświetla co najmniej tytuł ticketa i osobę przypisaną.
+    3.  Każda karta na tablicy wyświetla co najmniej tytuł ticketa, osobę przypisaną i "magiczną różdżkę" jeśli AI zostało użyte do poprawienia opisu.
 
 -   ID: US-007
 -   Tytuł: Zmiana statusu ticketa
@@ -178,6 +178,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
     1.  Po wygenerowaniu sugestii, widoczny jest system oceny (np. 5 gwiazdek).
     2.  Mogę wybrać ocenę od 1 do 5.
     3.  Ocena jest zapisywana w systemie w celach analitycznych.
+    4.  Ocena może być zmieniana, do momentu zapisania ticketa.
 
 -   ID: US-013
 -   Tytuł: Zarządzanie dokumentacją projektu (Administrator)
