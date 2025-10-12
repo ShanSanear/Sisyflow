@@ -34,7 +34,7 @@ Centralna tabela systemu przechowująca zgłoszenia (tickety).
 
 - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - title: TEXT NOT NULL CHECK (LENGTH(title) >= 1 AND LENGTH(title) <= 200)
-- description: TEXT CHECK (LENGTH(description) <= 50000)
+- description: TEXT CHECK (LENGTH(description) <= 10000)
 - type: ticket_type NOT NULL
 - status: ticket_status NOT NULL DEFAULT 'OPEN'
 - reporter_id: UUID NULLABLE REFERENCES profiles(id) ON DELETE SET NULL
