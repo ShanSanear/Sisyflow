@@ -353,8 +353,4 @@ Funkcje `get_user_role()` i `is_admin()` z atrybutem `SECURITY DEFINER`:
 
 ### 8.9. Inicjalizacja pierwszego administratora
 
-Zgodnie z decyzją z sesji planowania, pierwszy administrator będzie tworzony przez skrypt seed, a nie przez trigger w bazie danych. Zapewnia to:
-
-- Większą kontrolę nad procesem inicjalizacji
-- Łatwiejsze testowanie i debugowanie
-- Czystsze oddzielenie logiki biznesowej od schematu bazy danych
+Zgodnie z decyzją z sesji planowania, pierwszy administrator będzie tworzony przez skrypt seed, a nie przez trigger w bazie danych. Skrypt ten będzie uruchamiany w ramach uruchamiania samej aplikacji, poprzez backend.
