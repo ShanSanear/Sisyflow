@@ -69,6 +69,12 @@ The migrations are executed in chronological order based on their timestamps:
     - Policies for: profiles, tickets, comments, attachments, ai_suggestion_sessions, project_documentation, ai_errors
     - Must be executed last after all tables and helper functions are created
 
+12. **20251012000012_disable_selected_rls_policies.sql**
+    - Drops RLS policies for: tickets, ai_suggestion_sessions, project_documentation, ai_errors
+    - RLS remains enabled on these tables (restricts client-side access)
+    - These tables will be managed by backend services using service role
+    - Active policies remain for: profiles, comments, attachments
+
 ## Running Migrations
 
 ### Local Development
@@ -96,11 +102,22 @@ supabase db push
 
 ## Security Features
 
-All tables are protected by Row-Level Security (RLS):
+All tables have Row-Level Security (RLS) enabled:
 
-- **Admin users** have full access to all data
-- **Regular users** have restricted access based on ownership and collaboration
-- **Unauthenticated users** have no access to any data
+### Tables with Active RLS Policies (Client-Side Access):
+
+- **profiles**: View all, update own/admin, delete others (admin only)
+- **comments**: View all, create any, update own, delete own/admin
+- **attachments**: View all, create any, delete reporter/admin
+
+### Tables with RLS Enabled but No Policies (Backend-Only Access):
+
+- **tickets**: Managed via backend API using service role
+- **ai_suggestion_sessions**: Managed via backend API using service role
+- **project_documentation**: Managed via backend API using service role
+- **ai_errors**: Managed via backend API using service role
+
+**Note:** Tables without policies effectively block all client-side access. Backend services using the service role can still perform all operations.
 
 ## Key Design Decisions
 
