@@ -15,5 +15,27 @@ export const createTicketSchema = z.object({
   }),
 });
 
+/**
+ * Schema walidacji dla parametrów query GET /tickets
+ * Implementuje walidację zgodnie z wymaganiami API:
+ * - limit: 1-100, domyślnie 10
+ * - offset: >= 0, domyślnie 0
+ * - status: opcjonalny enum statusu
+ * - type: opcjonalny enum typu
+ * - assignee_id: opcjonalny UUID
+ * - reporter_id: opcjonalny UUID
+ * - sort: opcjonalny string sortowania
+ */
+export const getTicketsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
+  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]).optional(),
+  type: z.enum(["BUG", "IMPROVEMENT", "TASK"]).optional(),
+  assignee_id: z.string().uuid().optional(),
+  reporter_id: z.string().uuid().optional(),
+  sort: z.string().default("created_at desc"),
+});
+
 // Typy wywnioskowane ze schematów
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
+export type GetTicketsQueryInput = z.infer<typeof getTicketsQuerySchema>;

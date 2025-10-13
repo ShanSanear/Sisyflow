@@ -6,6 +6,69 @@ import { DEVELOPMENT_USER_ID } from "../../lib/constants";
 export const prerender = false;
 
 /**
+ * GET /api/tickets
+ *
+ * Pobiera listę ticketów z opcjonalnym filtrowaniem, sortowaniem i paginacją.
+ * Wymaga uwierzytelnienia użytkownika.
+ *
+ * Query Parameters: limit, offset, status, type, assignee_id, reporter_id, sort
+ * Response: 200 OK - { tickets: TicketDTO[], pagination: PaginationDTO }
+ * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
+ */
+export const GET: APIRoute = async ({ locals, url }) => {
+  try {
+    // Użyj stałego user ID dla developmentu
+    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
+    const supabase = locals.supabase;
+
+    // Parsuj parametry query z URL
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+
+    // Utwórz ticket service i wywołaj metodę
+    const ticketService = createTicketService(supabase);
+    const result = await ticketService.getTickets(queryParams);
+
+    // Zwróć pomyślną odpowiedź
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching tickets:", error);
+
+    // Obsługa błędów walidacji Zod
+    if (error && typeof error === "object" && "issues" in error) {
+      const zodError = error as { issues: { message: string }[] };
+      return new Response(
+        JSON.stringify({
+          error: "Validation Error",
+          message: "Invalid query parameters",
+          details: zodError.issues.map((issue) => issue.message),
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa innych błędów
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
+
+/**
  * POST /api/tickets
  *
  * Tworzy nowy ticket w systemie.
