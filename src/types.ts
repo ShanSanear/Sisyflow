@@ -3,8 +3,6 @@ import type { Tables } from "./db/database.types";
 // Export database table types for cleaner usage
 export type Profile = Tables<"profiles">;
 export type Ticket = Tables<"tickets">;
-export type Comment = Tables<"comments">;
-export type Attachment = Tables<"attachments">;
 export type AISuggestionSession = Tables<"ai_suggestion_sessions">;
 export type ProjectDocumentation = Tables<"project_documentation">;
 export type AIError = Tables<"ai_errors">;
@@ -63,7 +61,6 @@ export interface CreateTicketCommand {
   title: string;
   description?: string;
   type: Ticket["type"];
-  attachments?: CreateAttachmentCommand[];
 }
 
 // UpdateTicketCommand: Used in PUT /tickets/:id (request)
@@ -80,10 +77,7 @@ export interface UpdateTicketAssigneeCommand {
 }
 
 // FullTicketDTO: Used in GET /tickets/:id (response)
-export type FullTicketDTO = TicketDTO & {
-  comments: CommentDTO[];
-  attachments: AttachmentDTO[];
-};
+export type FullTicketDTO = TicketDTO;
 
 // AI Suggestion DTOs
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
@@ -105,32 +99,6 @@ export interface AISuggestionSessionDTO {
 // RateAISuggestionCommand: Used in PUT /ai-suggestion-sessions/:id/rating (request)
 export interface RateAISuggestionCommand {
   rating: number | null;
-}
-
-// Comment DTOs
-// CommentDTO: Used in GET /tickets/:id/comments (response)
-export type CommentDTO = Pick<Comment, "id" | "content" | "author_id" | "created_at" | "updated_at"> & {
-  author: Pick<Profile, "username">;
-};
-
-// CreateCommentCommand: Used in POST /tickets/:id/comments (request)
-export interface CreateCommentCommand {
-  content: string;
-}
-
-// UpdateCommentCommand: Used in PUT /comments/:id (request)
-export interface UpdateCommentCommand {
-  content: string;
-}
-
-// Attachment DTOs
-// AttachmentDTO: Used in GET /tickets/:id/attachments (response)
-export type AttachmentDTO = Pick<Attachment, "id" | "filename" | "created_at">;
-
-// CreateAttachmentCommand: Used in POST /tickets/:id/attachments (request)
-export interface CreateAttachmentCommand {
-  filename: string;
-  content: string;
 }
 
 // Project Documentation DTOs

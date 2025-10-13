@@ -7,8 +7,6 @@ Based on the database schema and PRD, the main resources are:
 - `users` (managed by Supabase Auth, extended via `profiles`)
 - `profiles` (user profiles with role management)
 - `tickets` (main issue tracking entities)
-- `comments` (comments on tickets)
-- `attachments` (file attachments for tickets)
 - `ai_suggestion_sessions` (AI-generated suggestions for tickets)
 - `project_documentation` (single project documentation record)
 - `ai_errors` (AI communication error logs)
@@ -122,10 +120,9 @@ Based on the database schema and PRD, the main resources are:
 
 ```json
 {
-    "title": "string",
-    "description": "string?",
-    "type": "BUG|IMPROVEMENT|TASK",
-    "attachments": [ { "filename": "string", "content": "string" } ]?
+  "title": "string",
+  "description": "string?",
+  "type": "BUG|IMPROVEMENT|TASK"
 }
 ```
 
@@ -138,7 +135,7 @@ Based on the database schema and PRD, the main resources are:
 
 - **GET** `/tickets/:id`
 - Gets a single ticket with related data.
-- Response: Full ticket + comments + attachments
+- Response: Full ticket object
 - Success: 200 OK
 - Errors: 404 Not Found
 
@@ -207,93 +204,6 @@ Based on the database schema and PRD, the main resources are:
 - Validating:
   - rating between 1 and 5 or null
 
-### Comments
-
-- **GET** `/tickets/:id/comments`
-- Lists comments for a ticket.
-- Query params: `limit`, `offset`
-- Response:
-
-```json
-{
-  "comments": [
-    {
-      "id": "uuid",
-      "content": "string",
-      "author_id": "uuid",
-      "created_at": "timestamp",
-      "updated_at": "timestamp",
-      "author": { "username": "string" }
-    }
-  ],
-  "pagination": { "page": 1, "limit": 10, "total": 100 }
-}
-```
-
-- Success: 200 OK
-
-- **POST** `/tickets/:id/comments`
-- Adds a comment to a ticket.
-- Request: `{ "content": "string" }`
-- Response: Created comment
-- Success: 201 Created
-- Errors: 400 Bad Request
-- Validations:
-  - Comment content length between 1 and 10000
-
-- **PUT** `/comments/:id`
-- Edits a comment (author only).
-- Request: `{ "content": "string" }`
-- Response: Updated comment
-- Success: 200 OK
-- Errors: 403 Forbidden, 404 Not Found
-
-- **DELETE** `/comments/:id`
-- Deletes a comment (author or ADMIN).
-- Success: 204 No Content
-- Errors: 403 Forbidden, 404 Not Found
-
-### Attachments
-
-- **GET** `/tickets/:id/attachments`
-- Lists attachments for a ticket.
-- Response:
-
-```json
-{
-  "attachments": [
-    {
-      "id": "uuid",
-      "filename": "string",
-      "created_at": "timestamp"
-    }
-  ]
-}
-```
-
-- Success: 200 OK
-
-- **POST** `/tickets/:id/attachments`
-- Adds an attachment to a ticket.
-- Request: `{ "filename": "string", "content": "string" }` (multipart/form-data for files)
-- Response: Created attachment
-- Success: 201 Created
-- Errors: 400 Bad Request (invalid file type/size)
-- Validations:
-  - filename - only .md and .txt extensions
-  - content - length of 20480 characters (~20 kB expected by database)
-
-- **GET** `/attachments/:id/download`
-- Downloads an attachment.
-- Response: File content
-- Success: 200 OK
-- Errors: 404 Not Found
-
-- **DELETE** `/attachments/:id`
-- Deletes an attachment (ticket reporter or ADMIN).
-- Success: 204 No Content
-- Errors: 403 Forbidden, 404 Not Found
-
 ### Project Documentation
 
 - **GET** `/project-documentation`
@@ -354,7 +264,6 @@ Based on the database schema and PRD, the main resources are:
 - Role-based access: Check user role from profiles table via RLS policies.
 - ADMIN role required for user management, project documentation, and AI errors.
 - Ticket operations: Reporter, assignee, or ADMIN can modify.
-- Comments/attachments: Author or ADMIN can delete.
 
 ## 4. Validation and Business Logic
 
@@ -362,8 +271,6 @@ Based on the database schema and PRD, the main resources are:
 - Username: 3-50 chars, unique.
 - Title: 1-200 chars.
 - Description: Max 10000 chars.
-- Comment content: 1-10000 chars.
-- Attachment: .txt/.md only, max 20480 chars.
 - Documentation: Max 20000 chars.
 - Rating: 1-5 or null.
 - API validates all before DB operations.

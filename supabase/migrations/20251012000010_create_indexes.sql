@@ -29,25 +29,6 @@ create index idx_tickets_type on public.tickets(type);
 -- most specific column first (status) then sort column (created_at desc)
 create index idx_tickets_status_created_at on public.tickets(status, created_at desc);
 
--- indexes on comments table
-
--- index on ticket_id for fetching all comments for a ticket
--- optimizes: loading comments when viewing ticket details
-create index idx_comments_ticket_id on public.comments(ticket_id);
-
--- index on author_id for filtering comments by author
--- optimizes: user activity views showing all comments by a user
-create index idx_comments_author_id on public.comments(author_id);
-
--- index on created_at for chronological sorting
--- optimizes: displaying comments in chronological order
-create index idx_comments_created_at on public.comments(created_at desc);
-
--- indexes on attachments table
-
--- index on ticket_id for fetching all attachments for a ticket
--- optimizes: loading attachments when viewing ticket details
-create index idx_attachments_ticket_id on public.attachments(ticket_id);
 
 -- indexes on ai_suggestion_sessions table
 
