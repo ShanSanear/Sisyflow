@@ -43,28 +43,7 @@ Centralna tabela systemu przechowująca zgłoszenia (tickety).
 - created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - updated_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
-### 2.4. comments
-
-Tabela przechowująca komentarze do ticketów.
-
-- id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
-- ticket_id: UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE
-- author_id: UUID NULLABLE REFERENCES profiles(id) ON DELETE SET NULL
-- content: TEXT NOT NULL CHECK (LENGTH(content) >= 1 AND LENGTH(content) <= 10000)
-- created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
-- updated_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-### 2.5. attachments
-
-Tabela przechowująca załączniki do ticketów (pliki .txt i .md).
-
-- id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
-- ticket_id: UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE
-- filename: TEXT NOT NULL CHECK (filename ~\* '\.(txt|md)$')
-- content: TEXT NOT NULL CHECK (LENGTH(content) <= 20480)
-- created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-### 2.6. ai_suggestion_sessions
+### 2.4. ai_suggestion_sessions
 
 Tabela przechowująca sugestie AI dla ticketów.
 
@@ -92,7 +71,7 @@ Tabela przechowująca sugestie AI dla ticketów.
 ]
 ```
 
-### 2.7. project_documentation
+### 2.5. project_documentation
 
 Tabela przechowująca dokumentację projektu używaną jako kontekst dla AI. Zawiera tylko jeden rekord.
 
@@ -101,7 +80,7 @@ Tabela przechowująca dokumentację projektu używaną jako kontekst dla AI. Zaw
 - updated_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 - updated_by: UUID REFERENCES profiles(id) ON DELETE SET NULL
 
-### 2.8. ai_errors
+### 2.6. ai_errors
 
 Tabela do logowania błędów komunikacji z AI.
 
@@ -121,42 +100,27 @@ Tabela do logowania błędów komunikacji z AI.
 - **Jeden-do-wielu (assignee)**: Jeden profil może być przypisany do wielu ticketów
   - `tickets.assignee_id` → `profiles.id`
 
-### 3.2. tickets ↔ comments
-
-- **Jeden-do-wielu**: Jeden ticket może mieć wiele komentarzy
-  - `comments.ticket_id` → `tickets.id`
-
-### 3.3. profiles ↔ comments
-
-- **Jeden-do-wielu**: Jeden profil może być autorem wielu komentarzy
-  - `comments.author_id` → `profiles.id`
-
-### 3.4. tickets ↔ attachments
-
-- **Jeden-do-wielu**: Jeden ticket może mieć wiele załączników
-  - `attachments.ticket_id` → `tickets.id`
-
-### 3.5. tickets ↔ ai_suggestion_sessions
+### 3.2. tickets ↔ ai_suggestion_sessions
 
 - **Jeden-do-wielu**: Jeden ticket może mieć wiele sesji sugestii AI
   - `ai_suggestion_sessions.ticket_id` → `tickets.id`
 
-### 3.6. profiles ↔ ai_suggestion_sessions
+### 3.3. profiles ↔ ai_suggestion_sessions
 
 - **Jeden-do-wielu**: Jeden profil może zainicjować wiele sesji sugestii AI
   - `ai_suggestion_sessions.user_id` → `profiles.id`
 
-### 3.7. profiles ↔ project_documentation
+### 3.4. profiles ↔ project_documentation
 
 - **Jeden-do-wielu**: Jeden profil (administrator) może zaktualizować dokumentację wielokrotnie
   - `project_documentation.updated_by` → `profiles.id`
 
-### 3.8. tickets ↔ ai_errors
+### 3.5. tickets ↔ ai_errors
 
 - **Jeden-do-wielu**: Jeden ticket może mieć powiązane wiele błędów AI
   - `ai_errors.ticket_id` → `tickets.id`
 
-### 3.9. profiles ↔ ai_errors
+### 3.6. profiles ↔ ai_errors
 
 - **Jeden-do-wielu**: Jeden profil może mieć powiązane wiele błędów AI
   - `ai_errors.user_id` → `profiles.id`
@@ -169,9 +133,6 @@ Indeksy zapewniające wydajność zapytań:
 
 - idx_tickets_reporter_id: tickets(reporter_id)
 - idx_tickets_assignee_id: tickets(assignee_id)
-- idx_comments_ticket_id: comments(ticket_id)
-- idx_comments_author_id: comments(author_id)
-- idx_attachments_ticket_id: attachments(ticket_id)
 - idx_ai_suggestion_sessions_ticket_id: ai_suggestion_sessions(ticket_id)
 - idx_ai_suggestion_sessions_user_id: ai_suggestion_sessions(user_id)
 - idx_ai_errors_ticket_id: ai_errors(ticket_id)
@@ -186,10 +147,6 @@ Indeksy zapewniające wydajność zapytań:
 
 - idx_tickets_status_created_at: tickets(status, created_at DESC)
 
-**Indeksy dla sortowania chronologicznego:**
-
-- idx_comments_created_at: comments(created_at DESC)
-
 ## 5. Funkcje pomocnicze SQL
 
 Funkcje pomocnicze dla polityk RLS:
@@ -199,7 +156,7 @@ Funkcje pomocnicze dla polityk RLS:
 
 ## 6. Row-Level Security (RLS)
 
-RLS (Row-Level Security) jest włączone na wszystkich tabelach: `profiles`, `tickets`, `comments`, `attachments`, `ai_suggestion_sessions`, `project_documentation`, `ai_errors`.
+RLS (Row-Level Security) jest włączone na wszystkich tabelach: `profiles`, `tickets`, `ai_suggestion_sessions`, `project_documentation`, `ai_errors`.
 
 ### 6.1. Polityki RLS dla tabeli `profiles`
 
@@ -221,27 +178,7 @@ RLS (Row-Level Security) jest włączone na wszystkich tabelach: `profiles`, `ti
 
 **DELETE**: Tylko administratorzy mogą usuwać tickety
 
-### 6.3. Polityki RLS dla tabeli `comments`
-
-**SELECT**: Wszyscy zalogowani użytkownicy mogą wyświetlać komentarze
-
-**INSERT**: Wszyscy zalogowani użytkownicy mogą dodawać komentarze
-
-**UPDATE**: Tylko autor może edytować swoje komentarze
-
-**DELETE**: Administratorzy mogą usuwać wszystkie komentarze, autorzy mogą usuwać swoje własne
-
-### 6.4. Polityki RLS dla tabeli `attachments`
-
-**SELECT**: Wszyscy zalogowani użytkownicy mogą wyświetlać załączniki
-
-**INSERT**: Wszyscy zalogowani użytkownicy mogą dodawać załączniki
-
-**UPDATE**: Brak polityki - załączniki nie są edytowalne
-
-**DELETE**: Administratorzy mogą usuwać wszystkie załączniki. Zgłaszający ticketa mogą usuwać załączniki ze swoich ticketów
-
-### 6.5. Polityki RLS dla tabeli `ai_suggestion_sessions`
+### 6.3. Polityki RLS dla tabeli `ai_suggestion_sessions`
 
 **SELECT**: Wszyscy zalogowani użytkownicy mogą wyświetlać sesje sugestii
 
@@ -251,7 +188,7 @@ RLS (Row-Level Security) jest włączone na wszystkich tabelach: `profiles`, `ti
 
 **DELETE**: Tylko administratorzy mogą usuwać sesje sugestii
 
-### 6.6. Polityki RLS dla tabeli `project_documentation`
+### 6.4. Polityki RLS dla tabeli `project_documentation`
 
 **SELECT**: Wszyscy zalogowani użytkownicy mogą wyświetlać dokumentację
 
@@ -261,7 +198,7 @@ RLS (Row-Level Security) jest włączone na wszystkich tabelach: `profiles`, `ti
 
 **DELETE**: Tylko administratorzy mogą usuwać dokumentację
 
-### 6.7. Polityki RLS dla tabeli `ai_errors`
+### 6.5. Polityki RLS dla tabeli `ai_errors`
 
 **SELECT**: Tylko administratorzy mogą wyświetlać logi błędów
 
@@ -279,7 +216,6 @@ Triggery typu `BEFORE UPDATE` automatycznie ustawiają pole `updated_at` na bie�
 
 - profiles
 - tickets
-- comments
 - project_documentation
 
 Wszystkie triggery korzystają z funkcji pomocniczej `update_updated_at_column()`, która ustawia `NEW.updated_at = NOW()`.
@@ -297,19 +233,9 @@ Użycie UUID zamiast sekwencyjnych liczb całkowitych zapewnia:
 
 ### 8.2. ON DELETE SET NULL vs ON DELETE CASCADE
 
-- **SET NULL**: Stosowane dla `reporter_id` i `assignee_id` w tabeli `tickets` oraz `author_id` w `comments`. Zachowuje historię ticketów i komentarzy nawet po usunięciu użytkownika.
-- **CASCADE**: Stosowane dla relacji ticket → comments, ticket → attachments. Usunięcie ticketa powoduje usunięcie powiązanych komentarzy i załączników, co jest zgodne z oczekiwaniami użytkowników.
+- **SET NULL**: Stosowane dla `reporter_id` i `assignee_id` w tabeli `tickets`. Zachowuje historię ticketów nawet po usunięciu użytkownika.
 
-### 8.3. Przechowywanie załączników w bazie danych
-
-Dla MVP, pliki tekstowe (do 20 KB) są przechowywane bezpośrednio w kolumnie `TEXT`. To podejście:
-
-- Upraszcza architekturę (brak potrzeby konfiguracji storage)
-- Jest akceptowalne dla małych plików tekstowych
-- Ułatwia backup i replikację danych
-- Dla przyszłej skalowalności, można rozważyć migrację do Supabase Storage
-
-### 8.4. Format JSONB dla sugestii AI
+### 8.3. Format JSONB dla sugestii AI
 
 Przechowywanie sugestii jako JSONB zamiast osobnej tabeli:
 
@@ -318,7 +244,7 @@ Przechowywanie sugestii jako JSONB zamiast osobnej tabeli:
 - Zapewnia wydajne zapytania dzięki indeksowaniu JSONB
 - Redukuje liczbę JOIN operations
 
-### 8.5. Pojedynczy rekord dokumentacji projektu
+### 8.4. Pojedynczy rekord dokumentacji projektu
 
 Tabela `project_documentation` jest zaprojektowana tak, aby zawierać tylko jeden rekord. To podejście:
 
@@ -326,7 +252,7 @@ Tabela `project_documentation` jest zaprojektowana tak, aby zawierać tylko jede
 - Upraszcza logikę aplikacji
 - Dla przyszłej rozbudowy o wiele projektów, można dodać kolumnę `project_id`
 
-### 8.6. Strategia indeksowania
+### 8.5. Strategia indeksowania
 
 Indeksy zostały dodane na:
 
@@ -335,7 +261,7 @@ Indeksy zostały dodane na:
 - Kolumnach używanych do sortowania (`created_at`)
 - Indeks kompozytowy `status + created_at` dla głównego widoku Kanban
 
-### 8.7. Row-Level Security (RLS)
+### 8.6. Row-Level Security (RLS)
 
 Wszystkie tabele są chronione przez RLS, co zapewnia:
 
@@ -343,7 +269,7 @@ Wszystkie tabele są chronione przez RLS, co zapewnia:
 - Separację uprawnień między rolami (ADMIN vs USER)
 - Ochronę przed nieautoryzowanym dostępem, nawet przy kompromitacji klucza API
 
-### 8.8. Funkcje pomocnicze SQL
+### 8.7. Funkcje pomocnicze SQL
 
 Funkcje `get_user_role()` i `is_admin()` z atrybutem `SECURITY DEFINER`:
 
@@ -351,6 +277,6 @@ Funkcje `get_user_role()` i `is_admin()` z atrybutem `SECURITY DEFINER`:
 - Upraszczają definicje polityk RLS
 - Zapewniają spójność w całym schemacie
 
-### 8.9. Inicjalizacja pierwszego administratora
+### 8.8. Inicjalizacja pierwszego administratora
 
 Zgodnie z decyzją z sesji planowania, pierwszy administrator będzie tworzony przez skrypt seed, a nie przez trigger w bazie danych. Skrypt ten będzie uruchamiany w ramach uruchamiania samej aplikacji, poprzez backend.
