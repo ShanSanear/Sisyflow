@@ -2,7 +2,7 @@
 
 ## 1. Przegląd punktu końcowego
 
-Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycznie przypisuje reporter_id do aktualnie uwierzytelnionego użytkownika i obsługuje opcjonalne załączniki. Endpoint zwraca pełny obiekt ticketu wraz z powiązanymi komentarzami i załącznikami.
+Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycznie przypisuje reporter_id do aktualnie uwierzytelnionego użytkownika. Endpoint zwraca pełny obiekt ticketu wraz z danymi reporter'a i assignee'a.
 
 ## 2. Szczegóły żądania
 
@@ -16,13 +16,7 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
   {
     "title": "string",
     "description": "string?",
-    "type": "BUG|IMPROVEMENT|TASK",
-    "attachments": [
-      {
-        "filename": "string",
-        "content": "string"
-      }
-    ]?
+    "type": "BUG|IMPROVEMENT|TASK"
   }
   ```
 
@@ -30,8 +24,6 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
 
 - **CreateTicketCommand**: Typ dla danych wejściowych żądania
 - **FullTicketDTO**: Typ dla pełnego obiektu ticket w odpowiedzi
-- **CreateAttachmentCommand**: Typ dla tworzenia załączników
-- **AttachmentDTO**: Typ dla załączników w odpowiedzi
 - **Profile**: Typ dla danych użytkownika (reporter/assignee)
 
 ## 4. Szczegóły odpowiedzi
@@ -54,15 +46,7 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
     },
     "assignee": {
       "username": "string"
-    }?,
-    "comments": [],
-    "attachments": [
-      {
-        "id": "uuid",
-        "filename": "string",
-        "created_at": "timestamp"
-      }
-    ]
+    }?
   }
   ```
 - **Error Responses**:
@@ -75,10 +59,9 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
 2. **Parsowanie request body**: Odczytaj i sparsuj JSON z request body
 3. **Walidacja danych**: Użyj Zod schema do walidacji danych wejściowych
 4. **Utworzenie ticket**: Wstaw nowy rekord do tabeli `tickets` z reporter_id ustawionym na aktualnego użytkownika
-5. **Obsługa załączników**: Jeśli podane attachments, utwórz rekordy w tabeli `attachments`
-6. **Pobranie pełnych danych**: Wykonaj JOIN query aby pobrać ticket z danymi reporter'a i assignee'a
-7. **Formatowanie odpowiedzi**: Przekształć dane do formatu FullTicketDTO
-8. **Zwróć odpowiedź**: HTTP 201 z pełnym obiektem ticket
+5. **Pobranie pełnych danych**: Wykonaj JOIN query aby pobrać ticket z danymi reporter'a i assignee'a
+6. **Formatowanie odpowiedzi**: Przekształć dane do formatu FullTicketDTO
+7. **Zwróć odpowiedź**: HTTP 201 z pełnym obiektem ticket
 
 ## 6. Względy bezpieczeństwa
 
@@ -88,7 +71,6 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
   - Title: 1-200 znaków, zapobieganie SQL injection
   - Description: max 10000 znaków
   - Type: tylko dozwolone wartości enum
-- **Bezpieczeństwo plików**: Walidacja nazw plików i wielkości załączników
 - **XSS Prevention**: Sanitizacja danych tekstowych
 
 ## 7. Obsługa błędów
@@ -98,24 +80,14 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
   - Description dłuższa niż 10000 znaków
   - Type nie jest jedną z dozwolonych wartości
   - Nieprawidłowy format JSON w request body
-  - Nieprawidłowa struktura attachments
 - **401 Unauthorized**:
   - Brak tokenu uwierzytelnienia
   - Nieprawidłowy token
-- **413 Payload Too Large**:
-  - Załączniki zbyt duże (całkowity rozmiar)
 - **500 Internal Server Error**:
   - Błąd połączenia z bazą danych
   - Nieoczekiwany błąd serwera
 
-## 8. Rozważania dotyczące wydajności
-
-- **Baza danych**: Użyć pojedynczej transakcji dla ticket + attachments
-- **Optymalizacja query**: Użyć JOIN zamiast osobnych zapytań
-- **Limity**: Maksymalna liczba załączników per ticket (10)
-- **Rozmiar plików**: Maksymalny rozmiar pojedynczego załącznika (20 kB)
-
-## 9. Etapy wdrożenia
+## 8. Etapy wdrożenia
 
 ### Krok 1: Przygotowanie struktury projektu
 
@@ -129,7 +101,6 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
 - Zaimplementować walidację title (1-200 znaków)
 - Zaimplementować walidację description (max 10000 znaków)
 - Zaimplementować walidację type (enum values)
-- Zaimplementować walidację attachments (opcjonalne, struktura)
 
 ### Krok 3: Implementacja TicketService
 
@@ -138,7 +109,6 @@ Ten endpoint umożliwia tworzenie nowego ticketu w systemie Sisyflow. Automatycz
   - Akceptuje `CreateTicketCommand` i `user_id`
   - Wykonuje walidację danych
   - Tworzy ticket w bazie danych
-  - Obsługuje tworzenie attachments w transakcji
   - Zwraca `FullTicketDTO`
 
 ### Krok 4: Implementacja API endpoint

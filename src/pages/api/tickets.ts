@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createTicketService } from "../../lib/services/ticket.service";
 import type { CreateTicketCommand } from "../../types";
-import { DEVELOPMENT_USER_ID, ATTACHMENT_LIMITS } from "../../lib/constants";
+import { DEVELOPMENT_USER_ID } from "../../lib/constants";
 
 export const prerender = false;
 
@@ -13,7 +13,7 @@ export const prerender = false;
  *
  * Request Body: CreateTicketCommand
  * Response: 201 Created - FullTicketDTO
- * Error Responses: 400 Bad Request, 401 Unauthorized, 413 Payload Too Large, 500 Internal Server Error
+ * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -39,40 +39,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
           headers: { "Content-Type": "application/json" },
         }
       );
-    }
-
-    // Sprawdź limity załączników
-    if (requestData.attachments && requestData.attachments.length > 0) {
-      // Sprawdź liczbę załączników
-      if (requestData.attachments.length > ATTACHMENT_LIMITS.MAX_PER_TICKET) {
-        return new Response(
-          JSON.stringify({
-            error: "Payload Too Large",
-            message: `Too many attachments. Maximum ${ATTACHMENT_LIMITS.MAX_PER_TICKET} allowed.`,
-          }),
-          {
-            status: 413,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      // Sprawdź rozmiar każdego załącznika
-      for (const attachment of requestData.attachments) {
-        const size = attachment.content?.length || 0;
-        if (size > ATTACHMENT_LIMITS.MAX_SIZE_PER_ATTACHMENT) {
-          return new Response(
-            JSON.stringify({
-              error: "Payload Too Large",
-              message: `Attachment "${attachment.filename}" exceeds size limit (${ATTACHMENT_LIMITS.MAX_SIZE_PER_ATTACHMENT / 1024}KB)`,
-            }),
-            {
-              status: 413,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-        }
-      }
     }
 
     // Utwórz ticket service i wywołaj metodę

@@ -99,7 +99,7 @@ High-level MVP capabilities, derived from the PRD:
 
 - **Ticket management (CRUD)**:
   - Types: `Bug`, `Improvement`, `Task`
-  - Fields: title (required), description (Markdown), type (required), attachments (`.txt`/`.md`, ≤1 MB), reporter (auto), assignee, comments (Markdown)
+  - Fields: title (required), description (Markdown), type (required), reporter (auto), assignee
   - Statuses: `Open`, `In Progress`, `Closed`
   - Kanban board is the primary UI, with drag-and-drop to change status (with permission checks)
 
@@ -111,10 +111,6 @@ High-level MVP capabilities, derived from the PRD:
 - **Admin panel**:
   - Manage users
   - Manage single project documentation field (used as AI context, up to 20,000 chars)
-
-- **Comments and attachments**:
-  - Add, edit, delete own comments (admin can delete any)
-  - Attach `.txt`/`.md` files up to 1 MB per file; attachments listed for download in ticket detail
 
 Out of scope for MVP:
 

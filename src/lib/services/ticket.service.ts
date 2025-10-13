@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { CreateTicketCommand, FullTicketDTO, AttachmentDTO } from "../../types";
+import type { CreateTicketCommand, FullTicketDTO } from "../../types";
 import { createTicketSchema } from "../validation/ticket.validation";
 import { z } from "zod";
 
@@ -42,27 +42,6 @@ export class TicketService {
 
       if (ticketError) {
         throw new Error(`Failed to create ticket: ${ticketError.message}`);
-      }
-
-      // Jeśli są załączniki, utwórz je w tej samej transakcji
-      let attachments: AttachmentDTO[] = [];
-      if (validatedData.attachments && validatedData.attachments.length > 0) {
-        const attachmentInserts = validatedData.attachments.map((attachment) => ({
-          ticket_id: ticket.id,
-          filename: attachment.filename,
-          content: attachment.content,
-        }));
-
-        const { data: createdAttachments, error: attachmentsError } = await this.supabase
-          .from("attachments")
-          .insert(attachmentInserts)
-          .select("id, filename, created_at");
-
-        if (attachmentsError) {
-          throw new Error(`Failed to create attachments: ${attachmentsError.message}`);
-        }
-
-        attachments = createdAttachments || [];
       }
 
       // Pobierz pełne dane ticketu z reporter'em
@@ -110,8 +89,6 @@ export class TicketService {
         updated_at: fullTicket.updated_at,
         reporter: { username: fullTicket.reporter.username },
         assignee: fullTicket.assignee ? { username: fullTicket.assignee.username } : undefined,
-        comments: [], // Nowy ticket nie ma komentarzy
-        attachments: attachments,
       };
 
       return result;
