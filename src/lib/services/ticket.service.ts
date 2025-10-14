@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { CreateTicketCommand, FullTicketDTO, TicketDTO, PaginationDTO } from "../../types";
-import { createTicketSchema, getTicketsQuerySchema } from "../validation/ticket.validation";
+import type {
+  CreateTicketCommand,
+  FullTicketDTO,
+  TicketDTO,
+  PaginationDTO,
+  UpdateTicketStatusCommand,
+} from "../../types";
+import { createTicketSchema, getTicketsQuerySchema, updateTicketStatusSchema } from "../validation/ticket.validation";
 import { z } from "zod";
 
 /**
@@ -174,20 +180,26 @@ export class TicketService {
       }
 
       // Mapuj wyniki na TicketDTO[]
-      const ticketDTOs: TicketDTO[] = (tickets || []).map((ticket) => ({
-        id: ticket.id,
-        title: ticket.title,
-        description: ticket.description,
-        type: ticket.type,
-        status: ticket.status,
-        reporter_id: ticket.reporter_id,
-        assignee_id: ticket.assignee_id,
-        ai_enhanced: ticket.ai_enhanced,
-        created_at: ticket.created_at,
-        updated_at: ticket.updated_at,
-        reporter: { username: ticket.reporter.username },
-        assignee: ticket.assignee ? { username: ticket.assignee.username } : undefined,
-      }));
+      const ticketDTOs: TicketDTO[] = (tickets || []).map((ticket) => {
+        if (!ticket.reporter) {
+          throw new Error("Ticket is missing reporter data");
+        }
+
+        return {
+          id: ticket.id,
+          title: ticket.title,
+          description: ticket.description,
+          type: ticket.type,
+          status: ticket.status,
+          reporter_id: ticket.reporter_id,
+          assignee_id: ticket.assignee_id,
+          ai_enhanced: ticket.ai_enhanced,
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          reporter: { username: ticket.reporter.username },
+          assignee: ticket.assignee ? { username: ticket.assignee.username } : undefined,
+        };
+      });
 
       // Przygotuj metadane paginacji dla dummy data
       // const total = ticketDTOs.length;
@@ -210,6 +222,130 @@ export class TicketService {
 
       // Dla innych błędów, opakuj w bardziej przyjazny komunikat
       throw new Error(`Failed to get tickets: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Aktualizuje status istniejącego ticketu
+   * Sprawdza uprawnienia użytkownika (reporter/assignee/ADMIN) przed aktualizacją
+   *
+   * @param ticketId ID ticketu do aktualizacji
+   * @param command Dane zawierające nowy status
+   * @param userId ID użytkownika wykonującego operację
+   * @returns Zaktualizowany ticket z pełnymi danymi
+   * @throws Error jeśli ticket nie istnieje, użytkownik nie ma uprawnień lub wystąpi błąd bazy danych
+   */
+  async updateTicketStatus(ticketId: string, command: UpdateTicketStatusCommand, userId: string): Promise<TicketDTO> {
+    // Walidacja danych wejściowych
+    const validatedData = updateTicketStatusSchema.parse(command);
+
+    try {
+      // Najpierw sprawdź czy ticket istnieje i pobierz jego dane
+      const { data: existingTicket, error: fetchError } = await this.supabase
+        .from("tickets")
+        .select("id, reporter_id, assignee_id")
+        .eq("id", ticketId)
+        .single();
+
+      if (fetchError || !existingTicket) {
+        throw new Error("Ticket not found");
+      }
+
+      // Sprawdź uprawnienia: użytkownik musi być reporter'em, assignee'em lub mieć rolę ADMIN
+      const isReporter = existingTicket.reporter_id === userId;
+      const isAssignee = existingTicket.assignee_id === userId;
+
+      // Sprawdź rolę użytkownika - dla ADMIN pozwól na aktualizację
+      let isAdmin = false;
+      // TODO - disable this for now - assume ADMIN is always used
+      isAdmin = true;
+      if (!isReporter && !isAssignee) {
+        const { data: userProfile, error: profileError } = await this.supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        if (profileError || !userProfile) {
+          throw new Error("User profile not found");
+        }
+
+        isAdmin = userProfile.role === "ADMIN";
+      }
+
+      if (!isReporter && !isAssignee && !isAdmin) {
+        throw new Error("Access denied: You don't have permission to update this ticket's status");
+      }
+
+      // Aktualizuj status ticketu
+      const { error: updateError } = await this.supabase
+        .from("tickets")
+        .update({
+          status: validatedData.status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", ticketId);
+
+      if (updateError) {
+        throw new Error(`Failed to update ticket status: ${updateError.message}`);
+      }
+
+      // Pobierz zaktualizowane dane ticketu z reporter'em i assignee'em
+      const { data: updatedTicket, error: refetchError } = await this.supabase
+        .from("tickets")
+        .select(
+          `
+          id,
+          title,
+          description,
+          type,
+          status,
+          reporter_id,
+          assignee_id,
+          ai_enhanced,
+          created_at,
+          updated_at,
+          reporter:profiles!tickets_reporter_id_fkey(username),
+          assignee:profiles!tickets_assignee_id_fkey(username)
+        `
+        )
+        .eq("id", ticketId)
+        .single();
+
+      if (refetchError || !updatedTicket) {
+        throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
+      }
+
+      // Sprawdź czy reporter istnieje - powinien istnieć
+      if (!updatedTicket.reporter) {
+        throw new Error("Failed to fetch reporter data for updated ticket");
+      }
+
+      // Formatuj odpowiedź zgodnie z TicketDTO
+      const result: TicketDTO = {
+        id: updatedTicket.id,
+        title: updatedTicket.title,
+        description: updatedTicket.description,
+        type: updatedTicket.type,
+        status: updatedTicket.status,
+        reporter_id: updatedTicket.reporter_id,
+        assignee_id: updatedTicket.assignee_id,
+        ai_enhanced: updatedTicket.ai_enhanced,
+        created_at: updatedTicket.created_at,
+        updated_at: updatedTicket.updated_at,
+        reporter: { username: updatedTicket.reporter.username },
+        assignee: updatedTicket.assignee ? { username: updatedTicket.assignee.username } : undefined,
+      };
+
+      return result;
+    } catch (error) {
+      // Przekaż błędy walidacji Zod bez zmian
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      throw new Error(`Failed to update ticket status: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 }

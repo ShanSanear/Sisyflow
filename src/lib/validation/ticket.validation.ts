@@ -36,6 +36,28 @@ export const getTicketsQuerySchema = z.object({
   sort: z.string().default("created_at desc"),
 });
 
+/**
+ * Schema walidacji dla parametrów URL zawierających ID ticketu
+ * Implementuje walidację zgodnie z wymaganiami API:
+ * - id: prawidłowy UUID format
+ */
+export const ticketIdParamsSchema = z.object({
+  id: z.string().uuid("Invalid ticket ID format - must be a valid UUID"),
+});
+
+/**
+ * Schema walidacji dla aktualizacji statusu ticketu
+ * Implementuje walidację zgodnie z wymaganiami biznesowymi:
+ * - status: jedna z dozwolonych wartości enum ("OPEN", "IN_PROGRESS", "CLOSED")
+ */
+export const updateTicketStatusSchema = z.object({
+  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"], {
+    errorMap: () => ({ message: "Status must be one of: OPEN, IN_PROGRESS, CLOSED" }),
+  }),
+});
+
 // Typy wywnioskowane ze schematów
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type GetTicketsQueryInput = z.infer<typeof getTicketsQuerySchema>;
+export type TicketIdParamsInput = z.infer<typeof ticketIdParamsSchema>;
+export type UpdateTicketStatusInput = z.infer<typeof updateTicketStatusSchema>;
