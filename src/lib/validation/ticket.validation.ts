@@ -84,9 +84,19 @@ export const updateTicketSchema = z
     }
   );
 
+/**
+ * Schema walidacji dla aktualizacji przypisania ticketu (PATCH /tickets/:id/assignee)
+ * Implementuje walidację zgodnie z wymaganiami biznesowymi:
+ * - assignee_id: opcjonalny UUID lub null dla odprzypisania
+ */
+export const updateTicketAssigneeSchema = z.object({
+  assignee_id: z.string().uuid("Invalid assignee ID format - must be a valid UUID").nullable(),
+});
+
 // Typy wywnioskowane ze schematów
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type GetTicketsQueryInput = z.infer<typeof getTicketsQuerySchema>;
 export type TicketIdParamsInput = z.infer<typeof ticketIdParamsSchema>;
 export type UpdateTicketStatusInput = z.infer<typeof updateTicketStatusSchema>;
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
+export type UpdateTicketAssigneeInput = z.infer<typeof updateTicketAssigneeSchema>;

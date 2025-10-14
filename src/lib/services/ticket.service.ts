@@ -7,12 +7,14 @@ import type {
   PaginationDTO,
   UpdateTicketStatusCommand,
   UpdateTicketCommand,
+  UpdateTicketAssigneeCommand,
 } from "../../types";
 import {
   createTicketSchema,
   getTicketsQuerySchema,
   updateTicketStatusSchema,
   updateTicketSchema,
+  updateTicketAssigneeSchema,
 } from "../validation/ticket.validation";
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { z } from "zod";
@@ -564,6 +566,146 @@ export class TicketService {
 
       // Dla innych błędów, opakuj w bardziej przyjazny komunikat
       throw new Error(`Failed to update ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Aktualizuje przypisanie ticketu (assignee)
+   * Sprawdza uprawnienia użytkownika (ADMIN lub self-assignment) przed aktualizacją
+   *
+   * @param ticketId ID ticketu do aktualizacji
+   * @param command Dane zawierające nowego assignee'a
+   * @param userId ID użytkownika wykonującego operację
+   * @returns Zaktualizowany ticket z pełnymi danymi
+   * @throws Error jeśli ticket nie istnieje, użytkownik nie ma uprawnień, assignee nie istnieje lub wystąpi błąd bazy danych
+   */
+  async updateTicketAssignee(
+    ticketId: string,
+    command: UpdateTicketAssigneeCommand,
+    userId: string
+  ): Promise<TicketDTO> {
+    // Walidacja danych wejściowych
+    const validatedData = updateTicketAssigneeSchema.parse(command);
+
+    try {
+      // Najpierw sprawdź czy ticket istnieje i pobierz jego dane
+      const { data: existingTicket, error: fetchError } = await this.supabase
+        .from("tickets")
+        .select("id, reporter_id, assignee_id")
+        .eq("id", ticketId)
+        .single();
+
+      if (fetchError || !existingTicket) {
+        throw new Error("Ticket not found");
+      }
+
+      // Sprawdź czy nowy assignee istnieje (jeśli nie jest null)
+      if (validatedData.assignee_id !== null) {
+        const { data: assigneeProfile, error: assigneeError } = await this.supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", validatedData.assignee_id)
+          .single();
+
+        if (assigneeError || !assigneeProfile) {
+          throw new Error("Assignee not found");
+        }
+      }
+
+      // Sprawdź uprawnienia: użytkownik musi być administratorem lub przypisywać siebie
+      const isSelfAssignment = validatedData.assignee_id === userId;
+
+      // Sprawdź rolę użytkownika - dla ADMIN pozwól na aktualizację
+      let isAdmin = false;
+      if (!isSelfAssignment) {
+        const { data: userProfile, error: profileError } = await this.supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        if (profileError || !userProfile) {
+          throw new Error("User profile not found");
+        }
+
+        isAdmin = userProfile.role === "ADMIN";
+      }
+
+      if (!isSelfAssignment && !isAdmin) {
+        throw new Error(
+          "Access denied: You don't have permission to assign this ticket. Only administrators can assign tickets to other users, or you can assign tickets to yourself."
+        );
+      }
+
+      // Aktualizuj assignee_id ticketu
+      const { error: updateError } = await this.supabase
+        .from("tickets")
+        .update({
+          assignee_id: validatedData.assignee_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", ticketId);
+
+      if (updateError) {
+        throw new Error(`Failed to update ticket assignee: ${updateError.message}`);
+      }
+
+      // Pobierz zaktualizowane dane ticketu z reporter'em i assignee'em
+      const { data: updatedTicket, error: refetchError } = await this.supabase
+        .from("tickets")
+        .select(
+          `
+          id,
+          title,
+          description,
+          type,
+          status,
+          reporter_id,
+          assignee_id,
+          ai_enhanced,
+          created_at,
+          updated_at,
+          reporter:profiles!tickets_reporter_id_fkey(username),
+          assignee:profiles!tickets_assignee_id_fkey(username)
+        `
+        )
+        .eq("id", ticketId)
+        .single();
+
+      if (refetchError || !updatedTicket) {
+        throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
+      }
+
+      // Sprawdź czy reporter istnieje - powinien istnieć
+      if (!updatedTicket.reporter) {
+        throw new Error("Failed to fetch reporter data for updated ticket");
+      }
+
+      // Formatuj odpowiedź zgodnie z TicketDTO
+      const result: TicketDTO = {
+        id: updatedTicket.id,
+        title: updatedTicket.title,
+        description: updatedTicket.description,
+        type: updatedTicket.type,
+        status: updatedTicket.status,
+        reporter_id: updatedTicket.reporter_id,
+        assignee_id: updatedTicket.assignee_id,
+        ai_enhanced: updatedTicket.ai_enhanced,
+        created_at: updatedTicket.created_at,
+        updated_at: updatedTicket.updated_at,
+        reporter: { username: updatedTicket.reporter.username },
+        assignee: updatedTicket.assignee ? { username: updatedTicket.assignee.username } : undefined,
+      };
+
+      return result;
+    } catch (error) {
+      // Przekaż błędy walidacji Zod bez zmian
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      throw new Error(`Failed to update ticket assignee: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 }
