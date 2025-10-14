@@ -9,7 +9,7 @@ export interface TicketCardViewModel {
   assigneeName?: string;
   type: TicketType;
   isAiEnhanced: boolean;
-  reporterId: string;
+  reporterId?: string; // Can be undefined if reporter account was deleted
   assigneeId?: string | null;
 }
 
