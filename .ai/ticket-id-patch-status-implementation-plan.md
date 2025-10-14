@@ -2,7 +2,7 @@
 
 ## 1. Przegląd punktu końcowego
 
-Punkt końcowy PATCH /tickets/:id/status umożliwia aktualizację statusu istniejącego ticketu w systemie. Jest przeznaczony głównie dla operacji drag & drop w interfejsie użytkownika, gdzie użytkownicy mogą zmieniać status ticketów między kolumnami Kanban. Dostęp do tej operacji mają wyłącznie: reporter ticketu, przypisany użytkownik (assignee) lub administrator systemu.
+Endpoint PATCH /tickets/:id/status umożliwia aktualizację statusu istniejącego ticketu w systemie. Jest przeznaczony głównie dla operacji drag & drop w interfejsie użytkownika, gdzie użytkownicy mogą zmieniać status ticketów między kolumnami Kanban. Dostęp do tej operacji mają wyłącznie: reporter ticketu, przypisany użytkownik (assignee) lub administrator systemu.
 
 ## 2. Szczegóły żądania
 

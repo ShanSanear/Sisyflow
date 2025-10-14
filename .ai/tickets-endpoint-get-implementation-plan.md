@@ -2,7 +2,7 @@
 
 ## 1. Przegląd punktu końcowego
 
-Punkt końcowy GET /tickets umożliwia pobieranie listy zgłoszeń (ticketów) z obsługą paginacji, filtrowania i sortowania. Jest to kluczowy endpoint dla systemu zarządzania zgłoszeniami, pozwalający użytkownikom przeglądać tickety z różnymi kryteriami wyszukiwania.
+Endpoint GET /tickets umożliwia pobieranie listy zgłoszeń (ticketów) z obsługą paginacji, filtrowania i sortowania. Jest to kluczowy endpoint dla systemu zarządzania zgłoszeniami, pozwalający użytkownikom przeglądać tickety z różnymi kryteriami wyszukiwania.
 
 ## 2. Szczegóły żądania
 
