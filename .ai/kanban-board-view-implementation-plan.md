@@ -30,8 +30,8 @@ Komponenty zostaną zaimplementowane w React i wyrenderowane po stronie klienta 
 
 ### `KanbanBoardView`
 
-- **Opis komponentu:** Komponent-strona, który inicjuje widok. Odpowiedzialny za wyświetlanie stanu ładowania, obsługę błędów na poziomie widoku oraz renderowanie `BoardContainer` po pomyślnym załadowaniu danych.
-- **Główne elementy:** Warunkowe renderowanie: `Skeleton` na czas ładowania, komunikat o błędzie lub komponent `BoardContainer`.
+- **Opis komponentu:** Główny komponent widoku. Jest odpowiedzialny za całą logikę, w tym wywołanie hooka `useKanbanBoard`, obsługę stanów ładowania i błędów. Przekazuje dane i handlery do prezentacyjnego komponentu `BoardContainer`.
+- **Główne elementy:** Logika warunkowego renderowania: `Skeleton` na czas ładowania, komunikat o błędzie lub komponent `BoardContainer` po pomyślnym załadowaniu danych.
 - **Obsługiwane interakcje:** Brak.
 - **Obsługiwana walidacja:** Brak.
 - **Typy:** `KanbanViewModel`.
@@ -39,12 +39,19 @@ Komponenty zostaną zaimplementowane w React i wyrenderowane po stronie klienta 
 
 ### `BoardContainer`
 
-- **Opis komponentu:** Główny kontener logiki tablicy Kanban. Inicjuje kontekst dla operacji "przeciągnij i upuść" (za pomocą biblioteki `@dnd-kit`), zarządza stanem ticketów i obsługuje logikę po upuszczeniu karty.
+- **Opis komponentu:** Komponent czysto prezentacyjny, odpowiedzialny za renderowanie struktury tablicy. Inicjuje kontekst dla operacji "przeciągnij i upuść" i deleguje obsługę zdarzenia `onDragEnd` do komponentu nadrzędnego.
 - **Główne elementy:** `DndContext` od `@dnd-kit`, mapowanie i renderowanie komponentów `KanbanColumn`.
-- **Obsługiwane interakcje:** `onDragEnd` - wyzwalane po zakończeniu przeciągania karty.
-- **Obsługiwana walidacja:** Sprawdzenie, czy karta została upuszczona w innej kolumnie niż źródłowa. Weryfikacja uprawnień użytkownika do modyfikacji ticketa po stronie klienta (przed wysłaniem żądania API).
+- **Obsługiwane interakcje:** `onDragEnd` - wywoływane po zakończeniu przeciągania karty, przekazywane do `KanbanBoardView`.
+- **Obsługiwana walidacja:** Sprawdzenie, czy karta została upuszczona w innej kolumnie niż źródłowa.
 - **Typy:** `KanbanViewModel`, `TicketCardViewModel`.
-- **Propsy:** Brak (zarządza własnym stanem poprzez hook `useKanbanBoard`).
+- **Propsy:**
+  ```typescript
+  interface BoardContainerProps {
+    boardState: KanbanViewModel;
+    handleDragEnd: (event: DragEndEvent) => void;
+    savingTicketId: string | null;
+  }
+  ```
 
 ### `KanbanColumn`
 
@@ -59,13 +66,14 @@ Komponenty zostaną zaimplementowane w React i wyrenderowane po stronie klienta 
     id: TicketStatus; // "OPEN" | "IN_PROGRESS" | "CLOSED"
     title: string;
     tickets: TicketCardViewModel[];
+    savingTicketId: string | null;
   }
   ```
 
 ### `TicketCard`
 
-- **Opis komponentu:** Reprezentuje pojedynczą kartę ticketa. Jest elementem przeciąganym (`draggable`). Wyświetla kluczowe informacje o tickecie i wizualnie sygnalizuje, czy użytkownik ma uprawnienia do jej przeniesienia.
-- **Główne elementy:** Kontener karty, tytuł (`<p>`), komponent `Badge` (Shadcn/ui) dla typu ticketa, nazwa osoby przypisanej, ikona "magicznej różdżki" (`Sparkles`), `Tooltip` (Shadcn/ui) dla pełnego tytułu.
+- **Opis komponentu:** Reprezentuje pojedynczą kartę ticketa. Jest elementem przeciąganym (`draggable`). Wyświetla kluczowe informacje o tickecie. Informuje wizualnie o stanie zapisywania po operacji "przeciągnij i upuść" oraz o uprawnieniach do przeniesienia.
+- **Główne elementy:** Kontener karty (ze zmiennym stylem dla stanu zapisywania), tytuł (`<p>`), komponent `Badge` (Shadcn/ui) dla typu ticketa, nazwa osoby przypisanej, ikona "magicznej różdżki" (`Sparkles`), `Tooltip` (Shadcn/ui) dla pełnego tytułu.
 - **Obsługiwane interakcje:** `onPointerDown` (inicjacja przeciągania), `onHover` (wyświetlenie tooltipa, jeśli tytuł nie jest w pełni wyświetlony).
 - **Obsługiwana walidacja:** Wizualna walidacja uprawnień – karta, której użytkownik nie może przenieść, będzie miała styl `cursor: not-allowed` i nie będzie reagować na przeciąganie.
 - **Typy:** `TicketCardViewModel`.
@@ -74,12 +82,13 @@ Komponenty zostaną zaimplementowane w React i wyrenderowane po stronie klienta 
   interface TicketCardProps {
     ticket: TicketCardViewModel;
     canMove: boolean; // Flaga określająca uprawnienia do przeciągania
+    isSaving: boolean; // Flaga określająca stan zapisywania
   }
   ```
 
 ## 5. Typy
 
-Do obsługi widoku potrzebne będą następujące struktury danych, bazujące na `TicketDTO` z `src/types.ts`.
+Do obsługi widoku potrzebne będą następujące struktury danych, które zostaną zdefiniowane w dedykowanym pliku: `src/components/views/KanbanBoardView.types.ts`.
 
 ```typescript
 // Typy statusu i typu ticketa
@@ -122,6 +131,7 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
     - `boardState: KanbanViewModel | null` - przechowuje aktualny stan tablicy.
     - `isLoading: boolean` - flaga stanu ładowania.
     - `error: Error | null` - obiekt błędu w przypadku problemów z API.
+    - `savingTicketId: string | null` - ID ticketa, który jest w trakcie zapisywania po operacji drag-and-drop.
   - **Udostępniane funkcje:**
     - `handleDragEnd(result: DragEndEvent)`: Funkcja do przekazania do `BoardContainer`, która przetwarza wynik operacji "przeciągnij i upuść".
 
@@ -129,16 +139,17 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
 
 - **Pobieranie danych:**
   - **Endpoint:** `GET /api/tickets`
-  - **Logika:** Po zamontowaniu komponentu `BoardContainer`, hook `useKanbanBoard` wywoła ten endpoint, aby pobrać wszystkie tickety. Odpowiedź `TicketDTO[]` zostanie przetransformowana na strukturę `KanbanViewModel`.
-
+  - **Logika:** Po zamontowaniu komponentu `KanbanBoardView`, hook `useKanbanBoard` wywoła ten endpoint, aby pobrać wszystkie tickety. Odpowiedź `TicketDTO[]` zostanie przetransformowana na strukturę `KanbanViewModel`.
 - **Aktualizacja statusu:**
   - **Endpoint:** `PATCH /api/tickets/:id/status`
   - **Logika:** Po upuszczeniu karty w nowej kolumnie, funkcja `handleDragEnd` w hooku `useKanbanBoard` wykona następujące kroki:
     1.  Optymistycznie zaktualizuje stan lokalny (`boardState`), aby UI zareagowało natychmiast.
-    2.  Wysyła żądanie `PATCH` z nowym statusem.
-    3.  **Typ żądania (`UpdateTicketStatusCommand`):** `{ status: TicketStatus }`
-    4.  **Typ odpowiedzi (`TicketDTO`):** Zaktualizowany obiekt ticketa.
-    5.  W przypadku błędu API, przywróci poprzedni stan `boardState` i wyświetli komunikat o błędzie.
+    2.  Ustawi `savingTicketId` na ID przenoszonego ticketa.
+    3.  Wysyła żądanie `PATCH` z nowym statusem.
+    4.  **Typ żądania (`UpdateTicketStatusCommand`):** `{ status: TicketStatus }`
+    5.  **Typ odpowiedzi (`TicketDTO`):** Zaktualizowany obiekt ticketa.
+    6.  Po otrzymaniu odpowiedzi (sukces lub błąd), ustawi `savingTicketId` na `null`.
+    7.  W przypadku błędu API, przywróci poprzedni stan `boardState` i wyświetli komunikat o błędzie.
 
 ## 8. Interakcje użytkownika
 
@@ -150,6 +161,7 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
   - Najechanie kursorem na kartę z długim, skróconym tytułem wyświetli `Tooltip` z pełną treścią.
 - **Dostępność:**
   - Alternatywą dla "przeciągnij i upuść" będzie menu kontekstowe dostępne na każdej karcie, pozwalające na wybór nowego statusu z listy.
+  - Interakcje "przeciągnij i upuść" będą również obsługiwane za pomocą klawiatury.
 
 ## 9. Warunki i walidacja
 
@@ -168,20 +180,24 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
 
 ## 11. Kroki implementacji
 
-1.  **Struktura plików:** Utworzenie pustych plików komponentów: `KanbanBoardView.tsx`, `BoardContainer.tsx`, `KanbanColumn.tsx`, `TicketCard.tsx` w odpowiednich katalogach.
-2.  **Definicje typów:** Zdefiniowanie typów `TicketCardViewModel` i `KanbanViewModel` w pliku `src/types.ts` lub dedykowanym pliku dla widoku.
+1.  **Struktura plików:** Utworzenie pustych plików komponentów: `KanbanBoardView.tsx`, `BoardContainer.tsx`, `KanbanColumn.tsx`, `TicketCard.tsx` oraz pliku na typy `KanbanBoardView.types.ts` w odpowiednich katalogach.
+2.  **Definicje typów:** Zdefiniowanie typów `TicketCardViewModel` i `KanbanViewModel` w pliku `src/components/views/KanbanBoardView.types.ts`.
 3.  **Komponenty statyczne:** Implementacja UI dla `KanbanColumn` i `TicketCard` przy użyciu statycznych danych (mock data), stylując je za pomocą Tailwind CSS i komponentów Shadcn/ui (`Badge`, `Tooltip`).
 4.  **Hook `useKanbanBoard`:** Stworzenie logiki hooka, na początku z mockową funkcją pobierającą dane, aby zwrócić statyczną strukturę `KanbanViewModel`.
-5.  **Integracja API:** Zastąpienie mockowej funkcji w `useKanbanBoard` rzeczywistym wywołaniem `fetch` do `GET /api/tickets`. Dodanie obsługi stanów ładowania i błędów.
-6.  **Implementacja Drag and Drop:**
+5.  **Struktura widoku:** Implementacja `KanbanBoardView` jako komponentu zarządzającego stanem (wywołującego hooka) i `BoardContainer` jako komponentu prezentacyjnego, przekazując do niego dane przez propsy.
+6.  **Integracja API:** Zastąpienie mockowej funkcji w `useKanbanBoard` rzeczywistym wywołaniem `fetch` do `GET /api/tickets`. Dodanie obsługi stanów ładowania i błędów.
+7.  **Implementacja Drag and Drop:**
     - Dodanie biblioteki `@dnd-kit/core`, `@dnd-kit/sortable`.
     - Owinięcie tablicy w `DndContext` w `BoardContainer`.
     - Użycie `useDraggable` w `TicketCard` i `useDroppable` w `KanbanColumn`.
-7.  **Logika `handleDragEnd`:** Implementacja funkcji `handleDragEnd` w `useKanbanBoard`, w tym:
+8.  **Logika `handleDragEnd`:** Implementacja funkcji `handleDragEnd` w `useKanbanBoard`, w tym:
     - Logika optymistycznej aktualizacji stanu.
+    - Zarządzanie stanem `savingTicketId`.
     - Wywołanie `PATCH /api/tickets/:id/status`.
     - Logika przywracania stanu w przypadku błędu.
-8.  **Obsługa uprawnień:** Implementacja logiki `canMove` na podstawie danych zalogowanego użytkownika i przekazanie jej jako prop do `TicketCard` w celu zablokowania przeciągania.
-9.  **Responsywność:** Dostosowanie stylów Tailwind CSS, aby na urządzeniach mobilnych tablica była przewijana horyzontalnie.
-10. **Dostępność:** Implementacja menu kontekstowego (np. używając komponentu `DropdownMenu` z Shadcn/ui) jako alternatywy dla zmiany statusu.
-11. **Finalne testy:** Przetestowanie wszystkich interakcji, obsługi błędów i responsywności.
+9.  **Wizualizacja stanu zapisywania:** Dodanie w `TicketCard` logiki, która na podstawie propa `isSaving` zmienia wygląd karty (zmniejsza opacity) by dać użytkownikowi znać że zmiana jest właśnie dokonywana.
+10. **Obsługa uprawnień:** Implementacja logiki `canMove` na podstawie danych zalogowanego użytkownika i przekazanie jej jako prop do `TicketCard` w celu zablokowania przeciągania.
+11. **Responsywność:** Dostosowanie stylów Tailwind CSS, aby na urządzeniach mobilnych tablica była przewijana horyzontalnie.
+12. **Dostępność (Menu):** Implementacja menu kontekstowego (np. używając komponentu `DropdownMenu` z Shadcn/ui) jako alternatywy dla zmiany statusu.
+13. **Dostępność (Klawiatura):** Rozszerzenie implementacji "przeciągnij i upuść" o obsługę z klawiatury przy użyciu `KeyboardSensor` z biblioteki `@dnd-kit`. Ten krok można pominąć w pierwszej iteracji, jeśli okaże się zbyt czasochłonny.
+14. **Finalne testy:** Przetestowanie wszystkich interakcji, obsługi błędów i responsywności.
