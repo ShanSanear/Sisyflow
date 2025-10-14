@@ -8,6 +8,7 @@ import type {
   UpdateTicketStatusCommand,
 } from "../../types";
 import { createTicketSchema, getTicketsQuerySchema, updateTicketStatusSchema } from "../validation/ticket.validation";
+import { POSTGREST_ERROR_CODES } from "../constants";
 import { z } from "zod";
 
 /**
@@ -222,6 +223,82 @@ export class TicketService {
 
       // Dla innych błędów, opakuj w bardziej przyjazny komunikat
       throw new Error(`Failed to get tickets: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Pobiera pojedynczy ticket wraz z danymi reportera i assignee'a
+   *
+   * @param ticketId ID ticketu do pobrania
+   * @returns Pełny obiekt ticketu z powiązanymi danymi reportera i assignee'a
+   * @throws Error jeśli ticket nie istnieje lub wystąpi błąd bazy danych
+   */
+  async getTicketById(ticketId: string): Promise<FullTicketDTO> {
+    try {
+      // Wykonaj zapytanie z JOIN do tabeli profiles dla reportera i assignee'a
+      const { data: ticket, error } = await this.supabase
+        .from("tickets")
+        .select(
+          `
+          id,
+          title,
+          description,
+          type,
+          status,
+          reporter_id,
+          assignee_id,
+          ai_enhanced,
+          created_at,
+          updated_at,
+          reporter:profiles!tickets_reporter_id_fkey(username),
+          assignee:profiles!tickets_assignee_id_fkey(username)
+        `
+        )
+        .eq("id", ticketId)
+        .single();
+
+      if (error) {
+        // Sprawdź czy to błąd "not found" (brak rekordu dla zapytania .single())
+        if (error.code === POSTGREST_ERROR_CODES.NO_ROWS_RETURNED_FOR_SINGLE) {
+          throw new Error("Ticket not found");
+        }
+        throw new Error(`Failed to fetch ticket: ${error.message}`);
+      }
+
+      if (!ticket) {
+        throw new Error("Ticket not found");
+      }
+
+      // Sprawdź czy reporter istnieje - powinien istnieć dla wszystkich ticketów
+      if (!ticket.reporter) {
+        throw new Error("Failed to fetch reporter data for ticket");
+      }
+
+      // Formatuj odpowiedź zgodnie z FullTicketDTO
+      const result: FullTicketDTO = {
+        id: ticket.id,
+        title: ticket.title,
+        description: ticket.description,
+        type: ticket.type,
+        status: ticket.status,
+        reporter_id: ticket.reporter_id,
+        assignee_id: ticket.assignee_id,
+        ai_enhanced: ticket.ai_enhanced,
+        created_at: ticket.created_at,
+        updated_at: ticket.updated_at,
+        reporter: { username: ticket.reporter.username },
+        assignee: ticket.assignee ? { username: ticket.assignee.username } : undefined,
+      };
+
+      return result;
+    } catch (error) {
+      // Przekaż błędy walidacji Zod bez zmian (choć nie ma walidacji w tej metodzie)
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      throw new Error(`Failed to get ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 

@@ -11,3 +11,9 @@ export const ATTACHMENT_LIMITS = {
   MAX_PER_TICKET: 10,
   MAX_SIZE_PER_ATTACHMENT: 20 * 1024, // 20 KB
 } as const;
+
+// Kody błędów PostgREST (Supabase)
+export const POSTGREST_ERROR_CODES = {
+  // No rows returned for a query that expects exactly one row
+  NO_ROWS_RETURNED_FOR_SINGLE: "PGRST116",
+} as const;

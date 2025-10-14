@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { createTicketService } from "../../lib/services/ticket.service";
 import type { CreateTicketCommand } from "../../types";
 import { DEVELOPMENT_USER_ID } from "../../lib/constants";
+import { isZodError, createZodValidationResponse } from "../../lib/utils";
 
 export const prerender = false;
 
@@ -39,19 +40,8 @@ export const GET: APIRoute = async ({ locals, url }) => {
     console.error("Error fetching tickets:", error);
 
     // Obsługa błędów walidacji Zod
-    if (error && typeof error === "object" && "issues" in error) {
-      const zodError = error as { issues: { message: string }[] };
-      return new Response(
-        JSON.stringify({
-          error: "Validation Error",
-          message: "Invalid query parameters",
-          details: zodError.issues.map((issue) => issue.message),
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (isZodError(error)) {
+      return createZodValidationResponse(error, "Invalid query parameters");
     }
 
     // Obsługa innych błędów
@@ -120,19 +110,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.error("Error creating ticket:", error);
 
     // Obsługa błędów walidacji Zod
-    if (error && typeof error === "object" && "issues" in error) {
-      const zodError = error as { issues: { message: string }[] };
-      return new Response(
-        JSON.stringify({
-          error: "Validation Error",
-          message: "Invalid request data",
-          details: zodError.issues.map((issue) => issue.message),
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (isZodError(error)) {
+      return createZodValidationResponse(error);
     }
 
     // Obsługa innych błędów

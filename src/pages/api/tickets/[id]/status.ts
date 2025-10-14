@@ -3,6 +3,7 @@ import { createTicketService } from "../../../../lib/services/ticket.service";
 import type { UpdateTicketStatusCommand } from "../../../../types";
 import { DEVELOPMENT_USER_ID } from "../../../../lib/constants";
 import { ticketIdParamsSchema } from "../../../../lib/validation/ticket.validation";
+import { isZodError, createZodValidationResponse } from "../../../../lib/utils";
 
 export const prerender = false;
 
@@ -62,19 +63,8 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
     console.error("Error updating ticket status:", error);
 
     // Obsługa błędów walidacji Zod
-    if (error && typeof error === "object" && "issues" in error) {
-      const zodError = error as { issues: { message: string }[] };
-      return new Response(
-        JSON.stringify({
-          error: "Validation Error",
-          message: "Invalid request data",
-          details: zodError.issues.map((issue) => issue.message),
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (isZodError(error)) {
+      return createZodValidationResponse(error);
     }
 
     // Obsługa błędów autoryzacji (403 Forbidden)
