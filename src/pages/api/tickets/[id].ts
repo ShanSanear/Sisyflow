@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { createTicketService } from "../../../lib/services/ticket.service";
-import type { FullTicketDTO } from "../../../types";
+import type { FullTicketDTO, UpdateTicketCommand } from "../../../types";
 import { DEVELOPMENT_USER_ID } from "../../../lib/constants";
-import { ticketIdParamsSchema } from "../../../lib/validation/ticket.validation";
+import { ticketIdParamsSchema, updateTicketSchema } from "../../../lib/validation/ticket.validation";
 import { isZodError, createZodValidationResponse } from "../../../lib/utils";
 
 export const prerender = false;
@@ -76,6 +76,137 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     // Obsługa innych błędów
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
+
+/**
+ * PUT /api/tickets/[id]
+ *
+ * Aktualizuje istniejący ticket. Dostęp mają wyłącznie reporter zgłoszenia, przypisany użytkownik (assignee) lub administrator (ADMIN).
+ * Wszystkie pola w żądaniu są opcjonalne, ale przynajmniej jedno pole musi zostać podane do aktualizacji.
+ *
+ * URL Params: id (UUID) - identyfikator ticketu
+ * Request Body: UpdateTicketCommand - pola do aktualizacji (title, description, type)
+ * Response: 200 OK - FullTicketDTO zawierający zaktualizowane dane ticketu
+ * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
+ */
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  try {
+    // Walidacja parametrów URL używając Zod
+    const validatedParams = ticketIdParamsSchema.parse(params);
+    const ticketId = validatedParams.id;
+
+    // Użyj stałego user ID dla developmentu
+    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
+    const userId = DEVELOPMENT_USER_ID;
+    const supabase = locals.supabase;
+
+    // Sprawdź czy użytkownik jest uwierzytelniony (prosta weryfikacja dla developmentu)
+    if (!userId) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "User authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Parsuj i waliduj ciało żądania
+    let requestBody: UpdateTicketCommand;
+    try {
+      requestBody = await request.json();
+    } catch {
+      return new Response(
+        JSON.stringify({
+          error: "Bad Request",
+          message: "Invalid JSON in request body",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Walidacja danych wejściowych używając Zod
+    const validatedData = updateTicketSchema.parse(requestBody);
+
+    // Utwórz ticket service i wywołaj metodę aktualizacji ticketu
+    const ticketService = createTicketService(supabase);
+    const updatedTicket: FullTicketDTO = await ticketService.updateTicket(ticketId, validatedData, userId);
+
+    // Zwróć pomyślną odpowiedź z zaktualizowanym ticketem
+    return new Response(JSON.stringify(updatedTicket), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error updating ticket:", error);
+
+    // Obsługa błędów walidacji Zod
+    if (isZodError(error)) {
+      return createZodValidationResponse(error);
+    }
+
+    // Obsługa błędów "access denied" (403 Forbidden)
+    if (error instanceof Error && error.message === "Access denied: You don't have permission to update this ticket") {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "You don't have permission to update this ticket",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa błędów "ticket not found" (404 Not Found)
+    if (error instanceof Error && error.message === "Ticket not found") {
+      return new Response(
+        JSON.stringify({
+          error: "Not Found",
+          message: "Ticket not found",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa błędów "user profile not found" (403 Forbidden)
+    if (error instanceof Error && error.message === "User profile not found") {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "User profile not found - access denied",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Dla innych błędów
     return new Response(
       JSON.stringify({
         error: "Internal Server Error",

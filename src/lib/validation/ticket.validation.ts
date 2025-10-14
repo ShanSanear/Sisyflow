@@ -56,8 +56,37 @@ export const updateTicketStatusSchema = z.object({
   }),
 });
 
+/**
+ * Schema walidacji dla aktualizacji ticketu (PUT /tickets/:id)
+ * Implementuje walidację zgodnie z wymaganiami biznesowymi:
+ * - title: opcjonalne, 1-200 znaków
+ * - description: opcjonalne, max 10000 znaków
+ * - type: opcjonalne, jedna z dozwolonych wartości enum
+ * Wymaga przynajmniej jednego pola do aktualizacji
+ */
+export const updateTicketSchema = z
+  .object({
+    title: z.string().min(1, "Title cannot be empty").max(200, "Title cannot exceed 200 characters").trim().optional(),
+    description: z.string().max(10000, "Description cannot exceed 10000 characters").optional(),
+    type: z
+      .enum(["BUG", "IMPROVEMENT", "TASK"], {
+        errorMap: () => ({ message: "Type must be one of: BUG, IMPROVEMENT, TASK" }),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      // Sprawdź czy przynajmniej jedno pole zostało podane do aktualizacji
+      return Object.values(data).some((value) => value !== undefined);
+    },
+    {
+      message: "At least one field must be provided for update",
+    }
+  );
+
 // Typy wywnioskowane ze schematów
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type GetTicketsQueryInput = z.infer<typeof getTicketsQuerySchema>;
 export type TicketIdParamsInput = z.infer<typeof ticketIdParamsSchema>;
 export type UpdateTicketStatusInput = z.infer<typeof updateTicketStatusSchema>;
+export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
