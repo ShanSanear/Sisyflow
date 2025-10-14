@@ -26,8 +26,8 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Kluczowe informacje do wyświetlenia:** Trzy kolumny reprezentujące statusy ticketów (`Otwarty`, `W toku`, `Zamknięty`). W kolumnach znajdują się karty ticketów, wyświetlające tytuł, osobę przypisaną, typ (oznaczony kolorem i komponentem `Badge`) oraz ikonę "magicznej różdżki", jeśli użyto sugestii AI.
 - **Kluczowe komponenty widoku:** `BoardContainer`, `KanbanColumn`, `TicketCard`, `Skeleton` (dla stanu ładowania), `Tooltip`, `Badge`.
 - **UX, dostępność i względy bezpieczeństwa:**
-  - **UX:** Funkcjonalność "przeciągnij i upuść" (drag-and-drop) do zmiany statusu ticketa. Skracanie długich tytułów z wyświetlaniem pełnej treści w tooltipie. Wizualne wskazówki (zmiana cienia/tła) przy najechaniu na kartę. Na urządzeniach mobilnych tablica jest przewijana horyzontalnie.
-  - **Dostępność:** Alternatywna obsługa zmiany statusupoprzez menu kontekstowe na karcie ticketa.
+  - **UX:** Funkcjonalność "przeciągnij i upuść" (drag-and-drop) do zmiany statusu ticketa. Skracanie długich tytułów z wyświetlaniem pełnej treści w tooltipie. Wizualne wskazówki (zmiana cienia/tła) przy najechaniu na kartę. Na urządzeniach mobilnych tablica jest przewijana horyzontalnie. W przypadku braku ticketów - wyświetlenie odpowiedniego komunikatu o ich braku.
+  - **Dostępność:** Alternatywna obsługa zmiany statusu poprzez menu kontekstowe na karcie ticketa bądź poprzez użycie klawiatury.
   - **Bezpieczeństwo:** Uprawnienia do zmiany statusu ticketa są weryfikowane po stronie serwera przy każdej operacji.
 
 ### Widok Profilu Użytkownika

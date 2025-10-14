@@ -31,7 +31,7 @@ Komponenty zostaną zaimplementowane w React i wyrenderowane po stronie klienta 
 ### `KanbanBoardView`
 
 - **Opis komponentu:** Główny komponent widoku. Jest odpowiedzialny za całą logikę, w tym wywołanie hooka `useKanbanBoard`, obsługę stanów ładowania i błędów. Przekazuje dane i handlery do prezentacyjnego komponentu `BoardContainer`.
-- **Główne elementy:** Logika warunkowego renderowania: `Skeleton` na czas ładowania, komunikat o błędzie lub komponent `BoardContainer` po pomyślnym załadowaniu danych.
+- **Główne elementy:** Logika warunkowego renderowania: `Skeleton` na czas ładowania, komunikat o błędzie, komponent `EmptyState` (gdy brak ticketów) lub komponent `BoardContainer` po pomyślnym załadowaniu danych.
 - **Obsługiwane interakcje:** Brak.
 - **Obsługiwana walidacja:** Brak.
 - **Typy:** `KanbanViewModel`.
@@ -127,6 +127,8 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
 
 - **`useKanbanBoard` hook:**
   - **Cel:** Enkapsulacja całej logiki związanej z tablicą Kanban: pobieranie danych, transformacja do `KanbanViewModel`, obsługa optymistycznych aktualizacji UI po przeciągnięciu karty oraz komunikacja z API.
+  - **Zależności:**
+    - `useAuth()`: Hook dostarczający dane zalogowanego użytkownika (`id` i `role`), niezbędne do weryfikacji uprawnień. Na potrzeby implementacji dane te mogą być zamockowane do czasu wdrożenia pełnej autentykacji.
   - **Zarządzany stan:**
     - `boardState: KanbanViewModel | null` - przechowuje aktualny stan tablicy.
     - `isLoading: boolean` - flaga stanu ładowania.
@@ -174,6 +176,7 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
 ## 10. Obsługa błędów
 
 - **Błąd pobierania danych:** Jeśli początkowe żądanie `GET /api/tickets` zakończy się niepowodzeniem, widok wyświetli globalny komunikat o błędzie z przyciskiem "Spróbuj ponownie".
+- **Brak danych (pusta tablica):** Jeśli żądanie `GET /api/tickets` zwróci pustą listę, widok wyświetli informację dla użytkownika, np. "Nie znaleziono żadnych ticketów. Stwórz nowy, aby rozpocząć pracę!".
 - **Błąd aktualizacji statusu:**
   - **Scenariusz:** Żądanie `PATCH` kończy się błędem (np. sieciowym, błędem serwera 500, lub błędem uprawnień 403, który ominął walidację UI).
   - **Obsługa:** Optymistyczna zmiana w UI zostanie cofnięta (karta wróci na swoje pierwotne miejsce), a użytkownik zobaczy powiadomienie typu "toast" z informacją o błędzie, np. "Nie udało się zaktualizować statusu ticketa".
@@ -182,9 +185,9 @@ Logika zarządzania stanem zostanie wyizolowana w dedykowanym customowym hooku `
 
 1.  **Struktura plików:** Utworzenie pustych plików komponentów: `KanbanBoardView.tsx`, `BoardContainer.tsx`, `KanbanColumn.tsx`, `TicketCard.tsx` oraz pliku na typy `KanbanBoardView.types.ts` w odpowiednich katalogach.
 2.  **Definicje typów:** Zdefiniowanie typów `TicketCardViewModel` i `KanbanViewModel` w pliku `src/components/views/KanbanBoardView.types.ts`.
-3.  **Komponenty statyczne:** Implementacja UI dla `KanbanColumn` i `TicketCard` przy użyciu statycznych danych (mock data), stylując je za pomocą Tailwind CSS i komponentów Shadcn/ui (`Badge`, `Tooltip`).
-4.  **Hook `useKanbanBoard`:** Stworzenie logiki hooka, na początku z mockową funkcją pobierającą dane, aby zwrócić statyczną strukturę `KanbanViewModel`.
-5.  **Struktura widoku:** Implementacja `KanbanBoardView` jako komponentu zarządzającego stanem (wywołującego hooka) i `BoardContainer` jako komponentu prezentacyjnego, przekazując do niego dane przez propsy.
+3.  **Komponenty statyczne:** Implementacja UI dla `KanbanColumn`, `TicketCard` oraz `EmptyState` przy użyciu statycznych danych (mock data), stylując je za pomocą Tailwind CSS i komponentów Shadcn/ui.
+4.  **Hook `useKanbanBoard`:** Stworzenie logiki hooka, na początku z mockową funkcją pobierającą dane oraz zamockowanym kontekstem użytkownika (`useAuth`).
+5.  **Struktura widoku:** Implementacja `KanbanBoardView` jako komponentu zarządzającego stanem (wywołującego hooka) i `BoardContainer` jako komponentu prezentacyjnego, przekazując do niego dane przez propsy. Dodanie logiki wyświetlania stanu pustego.
 6.  **Integracja API:** Zastąpienie mockowej funkcji w `useKanbanBoard` rzeczywistym wywołaniem `fetch` do `GET /api/tickets`. Dodanie obsługi stanów ładowania i błędów.
 7.  **Implementacja Drag and Drop:**
     - Dodanie biblioteki `@dnd-kit/core`, `@dnd-kit/sortable`.
