@@ -708,6 +708,59 @@ export class TicketService {
       throw new Error(`Failed to update ticket assignee: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
+
+  /**
+   * Usuwa istniejący ticket
+   * Sprawdza uprawnienia użytkownika - tylko administratorzy mogą usuwać tickety
+   *
+   * @param ticketId ID ticketu do usunięcia
+   * @param userId ID użytkownika wykonującego operację
+   * @throws Error jeśli ticket nie istnieje, użytkownik nie ma uprawnień lub wystąpi błąd bazy danych
+   */
+  async deleteTicket(ticketId: string, userId: string): Promise<void> {
+    try {
+      // Najpierw sprawdź czy ticket istnieje
+      const { data: existingTicket, error: fetchError } = await this.supabase
+        .from("tickets")
+        .select("id")
+        .eq("id", ticketId)
+        .single();
+
+      if (fetchError || !existingTicket) {
+        throw new Error("Ticket not found");
+      }
+
+      // Sprawdź rolę użytkownika - tylko ADMIN może usuwać tickety
+      const { data: userProfile, error: profileError } = await this.supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (profileError || !userProfile) {
+        throw new Error("User profile not found");
+      }
+
+      if (userProfile.role !== "ADMIN") {
+        throw new Error("Access denied: Only administrators can delete tickets");
+      }
+
+      // Usuń ticket
+      const { error: deleteError } = await this.supabase.from("tickets").delete().eq("id", ticketId);
+
+      if (deleteError) {
+        throw new Error(`Failed to delete ticket: ${deleteError.message}`);
+      }
+    } catch (error) {
+      // Przekaż błędy walidacji Zod bez zmian (choć nie ma walidacji w tej metodzie)
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      throw new Error(`Failed to delete ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
 }
 
 /**

@@ -219,3 +219,114 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     );
   }
 };
+
+/**
+ * DELETE /api/tickets/[id]
+ *
+ * Usuwa istniejący ticket. Dostęp mają wyłącznie użytkownicy z rolą administratora (ADMIN).
+ * Operacja jest nieodwracalna - usunięty ticket nie może zostać przywrócony.
+ *
+ * URL Params: id (UUID) - identyfikator ticketu do usunięcia
+ * Request Body: Brak (DELETE request nie zawiera ciała żądania)
+ * Response: 204 No Content - ticket został pomyślnie usunięty
+ * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    // Walidacja parametrów URL używając Zod
+    const validatedParams = ticketIdParamsSchema.parse(params);
+    const ticketId = validatedParams.id;
+
+    // Użyj stałego user ID dla developmentu
+    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
+    const userId = DEVELOPMENT_USER_ID;
+    const supabase = locals.supabase;
+
+    // Sprawdź czy użytkownik jest uwierzytelniony (prosta weryfikacja dla developmentu)
+    if (!userId) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "User authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Utwórz ticket service i wywołaj metodę usunięcia ticketu
+    const ticketService = createTicketService(supabase);
+    await ticketService.deleteTicket(ticketId, userId);
+
+    // Zwróć pomyślną odpowiedź bez treści (204 No Content)
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting ticket:", error);
+
+    // Obsługa błędów walidacji Zod
+    if (isZodError(error)) {
+      return createZodValidationResponse(error);
+    }
+
+    // Obsługa błędów "access denied" (403 Forbidden)
+    if (error instanceof Error && error.message === "Access denied: Only administrators can delete tickets") {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "You don't have permission to delete tickets. Only administrators can perform this action.",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa błędów "user profile not found" (403 Forbidden)
+    if (error instanceof Error && error.message === "User profile not found") {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "User profile not found - access denied",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa błędów "ticket not found" (404 Not Found)
+    if (error instanceof Error && error.message === "Ticket not found") {
+      return new Response(
+        JSON.stringify({
+          error: "Not Found",
+          message: "Ticket not found",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Dla innych błędów
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
