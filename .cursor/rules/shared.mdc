@@ -47,3 +47,9 @@ When modifying the directory structure, always update this section.
 - Use guard clauses to handle preconditions and invalid states early.
 - Implement proper error logging and user-friendly error messages.
 - Consider using custom error types or error factories for consistent error handling.
+
+### Guidelines for linter and formatting
+
+- Use `npm run lint:fix` to run linter
+- Use `npm run format` to run formatter
+- DO NOT manually change lines just to format/lint them properly before trying to run both of the above first

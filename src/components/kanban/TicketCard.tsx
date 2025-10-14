@@ -2,16 +2,24 @@ import React, { useRef, useEffect, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Sparkles } from "lucide-react";
-import type { TicketCardViewModel } from "../views/KanbanBoardView.types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sparkles, MoreHorizontal } from "lucide-react";
+import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface TicketCardProps {
   ticket: TicketCardViewModel;
+  currentStatus: TicketStatus; // Current status of the ticket
   canMove: boolean; // Flaga określająca uprawnienia do przeciągania
   isSaving: boolean; // Flaga określająca stan zapisywania
+  onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void; // Handler for status change via context menu
 }
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, canMove, isSaving }) => {
+export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, canMove, isSaving, onStatusChange }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
     disabled: !canMove || isSaving,
@@ -69,6 +77,16 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, canMove, isSavin
     }
   };
 
+  const getStatusOptions = () => {
+    const allStatuses: { status: TicketStatus; label: string }[] = [
+      { status: "OPEN", label: "Move to Open" },
+      { status: "IN_PROGRESS", label: "Move to In Progress" },
+      { status: "CLOSED", label: "Move to Closed" },
+    ];
+
+    return allStatuses.filter((option) => option.status !== currentStatus);
+  };
+
   const cardClassName = `
     bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
     select-none touch-none
@@ -91,7 +109,32 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, canMove, isSavin
         <Badge variant={getTypeBadgeVariant(ticket.type)} className="text-xs">
           {getTypeLabel(ticket.type)}
         </Badge>
-        {ticket.isAiEnhanced && <Sparkles className="h-4 w-4 text-purple-500 ml-2 flex-shrink-0" />}
+        <div className="flex items-center gap-1">
+          {ticket.isAiEnhanced && <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0" />}
+          {onStatusChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-6 w-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 opacity-60 hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {getStatusOptions().map((option) => (
+                  <DropdownMenuItem
+                    key={option.status}
+                    onClick={() => onStatusChange(ticket.id, option.status)}
+                    disabled={!canMove}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       {TitleElement}

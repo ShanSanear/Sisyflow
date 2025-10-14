@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { KanbanViewModel, TicketCardViewModel } from "../views/KanbanBoardView.types";
+import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 import type { TicketDTO } from "../../types";
+import { useAuth } from "./useAuth";
+import { useToast } from "./useToast";
 
 interface UseKanbanBoardResult {
   boardState: KanbanViewModel | null;
@@ -9,6 +11,8 @@ interface UseKanbanBoardResult {
   error: Error | null;
   savingTicketId: string | null;
   handleDragEnd: (event: DragEndEvent) => void;
+  handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   refetch: () => Promise<void>;
 }
 
@@ -22,6 +26,25 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
   const [error, setError] = useState<Error | null>(null);
 
   const [savingTicketId, _setSavingTicketId] = useState<string | null>(null); // Will be used for drag-and-drop saving state
+
+  const { currentUser } = useAuth();
+  const { showError, showSuccess } = useToast();
+
+  /**
+   * Check if current user can move a specific ticket
+   */
+  const canMoveTicket = useCallback(
+    (ticket: TicketCardViewModel): boolean => {
+      if (!currentUser) return false;
+
+      // Admin can move all tickets
+      if (currentUser.role === "ADMIN") return true;
+
+      // User can move ticket if they are the reporter or assignee
+      return currentUser.id === ticket.reporterId || currentUser.id === ticket.assigneeId;
+    },
+    [currentUser]
+  );
 
   /**
    * Transform TicketDTO array to KanbanViewModel
@@ -146,6 +169,14 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         return;
       }
 
+      // Check permissions before allowing the move
+      if (!canMoveTicket(ticketToMove)) {
+        console.warn(`User does not have permission to move ticket ${ticketId}`);
+        // TODO: Show permission error notification
+        showError("You don't have permission to move this ticket.");
+        return;
+      }
+
       // Optimistically update UI
       const newBoardState: KanbanViewModel = { ...boardState };
       newBoardState[oldStatus].tickets = newBoardState[oldStatus].tickets.filter((ticket) => ticket.id !== ticketId);
@@ -171,6 +202,9 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
 
         // Refresh data to ensure consistency
         await fetchTickets();
+        showSuccess(
+          `Ticket moved to ${newStatus === "OPEN" ? "Open" : newStatus === "IN_PROGRESS" ? "In Progress" : "Closed"}`
+        );
         console.log(`Successfully moved ticket ${ticketId} to ${newStatus}`);
       } catch (error) {
         console.error("Error updating ticket status:", error);
@@ -183,13 +217,95 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         revertedBoardState[oldStatus].tickets.push(ticketToMove);
         setBoardState(revertedBoardState);
 
-        // TODO: Show user-friendly error message (toast notification)
-        alert(`Failed to move ticket. Please try again.`);
+        showError("Failed to move ticket. Please try again.");
       } finally {
         _setSavingTicketId(null);
       }
     },
-    [boardState, fetchTickets]
+    [boardState, fetchTickets, canMoveTicket, showError, showSuccess]
+  );
+
+  /**
+   * Handle status change via context menu
+   */
+  const handleStatusChangeViaMenu = useCallback(
+    async (ticketId: string, newStatus: TicketStatus) => {
+      console.log(`Changing ticket ${ticketId} status to ${newStatus} via menu`);
+
+      // Find the ticket in current state
+      if (!boardState) {
+        console.error("Board state is not available");
+        return;
+      }
+
+      let ticketToMove: TicketCardViewModel | undefined;
+      let oldStatus: keyof KanbanViewModel | undefined;
+
+      for (const [status, column] of Object.entries(boardState)) {
+        const foundTicket = column.tickets.find((ticket) => ticket.id === ticketId);
+        if (foundTicket) {
+          ticketToMove = foundTicket;
+          oldStatus = status as keyof KanbanViewModel;
+          break;
+        }
+      }
+
+      if (!ticketToMove || !oldStatus || oldStatus === newStatus) {
+        console.log("Ticket not found or no status change needed");
+        return;
+      }
+
+      // Check permissions before allowing the move
+      if (!canMoveTicket(ticketToMove)) {
+        console.warn(`User does not have permission to move ticket ${ticketId}`);
+        // TODO: Show permission error notification
+        showError("You don't have permission to move this ticket.");
+        return;
+      }
+
+      // Optimistically update UI
+      const newBoardState: KanbanViewModel = { ...boardState };
+      newBoardState[oldStatus].tickets = newBoardState[oldStatus].tickets.filter((ticket) => ticket.id !== ticketId);
+      newBoardState[newStatus].tickets.push({ ...ticketToMove });
+      setBoardState(newBoardState);
+      _setSavingTicketId(ticketId);
+
+      try {
+        // Call API to update ticket status
+        const response = await fetch(`/api/tickets/${ticketId}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update ticket status: ${response.status} ${response.statusText}`);
+        }
+
+        // Refresh data to ensure consistency
+        await fetchTickets();
+        console.log(`Successfully changed ticket ${ticketId} status to ${newStatus}`);
+      } catch (error) {
+        console.error("Error updating ticket status:", error);
+
+        // Revert optimistic update on error
+        const revertedBoardState: KanbanViewModel = { ...boardState };
+        revertedBoardState[newStatus].tickets = revertedBoardState[newStatus].tickets.filter(
+          (ticket) => ticket.id !== ticketId
+        );
+        revertedBoardState[oldStatus].tickets.push(ticketToMove);
+        setBoardState(revertedBoardState);
+
+        showError("Failed to move ticket. Please try again.");
+      } finally {
+        _setSavingTicketId(null);
+      }
+    },
+    [boardState, fetchTickets, canMoveTicket, showError, showSuccess]
   );
 
   /**
@@ -210,6 +326,8 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
     error,
     savingTicketId,
     handleDragEnd,
+    handleStatusChangeViaMenu,
+    canMoveTicket,
     refetch,
   };
 };

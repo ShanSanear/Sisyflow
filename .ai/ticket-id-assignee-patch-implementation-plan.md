@@ -13,6 +13,7 @@ Punkt końcowy `PATCH /tickets/:id/assignee` umożliwia przypisywanie lub odprzy
   - **Wymagane**: `id` (UUID ticketu w ścieżce URL)
   - **Opcjonalne**: brak (parametry query nie są używane)
 - **Request Body**: `UpdateTicketAssigneeCommand`
+
   ```json
   {
     "assignee_id": "uuid | null"

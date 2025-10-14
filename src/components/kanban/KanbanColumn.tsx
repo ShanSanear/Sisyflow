@@ -8,9 +8,18 @@ interface KanbanColumnProps {
   title: string;
   tickets: TicketCardViewModel[];
   savingTicketId: string | null;
+  canMoveTicket: (ticket: TicketCardViewModel) => boolean;
+  handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
 }
 
-export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tickets, savingTicketId }) => {
+export const KanbanColumn: React.FC<KanbanColumnProps> = ({
+  id,
+  title,
+  tickets,
+  savingTicketId,
+  canMoveTicket,
+  handleStatusChangeViaMenu,
+}) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
@@ -36,8 +45,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tickets, 
           <TicketCard
             key={ticket.id}
             ticket={ticket}
-            canMove={true} // Na razie zawsze true, później będzie logika uprawnień
+            currentStatus={id}
+            canMove={canMoveTicket(ticket)}
             isSaving={savingTicketId === ticket.id}
+            onStatusChange={handleStatusChangeViaMenu}
           />
         ))}
         {tickets.length === 0 && (
