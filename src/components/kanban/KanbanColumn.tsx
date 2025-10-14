@@ -1,4 +1,5 @@
 import React from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { TicketCard } from "./TicketCard";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
@@ -9,10 +10,20 @@ interface KanbanColumnProps {
   savingTicketId: string | null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id: _id, title, tickets, savingTicketId }) => {
+export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tickets, savingTicketId }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id,
+  });
+
   return (
-    <div className="flex flex-col w-80 min-h-[600px] bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+    <div
+      ref={setNodeRef}
+      className={`flex flex-col w-80 min-h-[600px] rounded-lg p-4 transition-colors ${
+        isOver
+          ? "bg-blue-50 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700"
+          : "bg-gray-50 dark:bg-gray-900 border-2 border-transparent"
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
         <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium px-2 py-1 rounded-full">

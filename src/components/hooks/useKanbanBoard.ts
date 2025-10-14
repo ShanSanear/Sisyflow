@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import type { DragEndEvent } from "@dnd-kit/core";
 import type { KanbanViewModel, TicketCardViewModel } from "../views/KanbanBoardView.types";
 import type { TicketDTO } from "../../types";
 
@@ -7,7 +8,7 @@ interface UseKanbanBoardResult {
   isLoading: boolean;
   error: Error | null;
   savingTicketId: string | null;
-  handleDragEnd: (event: unknown) => void;
+  handleDragEnd: (event: DragEndEvent) => void;
   refetch: () => Promise<void>;
 }
 
@@ -19,7 +20,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
   const [boardState, setBoardState] = useState<KanbanViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [savingTicketId, _setSavingTicketId] = useState<string | null>(null); // Will be used for drag-and-drop saving state
 
   /**
@@ -106,12 +107,90 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
   }, [transformTicketsToKanbanView]);
 
   /**
-   * Handle drag end event (placeholder for future implementation)
+   * Handle drag end event
    */
-  const handleDragEnd = useCallback((event: unknown) => {
-    // TODO: Implement drag and drop logic
-    console.log("Drag end event:", event);
-  }, []);
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (!over) {
+        console.log("Drag ended without dropping over a valid target");
+        return;
+      }
+
+      const ticketId = active.id as string;
+      const newStatus = over.id as keyof KanbanViewModel;
+
+      console.log(`Moving ticket ${ticketId} to status ${newStatus}`);
+
+      // Find the ticket in current state
+      if (!boardState) {
+        console.error("Board state is not available");
+        return;
+      }
+
+      let ticketToMove: TicketCardViewModel | undefined;
+      let oldStatus: keyof KanbanViewModel | undefined;
+
+      for (const [status, column] of Object.entries(boardState)) {
+        const foundTicket = column.tickets.find((ticket) => ticket.id === ticketId);
+        if (foundTicket) {
+          ticketToMove = foundTicket;
+          oldStatus = status as keyof KanbanViewModel;
+          break;
+        }
+      }
+
+      if (!ticketToMove || !oldStatus || oldStatus === newStatus) {
+        console.log("Ticket not found or no status change needed");
+        return;
+      }
+
+      // Optimistically update UI
+      const newBoardState: KanbanViewModel = { ...boardState };
+      newBoardState[oldStatus].tickets = newBoardState[oldStatus].tickets.filter((ticket) => ticket.id !== ticketId);
+      newBoardState[newStatus].tickets.push({ ...ticketToMove });
+      setBoardState(newBoardState);
+      _setSavingTicketId(ticketId);
+
+      try {
+        // Call API to update ticket status
+        const response = await fetch(`/api/tickets/${ticketId}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update ticket status: ${response.status} ${response.statusText}`);
+        }
+
+        // Refresh data to ensure consistency
+        await fetchTickets();
+        console.log(`Successfully moved ticket ${ticketId} to ${newStatus}`);
+      } catch (error) {
+        console.error("Error updating ticket status:", error);
+
+        // Revert optimistic update on error
+        const revertedBoardState: KanbanViewModel = { ...boardState };
+        revertedBoardState[newStatus].tickets = revertedBoardState[newStatus].tickets.filter(
+          (ticket) => ticket.id !== ticketId
+        );
+        revertedBoardState[oldStatus].tickets.push(ticketToMove);
+        setBoardState(revertedBoardState);
+
+        // TODO: Show user-friendly error message (toast notification)
+        alert(`Failed to move ticket. Please try again.`);
+      } finally {
+        _setSavingTicketId(null);
+      }
+    },
+    [boardState, fetchTickets]
+  );
 
   /**
    * Refetch data from API
