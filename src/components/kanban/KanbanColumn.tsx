@@ -32,6 +32,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
           ? "bg-blue-50 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700"
           : "bg-gray-50 dark:bg-gray-900 border-2 border-transparent"
       }`}
+      role="region"
+      aria-label={`${title} column with ${tickets.length} tickets`}
     >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>

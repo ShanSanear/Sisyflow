@@ -89,7 +89,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
 
   const cardClassName = `
     bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
-    select-none touch-none
+    select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
     ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
     ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
     ${!canMove ? "cursor-not-allowed opacity-60" : ""}
@@ -148,7 +148,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
       {isTitleTruncated ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={cardClassName}>
+            <div
+              ref={setNodeRef}
+              style={style}
+              {...listeners}
+              {...attributes}
+              className={cardClassName}
+              role="button"
+              tabIndex={canMove && !isSaving ? 0 : -1}
+              aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
+              aria-describedby="drag-instructions"
+            >
               {CardContent}
             </div>
           </TooltipTrigger>
@@ -157,7 +167,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
           </TooltipContent>
         </Tooltip>
       ) : (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={cardClassName}>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...listeners}
+          {...attributes}
+          className={cardClassName}
+          role="button"
+          tabIndex={canMove && !isSaving ? 0 : -1}
+          aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
+          aria-describedby="drag-instructions"
+        >
           {CardContent}
         </div>
       )}
