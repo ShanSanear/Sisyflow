@@ -50,6 +50,5 @@ When modifying the directory structure, always update this section.
 
 ### Guidelines for linter and formatting
 
-- Use `npm run lint:fix` to run linter
-- Use `npm run format` to run formatter
+- Instead of constantly fixing linting issues, run `npm run lint:fix` and `npm run format` first to run linter and formatting and only if it didn't help - try manually changing things
 - DO NOT manually change lines just to format/lint them properly before trying to run both of the above first
