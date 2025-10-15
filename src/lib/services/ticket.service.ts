@@ -20,6 +20,47 @@ import { POSTGREST_ERROR_CODES } from "../constants";
 import { z } from "zod";
 
 /**
+ * Interface for Supabase error objects
+ */
+interface SupabaseError {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+}
+
+/**
+ * Helper function to extract detailed error information from Supabase errors
+ * Provides more context for debugging database issues
+ */
+function extractSupabaseError(error: unknown, operation: string): Error {
+  if (!error) return new Error(`${operation}: Unknown error`);
+
+  // Extract available error properties
+  const supabaseError = error as SupabaseError;
+  const message = supabaseError.message || "No message provided";
+  const code = supabaseError.code || "No code provided";
+  const details = supabaseError.details || "No details provided";
+  const hint = supabaseError.hint || "No hint provided";
+
+  // Create a detailed error message
+  const detailedMessage = [`${operation}: ${message}`, `Code: ${code}`, `Details: ${details}`, `Hint: ${hint}`].join(
+    " | "
+  );
+
+  // Log the full error for debugging (in development)
+  console.error(`Supabase Error in ${operation}:`, {
+    message,
+    code,
+    details,
+    hint,
+    fullError: error,
+  });
+
+  return new Error(detailedMessage);
+}
+
+/**
  * Service odpowiedzialny za operacje na ticketach
  * Implementuje logikę biznesową dla tworzenia i zarządzania ticketami
  */
@@ -56,7 +97,7 @@ export class TicketService {
         .single();
 
       if (ticketError) {
-        throw new Error(`Failed to create ticket: ${ticketError.message}`);
+        throw extractSupabaseError(ticketError, "Failed to create ticket");
       }
 
       // Pobierz pełne dane ticketu z reporter'em
@@ -82,7 +123,7 @@ export class TicketService {
         .single();
 
       if (fetchError) {
-        throw new Error(`Failed to fetch created ticket: ${fetchError.message}`);
+        throw extractSupabaseError(fetchError, "Failed to fetch created ticket");
       }
 
       // Sprawdź czy reporter istnieje - powinien istnieć ponieważ właśnie utworzyliśmy ticket
@@ -180,7 +221,7 @@ export class TicketService {
       const { data: tickets, error: queryError, count } = await query;
 
       if (queryError) {
-        throw new Error(`Failed to fetch tickets: ${queryError.message}`);
+        throw extractSupabaseError(queryError, "Failed to fetch tickets");
       }
 
       // Sprawdź czy wszystkie tickety mają reporter'a (powinny mieć)
@@ -270,7 +311,7 @@ export class TicketService {
         if (error.code === POSTGREST_ERROR_CODES.NO_ROWS_RETURNED_FOR_SINGLE) {
           throw new Error("Ticket not found");
         }
-        throw new Error(`Failed to fetch ticket: ${error.message}`);
+        throw extractSupabaseError(error, "Failed to fetch ticket");
       }
 
       if (!ticket) {
@@ -372,7 +413,7 @@ export class TicketService {
         .eq("id", ticketId);
 
       if (updateError) {
-        throw new Error(`Failed to update ticket status: ${updateError.message}`);
+        throw extractSupabaseError(updateError, "Failed to update ticket status");
       }
 
       // Pobierz zaktualizowane dane ticketu z reporter'em i assignee'em
@@ -507,7 +548,7 @@ export class TicketService {
       const { error: updateError } = await this.supabase.from("tickets").update(updateData).eq("id", ticketId);
 
       if (updateError) {
-        throw new Error(`Failed to update ticket: ${updateError.message}`);
+        throw extractSupabaseError(updateError, "Failed to update ticket");
       }
 
       // Pobierz zaktualizowane dane ticketu z reporter'em i assignee'em
@@ -647,7 +688,7 @@ export class TicketService {
         .eq("id", ticketId);
 
       if (updateError) {
-        throw new Error(`Failed to update ticket assignee: ${updateError.message}`);
+        throw extractSupabaseError(updateError, "Failed to update ticket assignee");
       }
 
       // Pobierz zaktualizowane dane ticketu z reporter'em i assignee'em
@@ -749,7 +790,7 @@ export class TicketService {
       const { error: deleteError } = await this.supabase.from("tickets").delete().eq("id", ticketId);
 
       if (deleteError) {
-        throw new Error(`Failed to delete ticket: ${deleteError.message}`);
+        throw extractSupabaseError(deleteError, "Failed to delete ticket");
       }
     } catch (error) {
       // Przekaż błędy walidacji Zod bez zmian (choć nie ma walidacji w tej metodzie)

@@ -30,6 +30,7 @@ export const KanbanBoardView: React.FC = () => {
   }
 
   if (error) {
+    console.error(error);
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
         <div className="max-w-full mx-auto px-6">

@@ -289,6 +289,9 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         // Refresh data to ensure consistency
         await fetchTickets();
         console.log(`Successfully changed ticket ${ticketId} status to ${newStatus}`);
+        showSuccess(
+          `Ticket moved to ${newStatus === "OPEN" ? "Open" : newStatus === "IN_PROGRESS" ? "In Progress" : "Closed"}`
+        );
       } catch (error) {
         console.error("Error updating ticket status:", error);
 
@@ -305,6 +308,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         _setSavingTicketId(null);
       }
     },
+
     [boardState, fetchTickets, canMoveTicket, showError, showSuccess]
   );
 
