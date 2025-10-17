@@ -264,6 +264,7 @@ Based on the database schema and PRD, the main resources are:
 - Role-based access: Check user role from profiles table via RLS policies.
 - ADMIN role required for user management, project documentation, and AI errors.
 - Ticket operations: Reporter, assignee, or ADMIN can modify.
+- All those required information are handled by endpoint `/profiles/me` - username, role
 
 ## 4. Validation and Business Logic
 

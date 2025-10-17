@@ -11,7 +11,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** Authentication View
 - **Ścieżka widoku:** `/auth` (obsługuje logowanie i rejestrację)
 - **Główny cel:** Umożliwienie użytkownikom zalogowania się do aplikacji lub, jeśli jest to pierwszy użytkownik, zarejestrowania konta z uprawnieniami Administratora.
-- **Kluczowe informacje do wyświetlenia:** Formularz z polami na e-mail i hasło (oraz nazwę użytkownika przy rejestracji), komunikaty o błędach walidacji lub logowania.
+- **Kluczowe informacje do wyświetlenia:** Formularz z polami na e-mail i hasło (oraz nazwę użytkownika przy rejestracji), komunikaty o błędach walidacji lub logowania. Brak top bara do momentu zalogowania.
 - **Kluczowe komponenty widoku:** `Card`, `Input`, `Button`, `Label`. Widok dynamicznie przełącza się między trybem logowania a rejestracji na podstawie zapytania do API o istnienie jakichkolwiek użytkowników.
 - **UX, dostępność i względy bezpieczeństwa:**
   - **UX:** Jasne komunikaty o błędach "inline" pod polami formularza. Obsługa wysyłania formularza klawiszem Enter.
@@ -23,7 +23,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** Kanban Board View
 - **Ścieżka widoku:** `/` (lub `/board`)
 - **Główny cel:** Wizualizacja, zarządzanie i śledzenie postępu prac nad ticketami w systemie. Jest to centralny punkt interakcji dla użytkowników.
-- **Kluczowe informacje do wyświetlenia:** Trzy kolumny reprezentujące statusy ticketów (`Otwarty`, `W toku`, `Zamknięty`). W kolumnach znajdują się karty ticketów, wyświetlające tytuł, osobę przypisaną, typ (oznaczony kolorem i komponentem `Badge`) oraz ikonę "magicznej różdżki", jeśli użyto sugestii AI.
+- **Kluczowe informacje do wyświetlenia:** Trzy kolumny reprezentujące statusy ticketów (`Otwarty`, `W toku`, `Zamknięty`). W kolumnach znajdują się karty ticketów, wyświetlające tytuł, osobę przypisaną, typ (oznaczony kolorem i komponentem `Badge`) oraz ikonę "magicznej różdżki", jeśli użyto sugestii AI. Top bar powinien być renderowany.
 - **Kluczowe komponenty widoku:** `BoardContainer`, `KanbanColumn`, `TicketCard`, `Skeleton` (dla stanu ładowania), `Tooltip`, `Badge`.
 - **UX, dostępność i względy bezpieczeństwa:**
   - **UX:** Funkcjonalność "przeciągnij i upuść" (drag-and-drop) do zmiany statusu ticketa. Skracanie długich tytułów z wyświetlaniem pełnej treści w tooltipie. Wizualne wskazówki (zmiana cienia/tła) przy najechaniu na kartę. Na urządzeniach mobilnych tablica jest przewijana horyzontalnie. W przypadku braku ticketów - wyświetlenie odpowiedniego komunikatu o ich braku.
@@ -35,7 +35,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** User Profile View
 - **Ścieżka widoku:** `/profile`
 - **Główny cel:** Umożliwienie użytkownikowi edycji podstawowych informacji o swoim koncie oraz personalizacji ustawień aplikacji.
-- **Kluczowe informacje do wyświetlenia:** Formularz do zmiany nazwy użytkownika, przełącznik do zmiany motywu kolorystycznego (jasny/ciemny).
+- **Kluczowe informacje do wyświetlenia:** Formularz do zmiany nazwy użytkownika, przełącznik do zmiany motywu kolorystycznego (jasny/ciemny). Top bar powinien być renderowany.
 - **Kluczowe komponenty widoku:** `Card`, `Input`, `Button`, `Switch` (dla motywu).
 - **UX, dostępność i względy bezpieczeństwa:**
   - **UX:** Informacja zwrotna (toast) po pomyślnym zapisaniu zmian.
@@ -47,7 +47,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** Admin Panel View
 - **Ścieżka widoku:** `/admin`
 - **Główny cel:** Zapewnienie Administratorowi centralnego miejsca do zarządzania użytkownikami systemu oraz konfiguracji kontekstu dla AI.
-- **Kluczowe informacje do wyświetlenia:** Nawigacja w formie zakładek, prowadząca do pod-widoków: "Zarządzanie Dokumentacją" (domyślny widok) i "Zarządzanie Użytkownikami".
+- **Kluczowe informacje do wyświetlenia:** Nawigacja w formie zakładek, prowadząca do pod-widoków: "Zarządzanie Dokumentacją" (domyślny widok) i "Zarządzanie Użytkownikami". Top bar powinien być renderowany.
 - **Kluczowe komponenty widoku:** `Tabs`.
 - **UX, dostępność i względy bezpieczeństwa:**
   - **UX:** Czytelny podział na sekcje.
@@ -84,6 +84,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
     - Nowy system (brak użytkowników): Użytkownik trafia na `/auth` i widzi formularz **rejestracji**. Po utworzeniu konta staje się Administratorem i jest przekierowywany na `/`.
     - Istniejący system: Użytkownik trafia na `/auth` i widzi formularz **logowania**. Po pomyślnym zalogowaniu jest przekierowywany na `/`.
 2.  **Główny przepływ (praca z ticketami):**
+    - Po zalogowaniu, top bar staje się widoczny i umożliwia nawigację do ticketów/panelu
     - Użytkownik znajduje się na widoku **Tablicy Kanban** (`/` bądź `/board`).
     - Klika przycisk "Utwórz Ticket", co otwiera **Modal Tworzenia/Edycji Ticketa**.
     - Wypełnia formularz, opcjonalnie korzysta z sugestii AI.
@@ -121,3 +122,4 @@ Poniżej znajduje się lista kluczowych, reużywalnych komponentów opartych na 
 - **`Skeleton`:** Używany jako wskaźnik ładowania dla całej tablicy Kanban.
 - **`Spinner`:** Używany jako wskaźnik ładowania dla akcji wewnątrz komponentów (np. podczas analizy AI w modalu).
 - **`Sonner`:** Globalne powiadomienia (typu "pop-up") informujące o powodzeniu lub niepowodzeniu operacji.
+- **`Navigation`:** Główny element implementacyjny top bara

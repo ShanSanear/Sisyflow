@@ -76,14 +76,14 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   1.  Gdy baza użytkowników jest pusta, formularz rejestracji jest dostępny.
   2.  Po poprawnym wypełnieniu formularza (e-mail, hasło) i jego zatwierdzeniu, tworzone jest nowe konto użytkownika.
   3.  Stworzone konto ma przypisaną rolę "Administrator".
-  4.  Po rejestracji jestem automatycznie zalogowany i przekierowany do głównego widoku aplikacji.
+  4.  Po rejestracji użytkownik jest automatycznie zalogowany i przekierowany do głównego widoku aplikacji, w którym widzi top bara.
 
 - ID: US-002
 - Tytuł: Logowanie do systemu
 - Opis: Jako zarejestrowany użytkownik, chcę móc zalogować się do aplikacji przy użyciu mojego adresu e-mail i hasła, aby uzyskać dostęp do swoich zadań.
 - Kryteria akceptacji:
   1.  Na stronie logowania znajdują się pola na e-mail i hasło.
-  2.  Po wprowadzeniu poprawnych danych i zatwierdzeniu formularza, uzyskuję dostęp do aplikacji.
+  2.  Po wprowadzeniu poprawnych danych i zatwierdzeniu formularza, użytkownik uzyskuje dostęp do aplikacji i jest przekierowywany do głównego widoku aplikacji, w którym widzi top bara.
   3.  Po wprowadzeniu niepoprawnych danych, wyświetlany jest komunikat o błędzie.
 
 ### 5.2. Zarządzanie użytkownikami (Administrator)
