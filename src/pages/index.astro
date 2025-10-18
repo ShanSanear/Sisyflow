@@ -1,8 +1,6 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { KanbanBoardView } from "../components/views/KanbanBoardView.tsx";
+// TODO: Implement proper authentication check in server-side code
+// For now, redirect to login page
 ---
 
-<Layout>
-  <KanbanBoardView client:load />
-</Layout>
+<meta http-equiv="refresh" content="0; url=/login" />
