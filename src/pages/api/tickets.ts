@@ -2,7 +2,12 @@ import type { APIRoute } from "astro";
 import { createTicketService } from "../../lib/services/ticket.service";
 import type { CreateTicketCommand } from "../../types";
 import { DEVELOPMENT_USER_ID } from "../../lib/constants";
-import { isZodError, createZodValidationResponse } from "../../lib/utils";
+import {
+  isZodError,
+  createZodValidationResponse,
+  isDatabaseConnectionError,
+  createDatabaseConnectionErrorResponse,
+} from "../../lib/utils";
 
 export const prerender = false;
 
@@ -38,6 +43,11 @@ export const GET: APIRoute = async ({ locals, url }) => {
     });
   } catch (error) {
     console.error("Error fetching tickets:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("tickets retrieval");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {
@@ -108,6 +118,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     console.error("Error creating ticket:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("ticket creation");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {

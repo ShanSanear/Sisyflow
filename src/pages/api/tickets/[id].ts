@@ -3,7 +3,12 @@ import { createTicketService } from "../../../lib/services/ticket.service";
 import type { FullTicketDTO, UpdateTicketCommand } from "../../../types";
 import { DEVELOPMENT_USER_ID } from "../../../lib/constants";
 import { ticketIdParamsSchema, updateTicketSchema } from "../../../lib/validation/ticket.validation";
-import { isZodError, createZodValidationResponse } from "../../../lib/utils";
+import {
+  isZodError,
+  createZodValidationResponse,
+  isDatabaseConnectionError,
+  createDatabaseConnectionErrorResponse,
+} from "../../../lib/utils";
 
 export const prerender = false;
 
@@ -55,6 +60,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
     });
   } catch (error) {
     console.error("Error fetching ticket:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("ticket retrieval");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {
@@ -158,6 +168,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     });
   } catch (error) {
     console.error("Error updating ticket:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("ticket update");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {
@@ -269,6 +284,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     });
   } catch (error) {
     console.error("Error deleting ticket:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("ticket deletion");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {

@@ -46,6 +46,68 @@ interface SupabaseError {
 }
 
 /**
+ * Interface for network/connection errors
+ */
+interface NetworkError extends Error {
+  cause?: Error;
+  code?: string;
+}
+
+/**
+ * Sprawdza czy błąd jest błędem połączenia z bazą danych
+ * Wykrywa typowe błędy sieciowe i połączenia
+ * @param error Błąd do sprawdzenia
+ * @returns true jeśli błąd wskazuje na problem z połączeniem do bazy danych
+ */
+export function isDatabaseConnectionError(error: unknown): boolean {
+  if (!error) return false;
+
+  const networkError = error as NetworkError;
+
+  // Sprawdź bezpośrednie właściwości błędu
+  if (networkError.message?.includes("fetch failed")) return true;
+  if (networkError.code === "ECONNREFUSED") return true;
+  if (networkError.code === "ENOTFOUND") return true;
+  if (networkError.code === "ETIMEDOUT") return true;
+  if (networkError.code === "ENETUNREACH") return true;
+
+  // Sprawdź cause (jeśli błąd jest opakowany)
+  if (networkError.cause) {
+    const cause = networkError.cause as NetworkError;
+    if (cause.message?.includes("fetch failed")) return true;
+    if (cause.code === "ECONNREFUSED") return true;
+    if (cause.code === "ENOTFOUND") return true;
+    if (cause.code === "ETIMEDOUT") return true;
+    if (cause.code === "ENETUNREACH") return true;
+  }
+
+  // Sprawdź czy to błąd Supabase związany z połączeniem
+  const supabaseError = error as SupabaseError;
+  if (supabaseError.message?.includes("fetch failed")) return true;
+  if (supabaseError.details?.includes("fetch failed")) return true;
+
+  return false;
+}
+
+/**
+ * Tworzy odpowiedź błędu połączenia z bazą danych dla API
+ * @param operation Nazwa operacji która się nie powiodła
+ * @returns Response object z błędem połączenia
+ */
+export function createDatabaseConnectionErrorResponse(operation: string): Response {
+  return new Response(
+    JSON.stringify({
+      error: "Database Connection Error",
+      message: `Failed to connect to database during ${operation}. Please check if the database is running and accessible.`,
+    }),
+    {
+      status: 503, // Service Unavailable - bardziej odpowiedni dla problemów z bazą danych
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+}
+
+/**
  * Helper function to extract detailed error information from Supabase errors
  * Provides more context for debugging database issues
  */

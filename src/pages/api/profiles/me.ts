@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createProfileService } from "../../../lib/services/profile.service";
+import { isDatabaseConnectionError, createDatabaseConnectionErrorResponse } from "../../../lib/utils";
 
 export const prerender = false;
 
@@ -31,6 +32,11 @@ export const GET: APIRoute = async ({ locals }) => {
     });
   } catch (error) {
     console.error("Error fetching user profile:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("user profile retrieval");
+    }
 
     // Obsługa błędów specyficznych dla tej operacji
     if (error instanceof Error && error.message === "Not Found") {

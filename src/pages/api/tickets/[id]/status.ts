@@ -3,7 +3,12 @@ import { createTicketService } from "../../../../lib/services/ticket.service";
 import type { UpdateTicketStatusCommand } from "../../../../types";
 import { DEVELOPMENT_USER_ID } from "../../../../lib/constants";
 import { ticketIdParamsSchema } from "../../../../lib/validation/ticket.validation";
-import { isZodError, createZodValidationResponse } from "../../../../lib/utils";
+import {
+  isZodError,
+  createZodValidationResponse,
+  isDatabaseConnectionError,
+  createDatabaseConnectionErrorResponse,
+} from "../../../../lib/utils";
 
 export const prerender = false;
 
@@ -61,6 +66,11 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
     });
   } catch (error) {
     console.error("Error updating ticket status:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("ticket status update");
+    }
 
     // Obsługa błędów walidacji Zod
     if (isZodError(error)) {
