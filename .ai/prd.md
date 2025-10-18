@@ -76,7 +76,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   1.  Gdy baza użytkowników jest pusta, formularz rejestracji jest dostępny.
   2.  Po poprawnym wypełnieniu formularza (e-mail, hasło) i jego zatwierdzeniu, tworzone jest nowe konto użytkownika.
   3.  Stworzone konto ma przypisaną rolę "Administrator".
-  4.  Po rejestracji użytkownik jest automatycznie zalogowany i przekierowany do głównego widoku aplikacji, w którym widzi top bara.
+  4.  Po rejestracji użytkownik jest automatycznie zalogowany (US-002) i przekierowany do głównego widoku aplikacji, w którym widzi top bara.
 
 - ID: US-002
 - Tytuł: Logowanie do systemu
@@ -85,6 +85,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   1.  Na stronie logowania znajdują się pola na e-mail i hasło.
   2.  Po wprowadzeniu poprawnych danych i zatwierdzeniu formularza, użytkownik uzyskuje dostęp do aplikacji i jest przekierowywany do głównego widoku aplikacji, w którym widzi top bara.
   3.  Po wprowadzeniu niepoprawnych danych, wyświetlany jest komunikat o błędzie.
+  4.  Użytkownik NIE MOŻE dostać się do innych zabezpieczonych stron aplikacji (takich jak `/board` czy `/`) bez uprzedniego zalogowania się.
 
 ### 5.2. Zarządzanie użytkownikami (Administrator)
 
@@ -97,6 +98,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  Po zatwierdzeniu formularza, w systemie tworzone jest nowe konto z rolą "Użytkownik".
   4.  Nie można utworzyć użytkownika z adresem e-mail, bądź nazwą użytkownika które już istnieją w systemie. W takim przypadku wyświetlany jest błąd.
   5.  Nowy użytkownik pojawia się na liście użytkowników w panelu Administratora.
+  6.  Wejście na stronę panelu administratora NIE JEST możliwe bez uprzedniego zalogowania się i posiadania roli ADMIN.
 
 - ID: US-004
 - Tytuł: Usuwanie użytkownika
@@ -118,6 +120,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  Pola "Tytuł" i "Typ" są wymagane do zapisania ticketa.
   4.  Po zapisaniu, jestem automatycznie ustawiany jako "Osoba zgłaszająca".
   5.  Nowy ticket pojawia się w kolumnie "Otwarty" na tablicy Kanban.
+  6.  Użytkownik który nie jest zalogowany nie może tworzyć ticketów.
 
 - ID: US-006
 - Tytuł: Przeglądanie ticketów na tablicy Kanban
@@ -126,6 +129,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   1.  Głównym widokiem aplikacji jest tablica z kolumnami: `Otwarty`, `W toku`, `Zamknięty`.
   2.  Wszystkie istniejące tickety są wyświetlane jako karty w odpowiednich kolumnach.
   3.  Każda karta na tablicy wyświetla co najmniej tytuł ticketa, osobę przypisaną i "magiczną różdżkę" jeśli AI zostało użyte do poprawienia opisu.
+  4.  Użytkownik który nie jest zalogowany nie ma dostępu do widoku ticketów.
 
 - ID: US-007
 - Tytuł: Zmiana statusu ticketa
@@ -134,6 +138,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   1.  Karty ticketów na tablicy Kanban można przeciągać i upuszczać (drag and drop).
   2.  Przeniesienie karty do innej kolumny powoduje aktualizację statusu ticketa w bazie danych.
   3.  Użytkownik, który nie jest ani zgłaszającym, ani przypisanym, ani Administratorem, nie może zmienić statusu ticketa.
+  4.  Użytkownik który nie jest zalogowany nie ma uprawnień do zmiany statusu ticketa.
 
 - ID: US-008
 - Tytuł: Przypisywanie osoby do ticketa
@@ -143,6 +148,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   2.  Po jej kliknięciu, moje konto zostaje ustawione jako "Osoba przypisana".
   3.  Osoba już przypisana może się "odpisać" od ticketa.
   4.  Administrator może przypisać dowolnego użytkownika do dowolnego ticketa.
+  5.  Użytkownik któy nie jest zalogowany nie może przypisać się do ticketa.
 
 - ID: US-009
 - Tytuł: Edycja własnego ticketa
@@ -164,6 +170,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  W trakcie analizy wyświetlany jest wskaźnik ładowania.
   4.  Po zakończeniu analizy, pod polem opisu pojawia się lista sugestii (do wstawienia i/lub pytań otwartych).
   5.  W przypadku błędu komunikacji z AI, wyświetlany jest stosowny komunikat z możliwością ponowienia próby.
+  6.  Użytkownik który nie jest zalogowany, nie może prosić o analizę ticketa pod względem sugestii AI.
 
 - ID: US-011
 - Tytuł: Aplikowanie sugestii AI
@@ -181,6 +188,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   2.  Mogę wybrać ocenę od 1 do 5.
   3.  Ocena jest zapisywana w systemie w celach analitycznych.
   4.  Ocena może być zmieniana, do momentu zapisania ticketa.
+  5.  Ocenę może modyfikować tylko użytkownik który ją wygenerował (czyli zgłaszający dany ticket)
 
 - ID: US-013
 - Tytuł: Zarządzanie dokumentacją projektu (Administrator)
@@ -190,6 +198,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   2.  Pole ma limit 20 000 znaków.
   3.  Mogę wkleić lub napisać tekst, a następnie go zapisać.
   4.  Zapisana treść będzie używana we wszystkich przyszłych zapytaniach do AI.
+  5.  Tylko użytkownik z rolą ADMIN ma dostęp do zarządzania dokumentacją projektu. Użytkownik który nie jest zalogowany nie ma do tego dostępu.
 
 ### 5.5. Profil użytkownika
 
@@ -201,6 +210,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   2. Profil dla MVP zawiera cztery pola - nazwę użytkownika (którą można edytować), rolę (tylko do odczytu) oraz możliwość zmiany hasła (pole "hasło" oraz "powtórz hasło").
   3. Użytkownik może zmodyfikować swoją nazwę użytkownika i/lub hasło z poziomu tego widoku.
   4. Użytkownik może widzieć tylko swój własny profil w tym widoku.
+  5. Użytkownik który nie jest zalogowany nie jest w stanie wyświetlić profilu.
 
 ## 6. Metryki sukcesu
 
