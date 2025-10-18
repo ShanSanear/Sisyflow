@@ -7,7 +7,7 @@ Punkt końcowy `PATCH /tickets/:id/assignee` umożliwia przypisywanie lub odprzy
 ## 2. Szczegóły żądania
 
 - **Metoda HTTP**: PATCH
-- **Struktura URL**: `/api/tickets/:id/assignee`
+- **Struktura URL**: `/tickets/:id/assignee`
   - `id`: UUID identyfikatora ticketu (wymagany)
 - **Parametry**:
   - **Wymagane**: `id` (UUID ticketu w ścieżce URL)
