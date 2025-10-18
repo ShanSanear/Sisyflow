@@ -1,48 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { ProfileDTO } from "../../types";
-import { POSTGREST_ERROR_CODES } from "../constants";
-
-/**
- * Interface for Supabase error objects
- */
-interface SupabaseError {
-  message?: string;
-  code?: string;
-  details?: string;
-  hint?: string;
-}
-
-/**
- * Helper function to extract detailed error information from Supabase errors
- * Provides more context for debugging database issues
- */
-function extractSupabaseError(error: unknown, operation: string): Error {
-  if (!error) return new Error(`${operation}: Unknown error`);
-
-  // Extract available error properties
-  const supabaseError = error as SupabaseError;
-  const message = supabaseError.message || "No message provided";
-  const code = supabaseError.code || "No code provided";
-  const details = supabaseError.details || "No details provided";
-  const hint = supabaseError.hint || "No hint provided";
-
-  // Create a detailed error message
-  const detailedMessage = [`${operation}: ${message}`, `Code: ${code}`, `Details: ${details}`, `Hint: ${hint}`].join(
-    " | "
-  );
-
-  // Log the full error for debugging (in development)
-  console.error(`Supabase Error in ${operation}:`, {
-    message,
-    code,
-    details,
-    hint,
-    fullError: error,
-  });
-
-  return new Error(detailedMessage);
-}
+import { POSTGREST_ERROR_CODES, DEVELOPMENT_USER_ID } from "../constants";
+import { extractSupabaseError } from "../utils";
 
 /**
  * Service odpowiedzialny za operacje na profilach użytkowników
@@ -59,6 +19,12 @@ export class ProfileService {
    */
   async getCurrentUserProfile(): Promise<ProfileDTO> {
     try {
+      // TODO: Implement proper session handling when authentication is ready
+      // For now, use development user ID until full authentication workflow is implemented
+      const userId = DEVELOPMENT_USER_ID;
+
+      // COMMENTED: Original session-based authentication code (to be used when auth is implemented)
+      /*
       // Pobierz sesję użytkownika
       const { data: session, error: sessionError } = await this.supabase.auth.getSession();
 
@@ -71,6 +37,7 @@ export class ProfileService {
       }
 
       const userId = session.session.user.id;
+      */
 
       // Pobierz profil użytkownika z bazy danych
       const { data: profile, error: profileError } = await this.supabase

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { createProfileService } from "../../lib/services/profile.service";
+import { createProfileService } from "../../../lib/services/profile.service";
 
 export const prerender = false;
 
@@ -14,13 +14,12 @@ export const prerender = false;
  */
 export const GET: APIRoute = async ({ locals }) => {
   try {
-    // Sprawdź czy użytkownik jest zalogowany poprzez sprawdzenie sesji
-    if (!locals.session || !locals.session.user) {
-      return new Response(null, { status: 401 });
-    }
+    // Użyj stałego user ID dla developmentu
+    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
+    const supabase = locals.supabase;
 
     // Utwórz profile service i wywołaj metodę
-    const profileService = createProfileService(locals.supabase);
+    const profileService = createProfileService(supabase);
     const profile = await profileService.getCurrentUserProfile();
 
     // Zwróć pomyślną odpowiedź
@@ -34,23 +33,17 @@ export const GET: APIRoute = async ({ locals }) => {
     console.error("Error fetching user profile:", error);
 
     // Obsługa błędów specyficznych dla tej operacji
-    if (error instanceof Error) {
-      if (error.message === "Not Found") {
-        return new Response(
-          JSON.stringify({
-            error: "Not Found",
-            message: "User profile not found",
-          }),
-          {
-            status: 404,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      if (error.message === "User not authenticated") {
-        return new Response(null, { status: 401 });
-      }
+    if (error instanceof Error && error.message === "Not Found") {
+      return new Response(
+        JSON.stringify({
+          error: "Not Found",
+          message: "User profile not found",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Obsługa innych błędów
