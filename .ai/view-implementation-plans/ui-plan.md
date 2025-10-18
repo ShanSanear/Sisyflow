@@ -35,7 +35,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** User Profile View
 - **Ścieżka widoku:** `/profile`
 - **Główny cel:** Umożliwienie użytkownikowi edycji podstawowych informacji o swoim koncie oraz personalizacji ustawień aplikacji.
-- **Kluczowe informacje do wyświetlenia:** Formularz do zmiany nazwy użytkownika, przełącznik do zmiany motywu kolorystycznego (jasny/ciemny). Top bar powinien być renderowany.
+- **Kluczowe informacje do wyświetlenia:** Formularz do zmiany nazwy użytkownika, jego hasła, informacja o roli oraz przełącznik do zmiany motywu kolorystycznego (jasny/ciemny). Top bar powinien być renderowany.
 - **Kluczowe komponenty widoku:** `Card`, `Input`, `Button`, `Switch` (dla motywu).
 - **UX, dostępność i względy bezpieczeństwa:**
   - **UX:** Informacja zwrotna (toast) po pomyślnym zapisaniu zmian.

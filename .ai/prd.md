@@ -191,6 +191,17 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  Mogę wkleić lub napisać tekst, a następnie go zapisać.
   4.  Zapisana treść będzie używana we wszystkich przyszłych zapytaniach do AI.
 
+### 5.5. Profil użytkownika
+
+- ID: US-014
+- Tytuł: Wyświetlanie profilu użytkownika
+- Opis: Jako użytkownik, chcę móc edytować swoją nazwę użytkownika oraz podejrzeć informace związane z moim profilem.
+- Kryteria akceptacji:
+  1. Widok "mój profil" w którym użytkownik może zobaczyć informacje o swoim profilu.
+  2. Profil dla MVP zawiera cztery pola - nazwę użytkownika (którą można edytować), rolę (tylko do odczytu) oraz możliwość zmiany hasła (pole "hasło" oraz "powtórz hasło").
+  3. Użytkownik może zmodyfikować swoją nazwę użytkownika i/lub hasło z poziomu tego widoku.
+  4. Użytkownik może widzieć tylko swój własny profil w tym widoku.
+
 ## 6. Metryki sukcesu
 
 Sukces wdrożenia wersji MVP będzie mierzony za pomocą dwóch kluczowych wskaźników, które bezpośrednio odnoszą się do głównego celu projektu - poprawy jakości zgłoszeń.
