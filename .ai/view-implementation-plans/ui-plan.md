@@ -78,20 +78,51 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
   - **Dostępność:** Tabela jest dostępna dla czytników ekranu.
   - **Bezpieczeństwo:** Administrator nie może usunąć własnego konta z poziomu interfejsu.
 
+### Pod-widok: Modal Tworzenia/Edycji Ticketa
+
+- **Nazwa widoku:** Ticket Modal View
+- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu).
+- **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban, z integracją sugestii AI dla kompletności opisu.
+- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza. W trybie edycji: załadowane dane ticketa (tytuł, opis renderowany jako Markdown, typ, osoba przypisana, osoba zgłaszająca - jeśli edycja). Sekcja sugestii AI (jeśli aktywowana): lista sugestii do wstawienia i pytań otwartych. System oceny jakości sugestii (gwiazdkami 1-5). Informacja o osobie zgłaszającej (nieedytowalna).
+- **Kluczowe komponenty widoku:** `Dialog` (okno modalne), `Input` (tytuł), `Textarea` z podglądem Markdown (opis), `Select` (typ ticketa), `Button` (sugestie AI, "Dodaj" sugestie, "Przypisz mnie"), lista sugestii (dynamiczna z przyciskami i checkboxami), `StarRating` (ocena AI), przyciski akcji (Zapisz, Anuluj).
+- **UX, dostępność i względy bezpieczeństwa:**
+  - **UX:** Automatyczne wstawianie sugestii do opisu na końcu opisu z dwiema pustymi liniami przerwy; wskaźnik ładowania podczas analizy AI; powiadomienie toast po zapisaniu i odświeżenie tablicy; obsługa klawisza Enter do zatwierdzenia formularza.
+  - **Dostępność:** Trap focus w modalu; etykiety ARIA dla sugestii i ocen; alternatywna nawigacja klawiaturą do aplikacji sugestii.
+  - **Bezpieczeństwo:** Walidacja po stronie klienta zgodna z API (długość pól); weryfikacja uprawnień do edycji na serwerze; brak przechowywania wrażliwych danych w stanie.
+- **Przypadki brzegowe i stany błędów:**
+  - **Puste stany:** W modalu tworzenia: brak sugestii AI powoduje komunikat "Opis wydaje się kompletny". Na tablicy: komunikat o braku ticketów z zachętą do utworzenia.
+  - **Walidacja:** Błędy pól wymaganych (tytuł, typ) lub przekroczenie limitu znaków (opis <10000) wyświetlają komunikaty inline pod polami. Błędy API (np. konflikt) jako toasty.
+  - **Błędy AI:** Nieudana analiza (500) pokazuje toast z opcją "Spróbuj ponownie"; brak dokumentacji projektu nie blokuje, ale może generować ogólne sugestie.
+  - **Uprawnienia:** Próba edycji cudzego ticketa bez roli admin: modal otwiera się w trybie podglądu; nieautoryzowany dostęp do tworzenia: przekierowanie do logowania.
+  - **Sieciowe:** Offline: blokada akcji z komunikatem; retry na reconnect.
+  - **Mobilne:** Modal dostosowany do pełnego ekranu; brak drag-drop, alternatywa menu kontekstowe.
+
 ## 3. Mapa podróży użytkownika
 
 1.  **Uwierzytelnianie:**
     - Nowy system (brak użytkowników): Użytkownik trafia na `/auth` i widzi formularz **rejestracji**. Po utworzeniu konta staje się Administratorem i jest przekierowywany na `/`.
     - Istniejący system: Użytkownik trafia na `/auth` i widzi formularz **logowania**. Po pomyślnym zalogowaniu jest przekierowywany na `/`.
+
 2.  **Główny przepływ (praca z ticketami):**
-    - Po zalogowaniu, top bar staje się widoczny i umożliwia nawigację do ticketów/panelu
+    - Po zalogowaniu, top bar staje się widoczny i umożliwia nawigację do ticketów/panelu.
     - Użytkownik znajduje się na widoku **Tablicy Kanban** (`/` bądź `/board`).
-    - Klika przycisk "Utwórz Ticket", co otwiera **Modal Tworzenia/Edycji Ticketa**.
-    - Wypełnia formularz, opcjonalnie korzysta z sugestii AI.
-    - Zapisuje ticket. Modal zamyka się, tablica odświeża, a nowy ticket jest widoczny w kolumnie "Otwarty".
-    - Użytkownik klika na istniejący ticket, co ponownie otwiera **Modal Tworzenia/Edycji Ticketa** (w trybie podglądu/edycji), gdzie może przypisać się do zadania lub edytować treść.
-    - Przeciąga kartę ticketa na tablicy z kolumny "Otwarty" do "W toku", aby zasygnalizować rozpoczęcie pracy.
-    - Po ukończeniu zadania przeciąga kartę do kolumny "Zamknięty".
+    - **Tworzenie ticketa:**
+      - Kliknięcie przycisku "Utwórz Ticket" w top barze otwiera **Modal Tworzenia/Edycji Ticketa** w trybie tworzenia z pustymi polami.
+      - Wprowadzenie tytułu (wymagane, walidacja inline) i wyboru typu z listy (Bug, Improvement, Task).
+      - Opcjonalne wprowadzenie opisu z obsługą Markdown.
+      - Kliknięcie "Poproś o sugestie AI" inicjuje analizę: wyświetlany spinner ładowania; po odpowiedzi, pod opisem pojawia się sekcja z sugestiami (fragmenty do wstawienia z przyciskiem "Dodaj" i pytania z checkboxem "Zastosowano").
+      - Zastosowanie sugestii (wstawienie tekstu lub zaznaczenie checkboxa) aktywuje system oceny gwiazdkami (1-5); ocena jest edytowalna do momentu zapisania.
+      - Kliknięcie "Zapisz": walidacja formularza, zapis oceny AI (jeśli dotyczy), utworzenie ticketa; modal zamyka się, tablica odświeża się, nowy ticket pojawia w kolumnie "Otwarty", wyświetlany toast sukcesu.
+      - Anulowanie: zamknięcie modala bez zapisania zmian.
+    - **Edycja ticketa:**
+      - Kliknięcie na kartę ticketa na tablicy otwiera **Modal Tworzenia/Edycji Ticketa** w trybie podglądu z załadowanymi danymi (tytuł, opis renderowany jako Markdown, typ, osoba przypisana). Naciśnięcie przycisku "Edytuj" przełącza w tryb edycji.
+      - Edycja pól (oprócz osoby zgłaszającej); jeśli brak przypisanej osoby, dostępny przycisk "Przypisz mnie".
+      - Opcjonalna analiza AI (analogicznie jak w tworzeniu, z możliwością ponownego generowania sugestii dla aktualnego opisu).
+      - Zapis zmian: aktualizacja ticketa, odświeżenie tablicy, toast potwierdzenia.
+      - W trybie podglądu (dla nieautoryzowanych): pola tylko do odczytu, bez opcji edycji lub AI.
+    - Przeciąganie karty ticketa na tablicy z kolumny "Otwarty" do "W toku", aby zasygnalizować rozpoczęcie pracy.
+    - Po ukończeniu zadania przeciąganie karty do kolumny "Zamknięty".
+
 3.  **Przepływ Administratora:**
     - Administrator klika link "Panel Administratora" w nawigacji, przechodząc do `/admin`.
     - W panelu wybiera zakładkę "Zarządzanie Użytkownikami", aby dodać lub usunąć użytkownika.
@@ -122,4 +153,7 @@ Poniżej znajduje się lista kluczowych, reużywalnych komponentów opartych na 
 - **`Skeleton`:** Używany jako wskaźnik ładowania dla całej tablicy Kanban.
 - **`Spinner`:** Używany jako wskaźnik ładowania dla akcji wewnątrz komponentów (np. podczas analizy AI w modalu).
 - **`Sonner`:** Globalne powiadomienia (typu "pop-up") informujące o powodzeniu lub niepowodzeniu operacji.
-- **`Navigation`:** Główny element implementacyjny top bara
+- **`Navigation`:** Główny element implementacyjny top bara.
+- **`MarkdownViewer`:** Komponent do renderowania opisu ticketa w trybie odczytu (używając react-markdown).
+- **`SuggestionList`:** Dynamiczna lista sugestii AI z przyciskami "Dodaj" dla insert i checkboxami dla pytań.
+- **`StarRating`:** Interaktywny komponent do oceny sugestii AI (1-5 gwiazdek).

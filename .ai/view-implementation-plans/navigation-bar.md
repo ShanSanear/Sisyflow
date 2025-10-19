@@ -116,7 +116,7 @@ Komponent będzie integrował się z jednym endpointem w celu pobrania danych o 
 
 - **Kliknięcie w logo lub link "Tablica Kanban":** Przekierowanie na główną stronę tablicy (`/`).
 - **Kliknięcie w link "Panel Administratora" (tylko Admin):** Przekierowanie do panelu administracyjnego (`/admin`).
-- **Kliknięcie w przycisk "Utwórz Ticket":** Otwarcie modala lub przejście na stronę tworzenia nowego zadania (np. `/tickets/new`).
+- **Kliknięcie w przycisk "Utwórz Ticket":** Otwarcie modala tworzenia nowego zadania.
 - **Kliknięcie w awatar:** Otwarcie menu podręcznego (`DropdownMenu`).
 - **Kliknięcie "Mój profil":** Przekierowanie na stronę profilu użytkownika (np. `/profile/me`).
 - **Kliknięcie "Wyloguj":** Wywołanie funkcji `logout`, która uderza do endpointu API wylogowującego, czyści stan lokalny i przekierowuje na stronę logowania (`/login`).
