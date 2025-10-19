@@ -67,6 +67,24 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // If this is the first user, create admin profile
+    if (userCount === 0 && data.user) {
+      // Generate a default username from email (before @)
+      const defaultUsername = email.split("@")[0];
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: data.user.id,
+        username: defaultUsername,
+        role: "ADMIN",
+      });
+
+      if (profileError) {
+        // TODO logging system - add proper logging here, as this is quite critical problem that needs to be addressed
+        console.error("Failed to create admin profile:", profileError);
+        // Don't fail registration if profile creation fails, but log it
+      }
+    }
+
     // Return success response with information about email confirmation
     return new Response(
       JSON.stringify({

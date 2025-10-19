@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "../ui/sonner";
 
 /**
  * Custom hook for toast notifications

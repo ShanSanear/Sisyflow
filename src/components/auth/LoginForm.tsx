@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { loginSchema, type LoginData } from "../../lib/validation/auth.validation";
+import { toast } from "../ui/sonner";
 
 type LoginFormData = LoginData;
 
-export const LoginForm: React.FC = () => {
+interface LoginFormProps {
+  registrationSuccess?: boolean;
+}
+
+export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = false }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (registrationSuccess) {
+      toast.success("Registration successful! Please check your email to confirm your account.");
+    }
+  }, [registrationSuccess]);
 
   const {
     register,

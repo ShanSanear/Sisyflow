@@ -43,10 +43,8 @@ export const RegisterForm: React.FC = () => {
         throw new Error(errorData.error || "Registration failed");
       }
 
-      const responseData = await response.json();
-      setSuccessMessage(
-        responseData.message || "Registration successful! Please check your email to confirm your account."
-      );
+      // Registration successful - redirect immediately to login page with success parameter
+      window.location.href = "/login?registration=success";
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
