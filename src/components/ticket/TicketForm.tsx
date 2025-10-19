@@ -30,6 +30,7 @@ export interface TicketFormProps {
   users: UserDTO[];
   onAssignChange: (assigneeId: string | null) => void;
   onSelfAssign: () => void;
+  onSubmit?: () => void;
 }
 
 export const TicketForm: React.FC<TicketFormProps> = ({
@@ -43,6 +44,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   users,
   onAssignChange,
   onSelfAssign,
+  onSubmit,
 }) => {
   const defaultValues = useMemo<TicketFormSchema>(
     () => ({
@@ -81,6 +83,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({
       description: descriptionValue,
       type: values.type,
     });
+
+    onSubmit?.();
   });
 
   const currentErrors = useMemo(() => {

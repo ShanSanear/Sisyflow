@@ -1,30 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type {
-  AISuggestionSessionDTO,
-  CreateTicketCommand,
-  FullTicketDTO,
-  Ticket,
-  TicketModalMode,
-  UserDTO,
-} from "@/types";
+import type { AISuggestionSessionDTO, FullTicketDTO, TicketModalMode, UserDTO } from "@/types";
 import { TicketForm } from "./TicketForm";
-
-interface TicketModalState {
-  mode: TicketModalMode;
-  ticket?: FullTicketDTO;
-  formData: Partial<CreateTicketCommand>;
-  suggestions?: AISuggestionSessionDTO;
-  rating: number | null;
-  aiEnhanced: boolean;
-  loading: boolean;
-  analyzing: boolean;
-  users: UserDTO[];
-  assigneeId: string | null;
-  formErrors: Record<string, string>;
-  isFormValid: boolean;
-}
+import { useTicketModal } from "@/components/hooks/useTicketModal";
 
 export interface TicketModalProps {
   isOpen: boolean;
@@ -35,54 +14,6 @@ export interface TicketModalProps {
   users?: UserDTO[];
 }
 
-const DEFAULT_FORM_DATA: Readonly<Partial<CreateTicketCommand>> = {
-  title: "",
-  description: "",
-  type: "BUG" as Ticket["type"],
-};
-
-const getInitialFormState = (
-  mode: TicketModalMode,
-  ticket?: FullTicketDTO,
-  users: UserDTO[] = []
-): TicketModalState => {
-  if (mode === "create" || !ticket) {
-    return {
-      mode,
-      ticket,
-      formData: { ...DEFAULT_FORM_DATA },
-      suggestions: undefined,
-      rating: null,
-      aiEnhanced: false,
-      loading: false,
-      analyzing: false,
-      users,
-      assigneeId: null,
-      formErrors: {},
-      isFormValid: false,
-    };
-  }
-
-  return {
-    mode,
-    ticket,
-    formData: {
-      title: ticket.title,
-      description: ticket.description ?? "",
-      type: ticket.type,
-    },
-    suggestions: undefined,
-    rating: null,
-    aiEnhanced: ticket.ai_enhanced,
-    loading: false,
-    analyzing: false,
-    users,
-    assigneeId: ticket.assignee_id ?? null,
-    formErrors: {},
-    isFormValid: true,
-  };
-};
-
 export const TicketModal: React.FC<TicketModalProps> = ({
   isOpen,
   onClose,
@@ -91,17 +22,26 @@ export const TicketModal: React.FC<TicketModalProps> = ({
   onSave,
   users = [],
 }) => {
-  void onSave; // avoid unused prop warning before API integration is implemented
-
-  const [state, setState] = useState<TicketModalState>(() => getInitialFormState(mode, initialTicket, users));
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setState(getInitialFormState(mode, initialTicket, users));
-  }, [initialTicket, isOpen, mode, users]);
+  const {
+    state,
+    updateFormData,
+    updateValidation,
+    updateAssignee,
+    handleSelfAssign,
+    requestAISuggestions,
+    applyAISuggestion,
+    toggleAIQuestion,
+    rateAISuggestions,
+    submitTicket,
+    closeModal,
+  } = useTicketModal({
+    isOpen,
+    mode,
+    initialTicket,
+    users,
+    onClose,
+    onSave,
+  });
 
   const dialogTitle = useMemo(() => {
     switch (mode) {
@@ -127,101 +67,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
     return "Review detailed ticket information.";
   }, [mode]);
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
-
-  const handleFormChange = useCallback((updates: Partial<CreateTicketCommand>) => {
-    setState((prev) => ({
-      ...prev,
-      formData: {
-        ...prev.formData,
-        ...updates,
-      },
-    }));
-  }, []);
-
-  const handleValidationChange = useCallback((validationErrors: Record<string, string>, isValid: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      formErrors: validationErrors,
-      isFormValid: isValid,
-      loading: prev.loading && isValid ? prev.loading : false,
-    }));
-  }, []);
-
-  const handleAssignChange = useCallback((assigneeId: string | null) => {
-    setState((prev) => ({
-      ...prev,
-      assigneeId,
-    }));
-  }, []);
-
-  const handleSelfAssign = useCallback(() => {
-    // Self-assign logic will be implemented alongside API integration
-  }, []);
-
-  const handleAnalyzeRequest = useCallback(() => {
-    // AI analysis logic will be implemented in later steps
-  }, []);
-
-  const handleSuggestionApply = useCallback((content: string) => {
-    setState((prev) => ({
-      ...prev,
-      formData: {
-        ...prev.formData,
-        description: `${prev.formData.description ? `${prev.formData.description}\n\n` : ""}${content}`,
-      },
-      aiEnhanced: true,
-    }));
-  }, []);
-
-  const handleQuestionToggle = useCallback((index: number) => {
-    setState((prev) => {
-      if (!prev.suggestions) {
-        return prev;
-      }
-
-      const updatedSuggestions = prev.suggestions.suggestions.map((suggestion, suggestionIndex) =>
-        suggestionIndex === index
-          ? {
-              ...suggestion,
-              applied: !suggestion.applied,
-            }
-          : suggestion
-      );
-
-      return {
-        ...prev,
-        suggestions: {
-          ...prev.suggestions,
-          suggestions: updatedSuggestions,
-        },
-        aiEnhanced: updatedSuggestions.some((suggestion) => suggestion.applied || suggestion.type === "INSERT"),
-      };
-    });
-  }, []);
-
-  const handleRatingChange = useCallback((rating: number) => {
-    setState((prev) => ({
-      ...prev,
-      rating,
-    }));
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
   const isViewMode = mode === "view";
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => (open ? undefined : closeModal())}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <div className="flex flex-col gap-4 p-6">
           <DialogHeader>
@@ -232,14 +81,15 @@ export const TicketModal: React.FC<TicketModalProps> = ({
           <TicketForm
             mode={mode}
             formData={state.formData}
-            onChange={handleFormChange}
-            onValidationChange={handleValidationChange}
+            onChange={updateFormData}
+            onValidationChange={updateValidation}
             assigneeId={state.assigneeId}
             assigneeUsername={state.ticket?.assignee?.username}
             reporterUsername={state.ticket?.reporter?.username}
             users={state.users}
-            onAssignChange={handleAssignChange}
+            onAssignChange={updateAssignee}
             onSelfAssign={handleSelfAssign}
+            onSubmit={submitTicket}
           />
 
           <div className="border-t" />
@@ -256,7 +106,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 type="button"
                 variant="outline"
                 disabled={state.analyzing || isViewMode}
-                onClick={handleAnalyzeRequest}
+                onClick={requestAISuggestions}
               >
                 {state.analyzing ? "Analyzing..." : "Request AI Suggestions"}
               </Button>
@@ -264,19 +114,20 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
             <AISuggestionsList
               suggestions={state.suggestions?.suggestions ?? []}
-              onApplyInsert={handleSuggestionApply}
-              onToggleQuestion={handleQuestionToggle}
+              onApplyInsert={applyAISuggestion}
+              onToggleQuestion={toggleAIQuestion}
               disabled={isViewMode}
             />
           </div>
 
-          <AIRating rating={state.rating} onChange={handleRatingChange} disabled={isViewMode} />
+          <AIRating rating={state.rating} onChange={rateAISuggestions} disabled={isViewMode} />
 
           <ActionButtons
             mode={mode}
-            onCancel={handleCancel}
+            onCancel={closeModal}
             isSubmitting={state.loading || state.analyzing}
             isFormValid={state.isFormValid || isViewMode}
+            onSubmit={submitTicket}
           />
         </div>
       </DialogContent>
@@ -384,9 +235,10 @@ interface ActionButtonsProps {
   onCancel: () => void;
   isSubmitting: boolean;
   isFormValid: boolean;
+  onSubmit: () => void;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({ mode, onCancel, isSubmitting, isFormValid }) => {
+const ActionButtons: React.FC<ActionButtonsProps> = ({ mode, onCancel, isSubmitting, isFormValid, onSubmit }) => {
   if (mode === "view") {
     return (
       <div className="flex justify-end gap-2">
@@ -402,7 +254,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ mode, onCancel, isSubmitt
       <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
         Cancel
       </Button>
-      <Button type="submit" form="ticket-modal-form" disabled={!isFormValid || isSubmitting}>
+      <Button type="button" disabled={!isFormValid || isSubmitting} onClick={onSubmit}>
         {isSubmitting ? "Saving..." : "Save"}
       </Button>
     </div>

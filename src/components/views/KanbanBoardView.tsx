@@ -2,11 +2,26 @@ import React from "react";
 import { BoardContainer } from "../kanban/BoardContainer";
 import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "lucide-react";
+import { TicketModal } from "../ticket/TicketModal";
 import { useKanbanBoard } from "../hooks/useKanbanBoard";
 
 export const KanbanBoardView: React.FC = () => {
-  const { boardState, isLoading, error, savingTicketId, handleDragEnd, handleStatusChangeViaMenu, canMoveTicket } =
-    useKanbanBoard();
+  const {
+    boardState,
+    isLoading,
+    error,
+    savingTicketId,
+    handleDragEnd,
+    handleStatusChangeViaMenu,
+    canMoveTicket,
+    refetch,
+    modalState,
+    openModalToCreate,
+    openModalToEdit,
+    closeModal,
+  } = useKanbanBoard();
 
   if (isLoading) {
     return (
@@ -40,7 +55,7 @@ export const KanbanBoardView: React.FC = () => {
               description="Failed to load tickets. Please refresh the page."
               action={{
                 label: "Try Again",
-                onClick: () => window.location.reload(),
+                onClick: () => void refetch(),
               }}
             />
           </div>
@@ -61,28 +76,44 @@ export const KanbanBoardView: React.FC = () => {
     );
   }
 
-  // Check if all columns are empty
   const hasTickets = Object.values(boardState).some((column) => column.tickets.length > 0);
 
-  if (!hasTickets) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
-        <div className="max-w-full mx-auto px-6">
-          <div className="flex justify-center">
-            <EmptyState title="No Tickets" description="No tickets found. Create a new one to get started!" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <BoardContainer
-      boardState={boardState}
-      handleDragEnd={handleDragEnd}
-      savingTicketId={savingTicketId}
-      canMoveTicket={canMoveTicket}
-      handleStatusChangeViaMenu={handleStatusChangeViaMenu}
-    />
+    <div className="relative">
+      <BoardContainer
+        boardState={boardState}
+        handleDragEnd={handleDragEnd}
+        savingTicketId={savingTicketId}
+        canMoveTicket={canMoveTicket}
+        handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+        onTicketSelect={(ticket) => {
+          void openModalToEdit(ticket.id);
+        }}
+      />
+
+      <div className="fixed bottom-8 right-8 z-50">
+        <Button onClick={openModalToCreate} className="shadow-lg" size="lg">
+          <PlusIcon className="mr-2 h-5 w-5" />
+          Create Ticket
+        </Button>
+      </div>
+
+      {!hasTickets ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <EmptyState title="No Tickets" description="No tickets found. Create a new one to get started!" />
+        </div>
+      ) : null}
+
+      <TicketModal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        mode={modalState.mode}
+        initialTicket={modalState.selectedTicket}
+        onSave={async () => {
+          await refetch();
+        }}
+        users={modalState.users}
+      />
+    </div>
   );
 };

@@ -13,14 +13,22 @@ import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView
 
 interface TicketCardProps {
   ticket: TicketCardViewModel;
-  currentStatus: TicketStatus; // Current status of the ticket
-  canMove: boolean; // Flaga określająca uprawnienia do przeciągania
-  isSaving: boolean; // Flaga określająca stan zapisywania
-  onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void; // Handler for status change via context menu
+  currentStatus: TicketStatus;
+  canMove: boolean;
+  isSaving: boolean;
+  onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void;
+  onSelect?: (ticket: TicketCardViewModel) => void;
 }
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, canMove, isSaving, onStatusChange }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+export const TicketCard: React.FC<TicketCardProps> = ({
+  ticket,
+  currentStatus,
+  canMove,
+  isSaving,
+  onStatusChange,
+  onSelect,
+}) => {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: ticket.id,
     disabled: !canMove || isSaving,
   });
@@ -36,7 +44,6 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
       }
     };
 
-    // Check immediately and after a short delay to ensure DOM is ready
     checkTruncation();
     const timeoutId = setTimeout(checkTruncation, 100);
 
@@ -87,15 +94,32 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
     return allStatuses.filter((option) => option.status !== currentStatus);
   };
 
-  const cardClassName = `
-    bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
-    select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-    ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
-    ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
-    ${!canMove ? "cursor-not-allowed opacity-60" : ""}
-    ${isSaving ? "opacity-50 animate-pulse" : ""}
-    ${isDragging ? "opacity-90" : ""}
-  `;
+  // const cardClassName = `
+  //   bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
+  //   select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+  //   ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
+  //   ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
+  //   ${!canMove ? "cursor-not-allowed opacity-60" : ""}
+  //   ${isSaving ? "opacity-50 animate-pulse" : ""}
+  //   ${isDragging ? "opacity-90" : ""}
+  // `;
+
+  const handleSelect = () => {
+    if (onSelect && !isSaving) {
+      onSelect(ticket);
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onSelect || isSaving) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(ticket);
+    }
+  };
 
   const TitleElement = (
     <p ref={titleRef} className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
@@ -143,43 +167,34 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
     </>
   );
 
+  const interactive = Boolean(onSelect);
+
+  const cardProps: React.HTMLAttributes<HTMLDivElement> = {
+    ref: setNodeRef,
+    style,
+    role: interactive ? "button" : undefined,
+    tabIndex: interactive ? 0 : canMove && !isSaving ? 0 : -1,
+    "aria-label": `${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`,
+    "aria-describedby": canMove && !isSaving ? "drag-instructions" : undefined,
+    onClick: interactive ? handleSelect : undefined,
+    onKeyDown: interactive ? handleKeyDown : undefined,
+    ...listeners,
+    ...attributes,
+  };
+
   return (
     <TooltipProvider>
       {isTitleTruncated ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div
-              ref={setNodeRef}
-              style={style}
-              {...listeners}
-              {...attributes}
-              className={cardClassName}
-              role="button"
-              tabIndex={canMove && !isSaving ? 0 : -1}
-              aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
-              aria-describedby="drag-instructions"
-            >
-              {CardContent}
-            </div>
+            <div {...cardProps}>{CardContent}</div>
           </TooltipTrigger>
           <TooltipContent>
             <p className="max-w-xs">{ticket.title}</p>
           </TooltipContent>
         </Tooltip>
       ) : (
-        <div
-          ref={setNodeRef}
-          style={style}
-          {...listeners}
-          {...attributes}
-          className={cardClassName}
-          role="button"
-          tabIndex={canMove && !isSaving ? 0 : -1}
-          aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
-          aria-describedby="drag-instructions"
-        >
-          {CardContent}
-        </div>
+        <div {...cardProps}>{CardContent}</div>
       )}
     </TooltipProvider>
   );

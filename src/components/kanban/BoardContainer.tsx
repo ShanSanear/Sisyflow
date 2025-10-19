@@ -13,6 +13,7 @@ interface BoardContainerProps {
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  onTicketSelect?: (ticket: TicketCardViewModel) => void;
 }
 
 export const BoardContainer: React.FC<BoardContainerProps> = ({
@@ -21,11 +22,12 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  onTicketSelect,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px of movement before drag starts
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -60,16 +62,12 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
     })
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDragStart = (event: DragStartEvent) => {
-    // Optional: Add visual feedback when dragging starts
-    // console.log("Drag started:", event.active.id);
+    void event;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDragOver = (event: DragOverEvent) => {
-    // Optional: Handle drag over events if needed
-    // console.log("Drag over:", event.over?.id);
+    void event;
   };
 
   return (
@@ -133,11 +131,11 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
                 savingTicketId={savingTicketId}
                 canMoveTicket={canMoveTicket}
                 handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+                onTicketSelect={onTicketSelect}
               />
             ))}
           </div>
         </div>
-        {/* Hidden instructions for screen readers */}
         <div id="drag-instructions" className="sr-only">
           Use Tab to navigate between cards, Space or Enter to start dragging, arrow keys to move, and Space or Enter to
           drop. Press Escape to cancel.

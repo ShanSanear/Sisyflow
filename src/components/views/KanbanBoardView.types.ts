@@ -27,3 +27,10 @@ export interface CurrentUser {
   id: string;
   role: "USER" | "ADMIN";
 }
+
+export interface TicketModalViewState {
+  isOpen: boolean;
+  mode: TicketModalMode;
+  selectedTicket?: FullTicketDTO;
+  users: UserDTO[];
+}

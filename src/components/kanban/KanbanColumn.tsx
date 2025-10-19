@@ -4,12 +4,13 @@ import { TicketCard } from "./TicketCard";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface KanbanColumnProps {
-  id: TicketStatus; // "OPEN" | "IN_PROGRESS" | "CLOSED"
+  id: TicketStatus;
   title: string;
   tickets: TicketCardViewModel[];
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  onTicketSelect?: (ticket: TicketCardViewModel) => void;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -19,6 +20,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  onTicketSelect,
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -51,6 +53,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             canMove={canMoveTicket(ticket)}
             isSaving={savingTicketId === ticket.id}
             onStatusChange={handleStatusChangeViaMenu}
+            onSelect={onTicketSelect}
           />
         ))}
         {tickets.length === 0 && (

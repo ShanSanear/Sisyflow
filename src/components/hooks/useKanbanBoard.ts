@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
-import type { TicketDTO } from "../../types";
+import type { TicketDTO, FullTicketDTO, TicketModalMode, UserDTO } from "../../types";
 import { useAuth } from "./useAuth";
 import { useToast } from "./useToast";
+
+interface TicketModalViewState {
+  isOpen: boolean;
+  mode: TicketModalMode;
+  selectedTicket?: FullTicketDTO;
+  users: UserDTO[];
+  isLoadingTicket: boolean;
+}
 
 interface UseKanbanBoardResult {
   boardState: KanbanViewModel | null;
@@ -14,41 +22,41 @@ interface UseKanbanBoardResult {
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   refetch: () => Promise<void>;
+  modalState: TicketModalViewState;
+  openModalToCreate: () => void;
+  openModalToEdit: (ticketId: string) => Promise<void>;
+  closeModal: () => void;
 }
 
-/**
- * Custom hook for managing Kanban board state and operations
- * Handles data fetching, state management, and drag-and-drop logic
- */
 export const useKanbanBoard = (): UseKanbanBoardResult => {
   const [boardState, setBoardState] = useState<KanbanViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const [savingTicketId, _setSavingTicketId] = useState<string | null>(null); // Will be used for drag-and-drop saving state
+  const [savingTicketId, _setSavingTicketId] = useState<string | null>(null);
+
+  const [modalState, setModalState] = useState<TicketModalViewState>({
+    isOpen: false,
+    mode: "create",
+    selectedTicket: undefined,
+    users: [],
+    isLoadingTicket: false,
+  });
 
   const { currentUser } = useAuth();
   const { showError, showSuccess } = useToast();
 
-  /**
-   * Check if current user can move a specific ticket
-   */
   const canMoveTicket = useCallback(
     (ticket: TicketCardViewModel): boolean => {
       if (!currentUser) return false;
 
-      // Admin can move all tickets
       if (currentUser.role === "ADMIN") return true;
 
-      // User can move ticket if they are the reporter or assignee
       return currentUser.id === ticket.reporterId || currentUser.id === ticket.assigneeId;
     },
     [currentUser]
   );
 
-  /**
-   * Transform TicketDTO array to KanbanViewModel
-   */
   const transformTicketsToKanbanView = useCallback((tickets: TicketDTO[]): KanbanViewModel => {
     const kanbanView: KanbanViewModel = {
       OPEN: {
@@ -72,11 +80,10 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         assigneeName: ticket.assignee?.username,
         type: ticket.type,
         isAiEnhanced: ticket.ai_enhanced,
-        reporterId: ticket.reporter_id || undefined, // Handle deleted reporter accounts
+        reporterId: ticket.reporter_id || undefined,
         assigneeId: ticket.assignee_id,
       };
 
-      // Group tickets by status
       switch (ticket.status) {
         case "OPEN":
           kanbanView.OPEN.tickets.push(ticketCard);
@@ -88,7 +95,6 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
           kanbanView.CLOSED.tickets.push(ticketCard);
           break;
         default:
-          // Handle unknown status by placing in OPEN column
           console.warn(`Unknown ticket status: ${ticket.status}, placing in OPEN column`);
           kanbanView.OPEN.tickets.push(ticketCard);
       }
@@ -97,9 +103,6 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
     return kanbanView;
   }, []);
 
-  /**
-   * Fetch tickets from API
-   */
   const fetchTickets = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
@@ -129,9 +132,113 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
     }
   }, [transformTicketsToKanbanView]);
 
-  /**
-   * Handle drag end event
-   */
+  const fetchTicketDetails = useCallback(async (ticketId: string): Promise<FullTicketDTO> => {
+    const response = await fetch(`/api/tickets/${ticketId}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ticket details: ${response.status}`);
+    }
+
+    const ticket = (await response.json()) as FullTicketDTO;
+    return ticket;
+  }, []);
+
+  const fetchUsers = useCallback(async (): Promise<UserDTO[]> => {
+    return [
+      {
+        username: "John Doe",
+        role: "USER",
+        id: "123",
+        email: "john.doe@example.com",
+      },
+      {
+        username: "Jane Doe",
+        role: "USER",
+        id: "456",
+        email: "jane.doe@example.com",
+      },
+    ] as UserDTO[];
+    // TODO: Requires /api/profiles endpoint being implemented
+    const response = await fetch("/api/users?limit=100");
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch users: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.users || !Array.isArray(data.users)) {
+      throw new Error("Invalid API response: expected users array");
+    }
+
+    return data.users as UserDTO[];
+  }, []);
+
+  const openModalWithState = useCallback((nextState: Partial<TicketModalViewState>) => {
+    setModalState((prev) => ({
+      isOpen: true,
+      mode: nextState.mode ?? prev.mode,
+      selectedTicket: nextState.selectedTicket,
+      users: nextState.users ?? prev.users,
+      isLoadingTicket: nextState.isLoadingTicket ?? false,
+    }));
+  }, []);
+
+  const openModalToCreate = useCallback(async () => {
+    try {
+      openModalWithState({ isLoadingTicket: true, mode: "create" });
+      const users = await fetchUsers();
+      setModalState({
+        isOpen: true,
+        mode: "create",
+        selectedTicket: undefined,
+        users,
+        isLoadingTicket: false,
+      });
+    } catch (error) {
+      console.error(error);
+      showError("Unable to load data for ticket creation.");
+      setModalState({
+        isOpen: false,
+        mode: "create",
+        selectedTicket: undefined,
+        users: [],
+        isLoadingTicket: false,
+      });
+    }
+  }, [fetchUsers, openModalWithState, showError]);
+
+  const openModalToEdit = useCallback(
+    async (ticketId: string) => {
+      try {
+        openModalWithState({ isLoadingTicket: true, mode: "edit" });
+        const [ticket, users] = await Promise.all([fetchTicketDetails(ticketId), fetchUsers()]);
+        setModalState({
+          isOpen: true,
+          mode: "edit",
+          selectedTicket: ticket,
+          users,
+          isLoadingTicket: false,
+        });
+      } catch (error) {
+        console.error(error);
+        showError("Unable to load ticket details. Please try again.");
+        setModalState({
+          isOpen: false,
+          mode: "edit",
+          selectedTicket: undefined,
+          users: [],
+          isLoadingTicket: false,
+        });
+      }
+    },
+    [fetchTicketDetails, fetchUsers, openModalWithState, showError]
+  );
+
+  const closeModal = useCallback(() => {
+    setModalState({ isOpen: false, mode: "create", selectedTicket: undefined, users: [], isLoadingTicket: false });
+  }, []);
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
@@ -172,12 +279,10 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
       // Check permissions before allowing the move
       if (!canMoveTicket(ticketToMove)) {
         console.warn(`User does not have permission to move ticket ${ticketId}`);
-        // TODO: Show permission error notification
         showError("You don't have permission to move this ticket.");
         return;
       }
 
-      // Optimistically update UI
       const newBoardState: KanbanViewModel = { ...boardState };
       newBoardState[oldStatus].tickets = newBoardState[oldStatus].tickets.filter((ticket) => ticket.id !== ticketId);
       newBoardState[newStatus].tickets.push({ ...ticketToMove });
@@ -200,7 +305,6 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
           throw new Error(`Failed to update ticket status: ${response.status} ${response.statusText}`);
         }
 
-        // Refresh data to ensure consistency
         await fetchTickets();
         showSuccess(
           `Ticket moved to ${newStatus === "OPEN" ? "Open" : newStatus === "IN_PROGRESS" ? "In Progress" : "Closed"}`
@@ -222,7 +326,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         _setSavingTicketId(null);
       }
     },
-    [boardState, fetchTickets, canMoveTicket, showError, showSuccess]
+    [boardState, canMoveTicket, fetchTickets, showError, showSuccess]
   );
 
   /**
@@ -308,8 +412,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         _setSavingTicketId(null);
       }
     },
-
-    [boardState, fetchTickets, canMoveTicket, showError, showSuccess]
+    [boardState, canMoveTicket, fetchTickets, showError, showSuccess]
   );
 
   /**
@@ -333,5 +436,9 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
     handleStatusChangeViaMenu,
     canMoveTicket,
     refetch,
+    modalState,
+    openModalToCreate,
+    openModalToEdit,
+    closeModal,
   };
 };
