@@ -1,45 +1,53 @@
-import React from "react";
-import type { ProfileDTO } from "../../types";
+import React, { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import type { UserViewModel } from "./types";
 
-/**
- * Props dla komponentu NavLinks
- */
+const baseLinkClasses =
+  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+
 interface NavLinksProps {
-  role: ProfileDTO["role"];
+  user: UserViewModel | null;
 }
 
-/**
- * NavLinks - Komponent prezentacyjny renderujący listę linków nawigacyjnych.
- * Warunkowo wyświetla link "Panel Administratora" na podstawie roli użytkownika.
- */
-export const NavLinks: React.FC<NavLinksProps> = ({ role }) => {
-  const handleKanbanClick = () => {
-    // Nawigacja do głównej strony tablicy
-    window.location.href = "/";
-  };
+export const NavLinks: React.FC<NavLinksProps> = ({ user }) => {
+  const [pathname, setPathname] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return "/";
+    }
+    return window.location.pathname;
+  });
 
-  const handleAdminClick = () => {
-    // Nawigacja do panelu administracyjnego
-    window.location.href = "/admin";
-  };
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handlePopState = () => {
+      setPathname(window.location.pathname);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
-    <nav className="hidden md:flex items-center space-x-6">
-      <button
-        onClick={handleKanbanClick}
-        className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+    <nav aria-label="Primary navigation" className="hidden items-center gap-2 lg:flex">
+      <a
+        href="/"
+        className={cn(baseLinkClasses, pathname === "/" && "text-foreground")}
+        aria-current={pathname === "/" ? "page" : undefined}
       >
         Kanban Board
-      </button>
+      </a>
 
-      {/* Warunkowe wyświetlanie linku do panelu administratora */}
-      {role === "ADMIN" && (
-        <button
-          onClick={handleAdminClick}
-          className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+      {user?.role === "ADMIN" && (
+        <a
+          href="/admin"
+          className={cn(baseLinkClasses, pathname.startsWith("/admin") && "text-foreground")}
+          aria-current={pathname.startsWith("/admin") ? "page" : undefined}
         >
-          Panel Administratora
-        </button>
+          Admin Panel
+        </a>
       )}
     </nav>
   );

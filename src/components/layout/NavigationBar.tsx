@@ -1,92 +1,115 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
+import { Logo } from "./Logo";
+import { NavLinks } from "./NavLinks";
+import { UserMenu } from "./UserMenu";
+import { UserProvider, useUserContext } from "./UserContext";
 import { Button } from "../ui/button";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "../ui/dropdown-menu";
-import { LogOut, User, Settings } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
+import { PlusCircleIcon } from "lucide-react";
+import { toast } from "../ui/sonner";
 
-interface NavigationBarProps {
-  user: {
-    email: string;
-    username?: string;
+const NavigationBarContent: React.FC = () => {
+  const { user, isLoading, error, refetch } = useUserContext();
+  const lastErrorMessageRef = useRef<string | null>(null);
+
+  const handleCreateTicket = () => {
+    window.location.href = "/tickets/new";
   };
-  onLogout?: () => void;
-}
 
-export const NavigationBar: React.FC<NavigationBarProps> = ({ user, onLogout }) => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const handleRefetch = useCallback(() => {
+    toast.info("Retrying user data fetch");
+    void refetch();
+  }, [refetch]);
 
-  const handleLogout = () => {
-    if (onLogout) {
-      setIsLoggingOut(true);
-      try {
-        onLogout();
-      } catch (error) {
-        console.error("Logout error:", error);
-      } finally {
-        setIsLoggingOut(false);
-      }
-    } else {
-      // Default behavior: redirect to logout endpoint
-      window.location.href = "/logout";
+  const handleLogout = useCallback(async () => {
+    const response = await fetch("/api/auth/sign-out", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error ?? `Sign-out failed: ${response.statusText}`);
     }
-  };
 
-  const displayName = user.username || user.email.split("@")[0];
+    toast.success("Signed out successfully");
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    if (!error) {
+      lastErrorMessageRef.current = null;
+      return;
+    }
+
+    const message = error.message ?? "Failed to load user data";
+
+    if (lastErrorMessageRef.current === message) {
+      return;
+    }
+
+    lastErrorMessageRef.current = message;
+    console.error("NavigationBar error:", error);
+    toast.error("Failed to load user data", {
+      description: message,
+    });
+  }, [error]);
+
+  if (isLoading) {
+    return (
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Skeleton className="h-9 w-24" aria-hidden="true" />
+          <Skeleton className="hidden h-9 w-48 lg:block" aria-hidden="true" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-40" aria-hidden="true" />
+            <Skeleton className="h-10 w-32" aria-hidden="true" />
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo/Brand */}
-        <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-semibold text-gray-900">Sisyflow</h1>
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center gap-6">
+          <Logo />
+          <NavLinks user={user} />
         </div>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
-            Kanban Board
+        <div className="flex items-center gap-3">
+          <Button onClick={handleCreateTicket} className="gap-2" aria-label="Create a new ticket">
+            <PlusCircleIcon className="h-4 w-4" />
+            Create ticket
           </Button>
-        </div>
 
-        {/* User Menu */}
-        <div className="flex items-center space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2 p-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-sm">{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <span className="hidden md:block text-sm font-medium text-gray-700">{displayName}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer text-red-600 focus:text-red-600"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                {isLoggingOut ? "Logging out..." : "Logout"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu user={user} isLoading={false} onLogout={handleLogout} />
         </div>
       </div>
-    </nav>
+
+      {error && (
+        <div className="border-t border-destructive/20 bg-destructive/10">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-sm text-destructive sm:px-6 lg:px-8">
+            <span>Failed to load user data.</span>
+            <Button variant="outline" size="sm" onClick={handleRefetch}>
+              Try again
+            </Button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export const NavigationBar: React.FC = () => {
+  return (
+    <UserProvider>
+      <NavigationBarContent />
+    </UserProvider>
   );
 };
