@@ -1,6 +1,22 @@
 ---
 import AuthLayout from "../layouts/AuthLayout.astro";
 import { RegisterForm } from "../components/auth/RegisterForm.tsx";
+import { createSupabaseServerInstance } from "../db/supabase.client.ts";
+
+// Check if users already exist in the system
+const supabase = createSupabaseServerInstance({
+  cookies: Astro.cookies,
+  headers: Astro.request.headers,
+});
+
+const { count: userCount, error: countError } = await supabase
+  .from("profiles")
+  .select("*", { count: "exact", head: true });
+
+// If users exist or there's an error checking, redirect to login
+if (countError || (userCount && userCount > 0)) {
+  return Astro.redirect("/login");
+}
 ---
 
 <AuthLayout title="Register">

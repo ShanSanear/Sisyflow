@@ -1,29 +1,20 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { registerSchema, type RegisterData } from "../../lib/validation/auth.validation";
 
-const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterFormData = RegisterData;
 
 export const RegisterForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -36,6 +27,7 @@ export const RegisterForm: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch("/api/auth/sign-up", {
@@ -51,8 +43,10 @@ export const RegisterForm: React.FC = () => {
         throw new Error(errorData.error || "Registration failed");
       }
 
-      // Success - redirect will be handled by the response
-      window.location.href = "/board";
+      const responseData = await response.json();
+      setSuccessMessage(
+        responseData.message || "Registration successful! Please check your email to confirm your account."
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
@@ -74,6 +68,12 @@ export const RegisterForm: React.FC = () => {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {successMessage && (
+          <Alert>
+            <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         )}
 
