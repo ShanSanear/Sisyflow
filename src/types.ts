@@ -112,6 +112,9 @@ export interface UpdateProjectDocumentationCommand {
   content: string;
 }
 
+// Ticket Modal specific types
+export type TicketModalMode = "create" | "edit" | "view";
+
 // AI Error DTO
 // AIErrorDTO: Used in GET /ai-errors (response)
 export type AIErrorDTO = Pick<

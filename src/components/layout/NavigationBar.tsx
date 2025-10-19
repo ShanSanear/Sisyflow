@@ -13,7 +13,8 @@ const NavigationBarContent: React.FC = () => {
   const lastErrorMessageRef = useRef<string | null>(null);
 
   const handleCreateTicket = () => {
-    window.location.href = "/tickets/new";
+    // TODO: Add opening modal logic
+    return;
   };
 
   const handleRefetch = useCallback(() => {
