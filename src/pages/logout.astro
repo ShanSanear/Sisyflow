@@ -1,0 +1,18 @@
+---
+// This page handles logout and redirects
+export const prerender = false;
+
+// Import the logout function directly
+import { createSupabaseServerInstance } from "../db/supabase.client";
+
+// Create supabase instance and sign out
+const supabase = createSupabaseServerInstance({
+  cookies: Astro.cookies,
+  headers: Astro.request.headers,
+});
+
+await supabase.auth.signOut();
+
+// Always redirect to login
+return Astro.redirect("/login");
+---

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createProfileService } from "../../../lib/services/profile.service";
+import { createSupabaseServerInstance } from "../../../db/supabase.client";
 import { isDatabaseConnectionError, createDatabaseConnectionErrorResponse } from "../../../lib/utils";
 
 export const prerender = false;
@@ -13,15 +14,30 @@ export const prerender = false;
  * Response: 200 OK - ProfileDTO
  * Error Responses: 401 Unauthorized, 404 Not Found, 500 Internal Server Error
  */
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ locals, cookies, request }) => {
   try {
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const supabase = locals.supabase;
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Utwórz profile service i wywołaj metodę
     const profileService = createProfileService(supabase);
-    const profile = await profileService.getCurrentUserProfile();
+    const profile = await profileService.getUserProfileById(locals.user.id);
 
     // Zwróć pomyślną odpowiedź
     return new Response(JSON.stringify(profile), {

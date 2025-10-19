@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { ProfileDTO } from "../../types";
-import { POSTGREST_ERROR_CODES, DEVELOPMENT_USER_ID } from "../constants";
+import { POSTGREST_ERROR_CODES } from "../constants";
 import { extractSupabaseError } from "../utils";
 
 /**
@@ -12,33 +12,14 @@ export class ProfileService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
-   * Pobiera profil aktualnie uwierzytelnionego użytkownika
+   * Pobiera profil użytkownika po ID
    *
+   * @param userId - ID użytkownika
    * @returns Profil użytkownika w formacie ProfileDTO
-   * @throws Error jeśli użytkownik nie jest zalogowany lub profil nie istnieje
+   * @throws Error jeśli użytkownik nie istnieje
    */
-  async getCurrentUserProfile(): Promise<ProfileDTO> {
+  async getUserProfileById(userId: string): Promise<ProfileDTO> {
     try {
-      // TODO: Implement proper session handling when authentication is ready
-      // For now, use development user ID until full authentication workflow is implemented
-      const userId = DEVELOPMENT_USER_ID;
-
-      // COMMENTED: Original session-based authentication code (to be used when auth is implemented)
-      /*
-      // Pobierz sesję użytkownika
-      const { data: session, error: sessionError } = await this.supabase.auth.getSession();
-
-      if (sessionError) {
-        throw extractSupabaseError(sessionError, "Failed to get user session");
-      }
-
-      if (!session.session || !session.session.user) {
-        throw new Error("User not authenticated");
-      }
-
-      const userId = session.session.user.id;
-      */
-
       // Pobierz profil użytkownika z bazy danych
       const { data: profile, error: profileError } = await this.supabase
         .from("profiles")
