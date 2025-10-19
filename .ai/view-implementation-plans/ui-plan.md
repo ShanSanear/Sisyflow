@@ -30,6 +30,25 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
   - **Dostępność:** Alternatywna obsługa zmiany statusu poprzez menu kontekstowe na karcie ticketa bądź poprzez użycie klawiatury.
   - **Bezpieczeństwo:** Uprawnienia do zmiany statusu ticketa są weryfikowane po stronie serwera przy każdej operacji.
 
+### Pod-widok: Modal Tworzenia/Edycji Ticketa
+
+- **Nazwa widoku:** Ticket Modal View
+- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu).
+- **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban, z integracją sugestii AI dla kompletności opisu.
+- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza. W trybie edycji: załadowane dane ticketa (tytuł, opis renderowany jako Markdown, typ, osoba przypisana, osoba zgłaszająca - jeśli edycja). Sekcja sugestii AI (jeśli aktywowana): lista sugestii do wstawienia i pytań otwartych. System oceny jakości sugestii (gwiazdkami 1-5). Informacja o osobie zgłaszającej (nieedytowalna).
+- **Kluczowe komponenty widoku:** `Dialog` (okno modalne), `Input` (tytuł), `Textarea` z podglądem Markdown (opis), `Select` (typ ticketa), `Button` (sugestie AI, "Dodaj" sugestie, "Przypisz mnie"), lista sugestii (dynamiczna z przyciskami i checkboxami), `StarRating` (ocena AI), przyciski akcji (Zapisz, Anuluj).
+- **UX, dostępność i względy bezpieczeństwa:**
+  - **UX:** Automatyczne wstawianie sugestii do opisu na końcu opisu z dwiema pustymi liniami przerwy; wskaźnik ładowania podczas analizy AI; powiadomienie toast po zapisaniu i odświeżenie tablicy; obsługa klawisza Enter do zatwierdzenia formularza.
+  - **Dostępność:** Trap focus w modalu; etykiety ARIA dla sugestii i ocen; alternatywna nawigacja klawiaturą do aplikacji sugestii.
+  - **Bezpieczeństwo:** Walidacja po stronie klienta zgodna z API (długość pól); weryfikacja uprawnień do edycji na serwerze; brak przechowywania wrażliwych danych w stanie.
+- **Przypadki brzegowe i stany błędów:**
+  - **Puste stany:** W modalu tworzenia: brak sugestii AI powoduje komunikat "Opis wydaje się kompletny". Na tablicy: komunikat o braku ticketów z zachętą do utworzenia.
+  - **Walidacja:** Błędy pól wymaganych (tytuł, typ) lub przekroczenie limitu znaków (opis <10000) wyświetlają komunikaty inline pod polami. Błędy API (np. konflikt) jako toasty.
+  - **Błędy AI:** Nieudana analiza (500) pokazuje toast z opcją "Spróbuj ponownie"; brak dokumentacji projektu nie blokuje, ale może generować ogólne sugestie.
+  - **Uprawnienia:** Próba edycji cudzego ticketa bez roli admin: modal otwiera się w trybie podglądu; nieautoryzowany dostęp do tworzenia: przekierowanie do logowania.
+  - **Sieciowe:** Offline: blokada akcji z komunikatem; retry na reconnect.
+  - **Mobilne:** Modal dostosowany do pełnego ekranu; brak drag-drop, alternatywa menu kontekstowe.
+
 ### Widok Profilu Użytkownika
 
 - **Nazwa widoku:** User Profile View
@@ -77,25 +96,6 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
   - **UX:** Wszelkie akcje destrukcyjne wymagają dodatkowego potwierdzenia.
   - **Dostępność:** Tabela jest dostępna dla czytników ekranu.
   - **Bezpieczeństwo:** Administrator nie może usunąć własnego konta z poziomu interfejsu.
-
-### Pod-widok: Modal Tworzenia/Edycji Ticketa
-
-- **Nazwa widoku:** Ticket Modal View
-- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu).
-- **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban, z integracją sugestii AI dla kompletności opisu.
-- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza. W trybie edycji: załadowane dane ticketa (tytuł, opis renderowany jako Markdown, typ, osoba przypisana, osoba zgłaszająca - jeśli edycja). Sekcja sugestii AI (jeśli aktywowana): lista sugestii do wstawienia i pytań otwartych. System oceny jakości sugestii (gwiazdkami 1-5). Informacja o osobie zgłaszającej (nieedytowalna).
-- **Kluczowe komponenty widoku:** `Dialog` (okno modalne), `Input` (tytuł), `Textarea` z podglądem Markdown (opis), `Select` (typ ticketa), `Button` (sugestie AI, "Dodaj" sugestie, "Przypisz mnie"), lista sugestii (dynamiczna z przyciskami i checkboxami), `StarRating` (ocena AI), przyciski akcji (Zapisz, Anuluj).
-- **UX, dostępność i względy bezpieczeństwa:**
-  - **UX:** Automatyczne wstawianie sugestii do opisu na końcu opisu z dwiema pustymi liniami przerwy; wskaźnik ładowania podczas analizy AI; powiadomienie toast po zapisaniu i odświeżenie tablicy; obsługa klawisza Enter do zatwierdzenia formularza.
-  - **Dostępność:** Trap focus w modalu; etykiety ARIA dla sugestii i ocen; alternatywna nawigacja klawiaturą do aplikacji sugestii.
-  - **Bezpieczeństwo:** Walidacja po stronie klienta zgodna z API (długość pól); weryfikacja uprawnień do edycji na serwerze; brak przechowywania wrażliwych danych w stanie.
-- **Przypadki brzegowe i stany błędów:**
-  - **Puste stany:** W modalu tworzenia: brak sugestii AI powoduje komunikat "Opis wydaje się kompletny". Na tablicy: komunikat o braku ticketów z zachętą do utworzenia.
-  - **Walidacja:** Błędy pól wymaganych (tytuł, typ) lub przekroczenie limitu znaków (opis <10000) wyświetlają komunikaty inline pod polami. Błędy API (np. konflikt) jako toasty.
-  - **Błędy AI:** Nieudana analiza (500) pokazuje toast z opcją "Spróbuj ponownie"; brak dokumentacji projektu nie blokuje, ale może generować ogólne sugestie.
-  - **Uprawnienia:** Próba edycji cudzego ticketa bez roli admin: modal otwiera się w trybie podglądu; nieautoryzowany dostęp do tworzenia: przekierowanie do logowania.
-  - **Sieciowe:** Offline: blokada akcji z komunikatem; retry na reconnect.
-  - **Mobilne:** Modal dostosowany do pełnego ekranu; brak drag-drop, alternatywa menu kontekstowe.
 
 ## 3. Mapa podróży użytkownika
 
