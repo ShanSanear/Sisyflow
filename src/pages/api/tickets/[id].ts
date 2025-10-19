@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createTicketService } from "../../../lib/services/ticket.service";
+import { createSupabaseServerInstance } from "../../../db/supabase.client";
 import type { FullTicketDTO, UpdateTicketCommand } from "../../../types";
-import { DEVELOPMENT_USER_ID } from "../../../lib/constants";
 import { ticketIdParamsSchema, updateTicketSchema } from "../../../lib/validation/ticket.validation";
 import {
   isZodError,
@@ -22,23 +22,18 @@ export const prerender = false;
  * Response: 200 OK - FullTicketDTO
  * Error Responses: 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Internal Server Error
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, cookies, request }) => {
   try {
     // Walidacja parametrów URL używając Zod
     const validatedParams = ticketIdParamsSchema.parse(params);
     const ticketId = validatedParams.id;
 
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const userId = DEVELOPMENT_USER_ID;
-    const supabase = locals.supabase;
-
-    // Sprawdź czy użytkownik jest uwierzytelniony (prosta weryfikacja dla developmentu)
-    if (!userId) {
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
       return new Response(
         JSON.stringify({
           error: "Unauthorized",
-          message: "User authentication required",
+          message: "Authentication required",
         }),
         {
           status: 401,
@@ -46,6 +41,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Utwórz ticket service i wywołaj metodę pobrania ticketu
     const ticketService = createTicketService(supabase);
@@ -110,23 +110,18 @@ export const GET: APIRoute = async ({ params, locals }) => {
  * Response: 200 OK - FullTicketDTO zawierający zaktualizowane dane ticketu
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */
-export const PUT: APIRoute = async ({ params, request, locals }) => {
+export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
   try {
     // Walidacja parametrów URL używając Zod
     const validatedParams = ticketIdParamsSchema.parse(params);
     const ticketId = validatedParams.id;
 
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const userId = DEVELOPMENT_USER_ID;
-    const supabase = locals.supabase;
-
-    // Sprawdź czy użytkownik jest uwierzytelniony (prosta weryfikacja dla developmentu)
-    if (!userId) {
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
       return new Response(
         JSON.stringify({
           error: "Unauthorized",
-          message: "User authentication required",
+          message: "Authentication required",
         }),
         {
           status: 401,
@@ -134,6 +129,12 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
+
+    const userId = locals.user.id;
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Parsuj i waliduj ciało żądania
     let requestBody: UpdateTicketCommand;
@@ -246,23 +247,18 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
  * Response: 204 No Content - ticket został pomyślnie usunięty
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals, cookies, request }) => {
   try {
     // Walidacja parametrów URL używając Zod
     const validatedParams = ticketIdParamsSchema.parse(params);
     const ticketId = validatedParams.id;
 
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const userId = DEVELOPMENT_USER_ID;
-    const supabase = locals.supabase;
-
-    // Sprawdź czy użytkownik jest uwierzytelniony (prosta weryfikacja dla developmentu)
-    if (!userId) {
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
       return new Response(
         JSON.stringify({
           error: "Unauthorized",
-          message: "User authentication required",
+          message: "Authentication required",
         }),
         {
           status: 401,
@@ -270,6 +266,12 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    const userId = locals.user.id;
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Utwórz ticket service i wywołaj metodę usunięcia ticketu
     const ticketService = createTicketService(supabase);

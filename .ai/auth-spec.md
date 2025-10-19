@@ -47,7 +47,7 @@ Interaktywne elementy formularzy zostaną zaimplementowane jako komponenty React
 
 ### 2.1. Endpointy API
 
-Zgodnie z konwencją Astro, endpointy API będą zlokalizowane w `src/pages/api`. Wykorzystamy dynamiczny routing, aby zgrupować wszystkie endpointy autentykacji.
+Zgodnie z konwencją Astro, endpointy API będą zlokalizowane w `src/pages/api`. Dla lepszej organizacji, endpointy autentyfikacji są zaimplementowane jako oddzielne pliki.
 
 - **`src/pages/api/auth/sign-in.ts` (`POST`)**:
   - Pobiera `email` i `password` z ciała żądania.

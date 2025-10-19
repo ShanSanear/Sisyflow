@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createTicketService } from "../../../../lib/services/ticket.service";
+import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import type { UpdateTicketStatusCommand } from "../../../../types";
-import { DEVELOPMENT_USER_ID } from "../../../../lib/constants";
 import { ticketIdParamsSchema } from "../../../../lib/validation/ticket.validation";
 import {
   isZodError,
@@ -23,16 +23,31 @@ export const prerender = false;
  * Response: 200 OK - TicketDTO
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */
-export const PATCH: APIRoute = async ({ request, params, locals }) => {
+export const PATCH: APIRoute = async ({ request, params, locals, cookies }) => {
   try {
     // Walidacja parametrów URL używając Zod
     const validatedParams = ticketIdParamsSchema.parse(params);
     const ticketId = validatedParams.id;
 
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const userId = DEVELOPMENT_USER_ID;
-    const supabase = locals.supabase;
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Parsuj request body
     let requestData: UpdateTicketStatusCommand;

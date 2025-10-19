@@ -50,10 +50,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ user, onLogout }) 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center space-x-6">
           <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
-            Dashboard
-          </Button>
-          <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
-            Projects
+            Kanban Board
           </Button>
         </div>
 

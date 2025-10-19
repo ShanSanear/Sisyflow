@@ -2,6 +2,8 @@ import type { APIRoute } from "astro";
 import { createSupabaseServerInstance } from "../../../db/supabase.client.ts";
 import { loginSchema } from "../../../lib/validation/auth.validation.ts";
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();

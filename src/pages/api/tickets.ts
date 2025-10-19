@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createTicketService } from "../../lib/services/ticket.service";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { CreateTicketCommand } from "../../types";
-import { DEVELOPMENT_USER_ID } from "../../lib/constants";
 import {
   isZodError,
   createZodValidationResponse,
@@ -21,11 +21,26 @@ export const prerender = false;
  * Response: 200 OK - { tickets: TicketDTO[], pagination: PaginationDTO }
  * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
-export const GET: APIRoute = async ({ locals, url }) => {
+export const GET: APIRoute = async ({ locals, cookies, request, url }) => {
   try {
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const supabase = locals.supabase;
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Parsuj parametry query z URL
     const queryParams = Object.fromEntries(url.searchParams.entries());
@@ -78,12 +93,27 @@ export const GET: APIRoute = async ({ locals, url }) => {
  * Response: 201 Created - FullTicketDTO
  * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
   try {
-    // Użyj stałego user ID dla developmentu
-    // TODO: Zastąpić pełnym uwierzytelnieniem gdy będzie gotowe
-    const userId = DEVELOPMENT_USER_ID;
-    const supabase = locals.supabase;
+    // Check if user is authenticated via middleware
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
     // Parsuj request body
     let requestData: CreateTicketCommand;

@@ -1,6 +1,12 @@
 ---
-// TODO: Implement proper authentication check in server-side code
-// For now, redirect to login page
----
+// Check user authentication status and redirect accordingly
+const user = Astro.locals.user;
 
-<meta http-equiv="refresh" content="0; url=/login" />
+if (user) {
+  // User is authenticated, redirect to main application
+  return Astro.redirect("/board");
+} else {
+  // User is not authenticated, redirect to login
+  return Astro.redirect("/login");
+}
+---
