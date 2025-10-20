@@ -2,7 +2,7 @@ import React from "react";
 import { BoardContainer } from "../kanban/BoardContainer";
 import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
-import { useKanbanBoard } from "../hooks/useKanbanBoard";
+import { useKanbanBoard } from "../../lib/hooks/useKanbanBoard";
 
 export const KanbanBoardView: React.FC = () => {
   const { boardState, isLoading, error, savingTicketId, handleDragEnd, handleStatusChangeViaMenu, canMoveTicket } =

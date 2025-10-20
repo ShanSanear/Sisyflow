@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
+import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../../components/views/KanbanBoardView.types";
 import type { TicketDTO } from "../../types";
 import { useAuth } from "./useAuth";
 import { useToast } from "./useToast";
