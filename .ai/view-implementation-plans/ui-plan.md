@@ -33,12 +33,12 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 ### Pod-widok: Modal Tworzenia/Edycji Ticketa
 
 - **Nazwa widoku:** Ticket Modal View
-- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu), via TicketModalContext (patrz ticket-modal.md).
+- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu), via TicketModalContext (patrz ticket-modal.md, src/lib/contexts/TicketModalContext.tsx).
 - **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban (MVP bez AI; future AI w ticket-modal-with-ai-suggestions.md).
 - **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza (title Input, description Textarea plain, type Select). W trybie edycji: załadowane dane ticketa (tytuł, opis plain text, typ, osoba przypisana, osoba zgłaszająca - readonly). Informacja o osobie zgłaszającej (nieedytowalna).
 - **Kluczowe komponenty widoku:** `Dialog` (modal), `Input` (tytuł), `Textarea` (opis, plain dla MVP), `Select` (typ), `Button` ("Przypisz mnie"), przyciski akcji (Zapisz, Anuluj).
 - **UX, dostępność i względy bezpieczeństwa:**
-  - **UX:** Walidacja inline; toast po zapisaniu i odświeżenie tablicy; Enter do submit.
+  - **UX:** Walidacja inline; toast po zapisaniu i odświeżenie tablicy; Enter do submit. Integracja: Użyj TicketModalContext z src/lib/contexts/. Walidacja: Zod + React Hook Form. API paths: /api/... (Astro routes).
   - **Dostępność:** Focus trap w Dialog; ARIA labels dla pól.
   - **Bezpieczeństwo:** Client-side check uprawnień (UserContext); server RLS w Supabase.
 - **Przypadki brzegowe i stany błędów:**
@@ -109,7 +109,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
       - Kliknięcie przycisku "Utwórz Ticket" w top barze otwiera **Modal Tworzenia/Edycji Ticketa** w trybie tworzenia z pustymi polami (via TicketModalContext).
       - Wprowadzenie tytułu (wymagane, walidacja inline Zod) i wyboru typu z listy (Bug, Improvement, Task).
       - Opcjonalne wprowadzenie opisu (plain text, <10000 znaków).
-      - Kliknięcie "Zapisz": walidacja, zapis ticketa; modal zamyka się, tablica odświeża się, nowy ticket pojawia w kolumnie "Otwarty", wyświetlany toast sukcesu (Sonner).
+      - Kliknięcie "Zapisz": walidacja, zapis ticketa; modal zamyka się, tablica odświeża się, nowy ticket pojawia w kolumnie "Otwarty", wyświetlany toast sukcesu (Sonner). reporter_id auto-set w backendzie; frontend nie wysyła.
       - Anulowanie: zamknięcie modala bez zapisania zmian.
     - **Edycja ticketa:**
       - Kliknięcie na kartę ticketa na tablicy otwiera **Modal Tworzenia/Edycji Ticketa** w trybie edycji z załadowanymi danymi (tytuł, opis plain, typ, assignee). Jeśli nieuprawniony – 'view' mode.
@@ -123,7 +123,7 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 
     - W modalu tworzenia/edycji: Po fill title/desc, klik "Poproś o sugestie AI" – loading (Spinner), analiza via backend (Openrouter.ai).
     - Sugestie: Lista INSERT (Button "Dodaj" – wstaw do description + \n\n) i QUESTION (Checkbox "Zastosowano" – set applied, ai_enhanced=true).
-    - Po apply: Show AIRating (1-5 gwiazdek), editable do submit; zapisz rating z ticket.
+    - Po apply: Show AIRating (1-5 gwiazdek), editable do submit; zapisz rating z ticket (opcjonalna).
     - Zapis: Jeśli ai_enhanced=true, set flag w POST/PUT /tickets; ticket pokazuje MagicWand icon w KanbanCard.
     - Edge: Brak sugestii – toast "Opis kompletny"; błąd AI – toast + retry.
 
@@ -163,9 +163,11 @@ Poniżej znajduje się lista kluczowych, reużywalnych komponentów opartych na 
 
 ### 5.2 Komponenty dla Integracji AI (Future w MVP)
 
-- **`SuggestionList`:** Lista sugestii AI z Button/Checkbox (dynamic, Tailwind space-y).
-- **`StarRating`:** Ocena 1-5 (custom z lucide-react StarIcon, clickable Buttons).
-- **`AIAnalysisButton`:** Przycisk analizy z loading (Button + Spinner).
+- **`SuggestionList`:** Lista sugestii AI z Button/Checkbox (dynamic, Tailwind space-y, src/components/AISuggestionsList.tsx).
+- **`StarRating`:** Ocena 1-5 (custom z lucide-react StarIcon, clickable Buttons, src/components/AIRating.tsx).
+- **`AIAnalysisButton`:** Przycisk analizy z loading (Button + Spinner, src/components/AIAnalysisButton.tsx).
 - **`MagicWandIcon`:** Ikona w TicketCard jeśli ai_enhanced (lucide-react Wand2).
-- **`MarkdownViewer`:** Render opisu z MD (react-markdown, w view i preview).
+- **`MarkdownViewer`:** Render opisu z MD (react-markdown, w view i preview, src/components/MarkdownViewer.tsx).
 - Integracja: Openrouter.ai via /api/ai endpoints (Supabase edge functions lub Astro API routes).
+
+Future deps: react-markdown dla MarkdownViewer.

@@ -38,6 +38,8 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
     localsWithUser.user = {
       email: user.email || "",
       id: user.id,
+      // TODO: get role from profiles table
+      role: "ADMIN" as const,
     };
   } else if (!PUBLIC_PATHS.includes(url.pathname)) {
     // Redirect to login for protected routes
