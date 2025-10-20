@@ -7,14 +7,14 @@ import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { PlusCircleIcon } from "lucide-react";
 import { toast } from "../ui/sonner";
+import { emitTicketModalEvent } from "@/lib/events";
 
 const NavigationBarContent: React.FC = () => {
   const { user, isLoading, error, refetch } = useUserContext();
   const lastErrorMessageRef = useRef<string | null>(null);
 
   const handleCreateTicket = () => {
-    // TODO: Add opening modal logic
-    return;
+    emitTicketModalEvent({ type: "create" });
   };
 
   const handleRefetch = useCallback(() => {

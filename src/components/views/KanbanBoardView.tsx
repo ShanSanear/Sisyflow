@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BoardContainer } from "../kanban/BoardContainer";
 import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
 import { TicketModal } from "../ticket/TicketModal";
 import { useKanbanBoard } from "../hooks/useKanbanBoard";
+import { addTicketModalEventListener } from "@/lib/events";
 
 export const KanbanBoardView: React.FC = () => {
   const {
@@ -22,6 +21,23 @@ export const KanbanBoardView: React.FC = () => {
     openModalToEdit,
     closeModal,
   } = useKanbanBoard();
+
+  useEffect(() => {
+    const removeListener = addTicketModalEventListener((event) => {
+      if (event.detail.type === "create") {
+        void openModalToCreate();
+        return;
+      }
+
+      if (event.detail.type === "edit") {
+        void openModalToEdit(event.detail.ticketId);
+      }
+    });
+
+    return () => {
+      removeListener();
+    };
+  }, [openModalToCreate, openModalToEdit]);
 
   if (isLoading) {
     return (
@@ -90,13 +106,6 @@ export const KanbanBoardView: React.FC = () => {
           void openModalToEdit(ticket.id);
         }}
       />
-
-      <div className="fixed bottom-8 right-8 z-50">
-        <Button onClick={openModalToCreate} className="shadow-lg" size="lg">
-          <PlusIcon className="mr-2 h-5 w-5" />
-          Create Ticket
-        </Button>
-      </div>
 
       {!hasTickets ? (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

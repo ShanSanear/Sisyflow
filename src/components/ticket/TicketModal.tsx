@@ -117,10 +117,17 @@ export const TicketModal: React.FC<TicketModalProps> = ({
               onApplyInsert={applyAISuggestion}
               onToggleQuestion={toggleAIQuestion}
               disabled={isViewMode}
+              isLoading={state.analyzing}
             />
           </div>
 
-          <AIRating rating={state.rating} onChange={rateAISuggestions} disabled={isViewMode} />
+          <AIRating
+            rating={state.rating}
+            onChange={(rating) => {
+              void rateAISuggestions(rating);
+            }}
+            disabled={isViewMode || !state.suggestions}
+          />
 
           <ActionButtons
             mode={mode}
@@ -137,9 +144,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
 interface AISuggestionsListProps {
   suggestions: AISuggestionSessionDTO["suggestions"];
-  onApplyInsert: (content: string) => void;
+  onApplyInsert: (index: number, content: string) => void;
   onToggleQuestion: (index: number) => void;
   disabled?: boolean;
+  isLoading?: boolean;
 }
 
 const AISuggestionsList: React.FC<AISuggestionsListProps> = ({
@@ -147,7 +155,16 @@ const AISuggestionsList: React.FC<AISuggestionsListProps> = ({
   onApplyInsert,
   onToggleQuestion,
   disabled,
+  isLoading,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+        Analyzing ticket details. This might take a few seconds.
+      </div>
+    );
+  }
+
   if (!suggestions.length) {
     return (
       <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -169,8 +186,13 @@ const AISuggestionsList: React.FC<AISuggestionsListProps> = ({
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">{suggestion.content}</p>
 
             {suggestion.type === "INSERT" ? (
-              <Button type="button" size="sm" disabled={disabled} onClick={() => onApplyInsert(suggestion.content)}>
-                Add to description
+              <Button
+                type="button"
+                size="sm"
+                disabled={disabled || suggestion.applied}
+                onClick={() => onApplyInsert(index, suggestion.content)}
+              >
+                {suggestion.applied ? "Added" : "Add to description"}
               </Button>
             ) : (
               <label className="flex items-center gap-2 text-sm">

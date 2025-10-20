@@ -114,7 +114,7 @@ export const useTicketModal = ({ isOpen, mode, initialTicket, users = [], onClos
       ...prev,
       formErrors: errors,
       isFormValid: isValid,
-      loading: prev.loading && isValid ? prev.loading : false,
+      loading: isValid ? prev.loading : false,
     }));
   }, []);
 
@@ -236,7 +236,6 @@ export const useTicketModal = ({ isOpen, mode, initialTicket, users = [], onClos
         description: state.formData.description ?? state.ticket.description ?? "",
         type: state.formData.type ?? state.ticket.type,
         ai_enhanced: state.aiEnhanced,
-        rating: state.rating,
       }),
     });
 
@@ -252,7 +251,7 @@ export const useTicketModal = ({ isOpen, mode, initialTicket, users = [], onClos
     }
 
     return updatedTicket;
-  }, [ensureAssigneeUpdated, state.aiEnhanced, state.assigneeId, state.formData, state.rating, state.ticket]);
+  }, [ensureAssigneeUpdated, state.aiEnhanced, state.assigneeId, state.formData, state.ticket]);
 
   const submitTicket = useCallback(async () => {
     if (isViewMode) {
@@ -296,45 +295,82 @@ export const useTicketModal = ({ isOpen, mode, initialTicket, users = [], onClos
     updateTicket,
   ]);
 
-  const requestAISuggestions = useCallback(() => {
+  const requestAISuggestions = useCallback(async () => {
     if (isViewMode) {
       return;
     }
 
-    setState((prev) => ({ ...prev, analyzing: true }));
+    const title = state.formData.title?.trim() ?? "";
 
-    window.setTimeout(() => {
+    if (!title) {
+      showError("Add a title before requesting AI suggestions.");
+      return;
+    }
+
+    setState((prev) => ({ ...prev, analyzing: true, suggestions: undefined }));
+
+    try {
+      const response = await fetch("/api/ai-suggestion-sessions/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description: state.formData.description?.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to analyze ticket: ${response.status}`);
+      }
+
+      const session = (await response.json()) as AISuggestionSessionDTO;
+
       setState((prev) => ({
         ...prev,
         analyzing: false,
-        suggestions: {
-          session_id: crypto.randomUUID(),
-          suggestions: [
-            {
-              type: "INSERT",
-              content: "Consider adding acceptance criteria to clarify the expected outcome.",
-              applied: false,
-            },
-            {
-              type: "QUESTION",
-              content: "Are there any device-specific constraints to account for?",
-              applied: false,
-            },
-          ],
-        },
+        suggestions: session,
+        aiEnhanced: session.suggestions.some((suggestion) => suggestion.applied),
       }));
-    }, 800);
-  }, [isViewMode]);
+      showSuccess("AI suggestions are ready.");
+    } catch (error) {
+      console.error(error);
+      setState((prev) => ({ ...prev, analyzing: false }));
+      showError("Unable to analyze ticket. Please try again.");
+    }
+  }, [isViewMode, showError, showSuccess, state.formData.description, state.formData.title]);
 
-  const applyAISuggestion = useCallback((content: string) => {
-    setState((prev) => ({
-      ...prev,
-      formData: {
-        ...prev.formData,
-        description: `${prev.formData.description ? `${prev.formData.description}\n\n` : ""}${content}`,
-      },
-      aiEnhanced: true,
-    }));
+  const applyAISuggestion = useCallback((index: number, content: string) => {
+    setState((prev) => {
+      const descriptionPrefix = prev.formData.description ? `${prev.formData.description}\n\n` : "";
+      const nextDescription = `${descriptionPrefix}${content}`;
+
+      let nextSuggestions = prev.suggestions;
+      if (nextSuggestions) {
+        nextSuggestions = {
+          ...nextSuggestions,
+          suggestions: nextSuggestions.suggestions.map((suggestion, suggestionIndex) =>
+            suggestionIndex === index
+              ? {
+                  ...suggestion,
+                  applied: true,
+                }
+              : suggestion
+          ),
+        };
+      }
+
+      return {
+        ...prev,
+        formData: {
+          ...prev.formData,
+          description: nextDescription,
+        },
+        suggestions: nextSuggestions,
+        aiEnhanced: true,
+      };
+    });
   }, []);
 
   const toggleAIQuestion = useCallback((index: number) => {
@@ -358,17 +394,48 @@ export const useTicketModal = ({ isOpen, mode, initialTicket, users = [], onClos
           ...prev.suggestions,
           suggestions,
         },
-        aiEnhanced: suggestions.some((suggestion) => suggestion.applied || suggestion.type === "INSERT"),
+        aiEnhanced: suggestions.some((suggestion) => suggestion.applied),
       };
     });
   }, []);
 
-  const rateAISuggestions = useCallback((rating: number) => {
-    setState((prev) => ({
-      ...prev,
-      rating,
-    }));
-  }, []);
+  const rateAISuggestions = useCallback(
+    async (rating: number) => {
+      if (!state.suggestions?.session_id) {
+        showError("Request AI suggestions before rating them.");
+        return;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        rating,
+      }));
+
+      try {
+        const response = await fetch(`/api/ai-suggestion-sessions/${state.suggestions.session_id}/rating`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ rating }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to rate AI suggestions: ${response.status}`);
+        }
+
+        showSuccess("Thanks for rating the AI suggestions.");
+      } catch (error) {
+        console.error(error);
+        setState((prev) => ({
+          ...prev,
+          rating: prev.rating,
+        }));
+        showError("We could not submit your rating. Please try again.");
+      }
+    },
+    [showError, showSuccess, state.suggestions?.session_id]
+  );
 
   const closeModal = useCallback(() => {
     onClose();
