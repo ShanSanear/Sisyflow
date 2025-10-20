@@ -15,7 +15,7 @@ Based on the database schema and PRD, the main resources are:
 
 ### Users (Admin Management)
 
-- **GET** `/users`
+- **GET** `/api/users`
 - Lists all users (ADMIN only).
 - Query params: `limit`, `offset` (pagination)
 - Response:
@@ -32,7 +32,7 @@ Based on the database schema and PRD, the main resources are:
 - Success: 200 OK
 - Errors: 403 Forbidden (not ADMIN)
 
-- **POST** `/users`
+- **POST** `/api/users`
 - Creates a new user (ADMIN only).
 - Request: `{ "email": "string", "password": "string", "username": "string", "role": "USER" }`
 - Response:
@@ -53,14 +53,14 @@ Based on the database schema and PRD, the main resources are:
   - email not empty, email format
   - username not empty, at least 3 characters, but no more than 30
 
-- **DELETE** `/users/:id`
+- **DELETE** `/api/users/:id`
 - Deletes a user (ADMIN only, cannot delete self).
 - Success: 204 No Content
 - Errors: 403 Forbidden (not ADMIN or self), 404 Not Found
 
 ### Profiles
 
-- **GET** `/profiles/me`
+- **GET** `/api/profiles/me`
 - Gets current user's profile.
 - Response:
 
@@ -76,7 +76,7 @@ Based on the database schema and PRD, the main resources are:
 
 - Success: 200 OK
 
-- **PUT** `/profiles/me`
+- **PUT** `/api/profiles/me`
 - Updates current user's profile (username, cannot change role).
 - Request: `{ "username": "string" }`
 - Response: Same as GET
@@ -85,7 +85,7 @@ Based on the database schema and PRD, the main resources are:
 
 ### Tickets
 
-- **GET** `/tickets`
+- **GET** `/api/tickets`
 - Lists tickets with pagination, filtering, sorting.
 - Query params: `limit`, `offset`, `status` (OPEN|IN_PROGRESS|CLOSED), `type` (BUG|IMPROVEMENT|TASK), `assignee_id`, `reporter_id`, `sort` (created_at desc)
 - Response:
@@ -114,7 +114,7 @@ Based on the database schema and PRD, the main resources are:
 
 - Success: 200 OK
 
-- **POST** `/tickets`
+- **POST** `/api/tickets`
 - Creates a new ticket (sets reporter_id to current user).
 - Request:
 
@@ -133,80 +133,59 @@ Based on the database schema and PRD, the main resources are:
   - Title of length between 1 and 200
   - Description of length less than 10000
 
-- **GET** `/tickets/:id`
+- **GET** `/api/tickets/:id`
 - Gets a single ticket with related data.
 - Response: Full ticket object
 - Success: 200 OK
 - Errors: 404 Not Found
 
-- **PUT** `/tickets/:id`
+- **PUT** `/api/tickets/:id`
 - Updates a ticket (reporter/assignee/ADMIN only).
 - Request: Same as POST, but all fields optional
 - Response: Updated ticket
 - Success: 200 OK
 - Errors: 403 Forbidden, 404 Not Found, 400 Bad Request
 
-- **PATCH** `/tickets/:id/status`
+- **PATCH** `/api/tickets/:id/status`
 - Updates ticket status (drag & drop, reporter/assignee/ADMIN only).
 - Request: `{ "status": "OPEN|IN_PROGRESS|CLOSED" }`
 - Response: Updated ticket
 - Success: 200 OK
 - Errors: 403 Forbidden, 404 Not Found
 
-- **PATCH** `/tickets/:id/assignee`
+- **PATCH** `/api/tickets/:id/assignee`
 - Assigns/unassigns user to ticket (self-assignment or ADMIN).
 - Request: `{ "assignee_id": "uuid?" }` (null to unassign)
 - Response: Updated ticket
 - Success: 200 OK
 - Errors: 403 Forbidden, 404 Not Found
 
-- **DELETE** `/tickets/:id`
+- **DELETE** `/api/tickets/:id`
 - Deletes a ticket (ADMIN only).
 - Success: 204 No Content
 - Errors: 403 Forbidden, 404 Not Found
 
-### AI Suggestions
+### AI Suggestions (Future MVP Endpoints)
 
-- **POST** `/ai-suggestion-sessions/analyze`
-- Analyzes ticket title and description to generate AI suggestions (used during ticket creation/editing before saving).
-- Request:
-
-```json
-{
-  "title": "string",
-  "description": "string?"
-}
-```
-
-- Response:
-
-```json
-{
-  "session_id": "uuid",
-  "suggestions": [
-    {
-      "type": "INSERT|QUESTION",
-      "content": "string",
-      "applied": boolean
-    }
-  ]
-}
-```
-
+- **POST** `/api/ai-suggestion-sessions/analyze` (Future)
+- Analyzes ticket title and description to generate AI suggestions (used during ticket creation/editing before saving, via Openrouter.ai in backend API route).
+- Request: `{ "title": "string", "description": "string?" }` + fetch project docs.
+- Response: `{ "session_id": "uuid", "suggestions": [ { "type": "INSERT|QUESTION", "content": "string", "applied": boolean } ] }`
 - Success: 200 OK
-- Errors: 500 Internal Server Error (AI failure)
+- Errors: 500 (log to ai_errors via Supabase insert, user gets generic error info)
 
-- **PUT** `/ai-suggestion-sessions/:id/rating`
+- **PUT** `/api/ai-suggestion-sessions/:id/rating` (Future)
 - Rates an AI suggestion session.
 - Request: `{ "rating": 1-5 }`
 - Success: 200 OK
-- Errors: 400 Bad Request, 404 Not Found
-- Validating:
-  - rating between 1 and 5 or null
+- Errors: 400, 404
+- Validation: rating 1-5 or null; store in Supabase ai_suggestion_sessions.
 
-### Project Documentation
+Implementacja po basic tickets CRUD; użyj Supabase dla tables (ai_suggestion_sessions, ai_errors), backend call do Openrouter.ai.
 
-- **GET** `/project-documentation`
+### Project Documentation (Future for AI)
+
+- **GET** `/api/project-documentation` (Future, dla AI context)
 - Gets the project documentation.
 - Response:
 
@@ -221,7 +200,7 @@ Based on the database schema and PRD, the main resources are:
 
 - Success: 200 OK
 
-- **PUT** `/project-documentation`
+- **PUT** `/api/project-documentation` (ADMIN only, Future)
 - Updates project documentation (ADMIN only).
 - Request: `{ "content": "string" }`
 - Response: Updated documentation
@@ -232,7 +211,7 @@ Based on the database schema and PRD, the main resources are:
 
 ### AI Errors (Admin Only)
 
-- **GET** `/ai-errors`
+- **GET** `/api/ai-errors`
 - Lists AI errors (ADMIN only).
 - Query params: `limit`, `offset`, `ticket_id`
 - Response:
@@ -256,15 +235,18 @@ Based on the database schema and PRD, the main resources are:
 - Success: 200 OK
 - Errors: 403 Forbidden
 
+Wszystkie endpoints pod /api/ (Astro API routes, np. src/pages/api/tickets.ts). Fetch z frontendu: relative '/api/tickets' z auth Bearer z Supabase session z middleware'a.
+
 ## 3. Authentication and Authorization
 
-- **Mechanism**: Supabase Auth with JWT tokens. All endpoints require Bearer token in Authorization header except `/auth/register` and `/auth/login`.
+- **Mechanism**: Supabase Auth with JWT tokens. All endpoints require Bearer token in Authorization header except `/api/auth/register` and `/api/auth/login`.
 - **Implementation**:
-- Use Supabase SDK for token verification.
-- Role-based access: Check user role from profiles table via RLS policies.
-- ADMIN role required for user management, project documentation, and AI errors.
-- Ticket operations: Reporter, assignee, or ADMIN can modify.
-- All those required information are handled by endpoint `/profiles/me` - username, role
+  - Frontend: In Astro API routes (src/pages/api/...): Use supabase from context.locals.supabase (injected via middleware in src/middleware/index.ts, which handles auth from cookies/headers – token auto-set from locals.get('supabaseAccessToken') or similar). For fetch from frontend: relative paths like '/api/tickets' – middleware auto-adds auth headers (Bearer with session token from cookies). Check roles via supabase.from('profiles').select('role').eq('id', user.id).single() in backend; frontend relies on /api/profiles/me response.
+  - Use Supabase SDK for token verification.
+  - Role-based access: Check user role from profiles table via RLS policies.
+  - ADMIN role required for user management, project documentation, and AI errors.
+  - Ticket operations: Reporter, assignee, or ADMIN can modify.
+  - All required information is handled by endpoint `/api/profiles/me` - username, role.
 
 ## 4. Validation and Business Logic
 
@@ -277,9 +259,10 @@ Based on the database schema and PRD, the main resources are:
 - API validates all before DB operations.
 
 - **Business Logic**:
-- First user registration: If no profiles exist, set role to ADMIN.
-- Ticket creation: Auto-set reporter_id.
-- AI suggestions: Fetch project documentation, analyze title/description, send to Openrouter.ai, store in ai_suggestion_sessions.
-- Kanban: Use status filtering for columns.
-- Assignee logic: Allow self-assignment if unassigned.
-- Triggers update updated_at automatically.
+  - First user registration: If no profiles exist, set role to ADMIN (Supabase trigger).
+  - Ticket creation: Auto-set reporter_id.
+  - (Future) AI suggestions: Fetch project documentation (Supabase), analyze title/description via Openrouter.ai (backend), store session in Supabase; set ai_enhanced=true if applied.
+  - Kanban: Use status filtering for columns (Supabase query).
+  - Assignee logic: Allow self-assignment if unassigned (RLS policy).
+  - Triggers update updated_at automatically (Supabase).
+  - AI Errors: On 500, insert to ai_errors table (Supabase).

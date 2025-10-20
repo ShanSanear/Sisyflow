@@ -33,21 +33,20 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 ### Pod-widok: Modal Tworzenia/Edycji Ticketa
 
 - **Nazwa widoku:** Ticket Modal View
-- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu).
-- **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban, z integracją sugestii AI dla kompletności opisu.
-- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza. W trybie edycji: załadowane dane ticketa (tytuł, opis renderowany jako Markdown, typ, osoba przypisana, osoba zgłaszająca - jeśli edycja). Sekcja sugestii AI (jeśli aktywowana): lista sugestii do wstawienia i pytań otwartych. System oceny jakości sugestii (gwiazdkami 1-5). Informacja o osobie zgłaszającej (nieedytowalna).
-- **Kluczowe komponenty widoku:** `Dialog` (okno modalne), `Input` (tytuł), `Textarea` z podglądem Markdown (opis), `Select` (typ ticketa), `Button` (sugestie AI, "Dodaj" sugestie, "Przypisz mnie"), lista sugestii (dynamiczna z przyciskami i checkboxami), `StarRating` (ocena AI), przyciski akcji (Zapisz, Anuluj).
+- **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu), via TicketModalContext (patrz ticket-modal.md, src/lib/contexts/TicketModalContext.tsx).
+- **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban (MVP bez AI; future AI w ticket-modal-with-ai-suggestions.md).
+- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza (title Input, description Textarea plain, type Select). W trybie edycji: załadowane dane ticketa (tytuł, opis plain text, typ, osoba przypisana, osoba zgłaszająca - readonly). Informacja o osobie zgłaszającej (nieedytowalna).
+- **Kluczowe komponenty widoku:** `Dialog` (modal), `Input` (tytuł), `Textarea` (opis, plain dla MVP), `Select` (typ), `Button` ("Przypisz mnie"), przyciski akcji (Zapisz, Anuluj).
 - **UX, dostępność i względy bezpieczeństwa:**
-  - **UX:** Automatyczne wstawianie sugestii do opisu na końcu opisu z dwiema pustymi liniami przerwy; wskaźnik ładowania podczas analizy AI; powiadomienie toast po zapisaniu i odświeżenie tablicy; obsługa klawisza Enter do zatwierdzenia formularza.
-  - **Dostępność:** Trap focus w modalu; etykiety ARIA dla sugestii i ocen; alternatywna nawigacja klawiaturą do aplikacji sugestii.
-  - **Bezpieczeństwo:** Walidacja po stronie klienta zgodna z API (długość pól); weryfikacja uprawnień do edycji na serwerze; brak przechowywania wrażliwych danych w stanie.
+  - **UX:** Walidacja inline; toast po zapisaniu i odświeżenie tablicy; Enter do submit. Integracja: Użyj TicketModalContext z src/lib/contexts/. Walidacja: Zod + React Hook Form. API paths: /api/... (Astro routes).
+  - **Dostępność:** Focus trap w Dialog; ARIA labels dla pól.
+  - **Bezpieczeństwo:** Client-side check uprawnień (UserContext); server RLS w Supabase.
 - **Przypadki brzegowe i stany błędów:**
-  - **Puste stany:** W modalu tworzenia: brak sugestii AI powoduje komunikat "Opis wydaje się kompletny". Na tablicy: komunikat o braku ticketów z zachętą do utworzenia.
-  - **Walidacja:** Błędy pól wymaganych (tytuł, typ) lub przekroczenie limitu znaków (opis <10000) wyświetlają komunikaty inline pod polami. Błędy API (np. konflikt) jako toasty.
-  - **Błędy AI:** Nieudana analiza (500) pokazuje toast z opcją "Spróbuj ponownie"; brak dokumentacji projektu nie blokuje, ale może generować ogólne sugestie.
-  - **Uprawnienia:** Próba edycji cudzego ticketa bez roli admin: modal otwiera się w trybie podglądu; nieautoryzowany dostęp do tworzenia: przekierowanie do logowania.
-  - **Sieciowe:** Offline: blokada akcji z komunikatem; retry na reconnect.
-  - **Mobilne:** Modal dostosowany do pełnego ekranu; brak drag-drop, alternatywa menu kontekstowe.
+  - **Puste stany:** W modalu tworzenia: brak ticketów – zachęta; walidacja inline (Zod).
+  - **Walidacja:** Błędy pól (tytuł, typ) lub limit opis <10000 – inline + toast API.
+  - **Uprawnienia:** Edycja cudzego: auto 'view' mode jeśli użytkownik nie jest adminem.
+  - **Sieciowe:** Offline: disable + toast.
+  - **Mobilne:** Full-screen modal.
 
 ### Widok Profilu Użytkownika
 
@@ -103,29 +102,36 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
     - Nowy system (brak użytkowników): Użytkownik trafia na `/auth` i widzi formularz **rejestracji**. Po utworzeniu konta staje się Administratorem i jest przekierowywany na `/`.
     - Istniejący system: Użytkownik trafia na `/auth` i widzi formularz **logowania**. Po pomyślnym zalogowaniu jest przekierowywany na `/`.
 
-2.  **Główny przepływ (praca z ticketami):**
+2.  **Główny przepływ (praca z ticketami, MVP bez AI):**
     - Po zalogowaniu, top bar staje się widoczny i umożliwia nawigację do ticketów/panelu.
     - Użytkownik znajduje się na widoku **Tablicy Kanban** (`/` bądź `/board`).
     - **Tworzenie ticketa:**
-      - Kliknięcie przycisku "Utwórz Ticket" w top barze otwiera **Modal Tworzenia/Edycji Ticketa** w trybie tworzenia z pustymi polami.
-      - Wprowadzenie tytułu (wymagane, walidacja inline) i wyboru typu z listy (Bug, Improvement, Task).
-      - Opcjonalne wprowadzenie opisu z obsługą Markdown.
-      - Kliknięcie "Poproś o sugestie AI" inicjuje analizę: wyświetlany spinner ładowania; po odpowiedzi, pod opisem pojawia się sekcja z sugestiami (fragmenty do wstawienia z przyciskiem "Dodaj" i pytania z checkboxem "Zastosowano").
-      - Zastosowanie sugestii (wstawienie tekstu lub zaznaczenie checkboxa) aktywuje system oceny gwiazdkami (1-5); ocena jest edytowalna do momentu zapisania.
-      - Kliknięcie "Zapisz": walidacja formularza, zapis oceny AI (jeśli dotyczy), utworzenie ticketa; modal zamyka się, tablica odświeża się, nowy ticket pojawia w kolumnie "Otwarty", wyświetlany toast sukcesu.
+      - Kliknięcie przycisku "Utwórz Ticket" w top barze otwiera **Modal Tworzenia/Edycji Ticketa** w trybie tworzenia z pustymi polami (via TicketModalContext).
+      - Wprowadzenie tytułu (wymagane, walidacja inline Zod) i wyboru typu z listy (Bug, Improvement, Task).
+      - Opcjonalne wprowadzenie opisu (plain text, <10000 znaków).
+      - Kliknięcie "Zapisz": walidacja, zapis ticketa; modal zamyka się, tablica odświeża się, nowy ticket pojawia w kolumnie "Otwarty", wyświetlany toast sukcesu (Sonner). reporter_id auto-set w backendzie; frontend nie wysyła.
       - Anulowanie: zamknięcie modala bez zapisania zmian.
     - **Edycja ticketa:**
-      - Kliknięcie na kartę ticketa na tablicy otwiera **Modal Tworzenia/Edycji Ticketa** w trybie podglądu z załadowanymi danymi (tytuł, opis renderowany jako Markdown, typ, osoba przypisana). Naciśnięcie przycisku "Edytuj" przełącza w tryb edycji.
-      - Edycja pól (oprócz osoby zgłaszającej); jeśli brak przypisanej osoby, dostępny przycisk "Przypisz mnie".
-      - Opcjonalna analiza AI (analogicznie jak w tworzeniu, z możliwością ponownego generowania sugestii dla aktualnego opisu).
+      - Kliknięcie na kartę ticketa na tablicy otwiera **Modal Tworzenia/Edycji Ticketa** w trybie edycji z załadowanymi danymi (tytuł, opis plain, typ, assignee). Jeśli nieuprawniony – 'view' mode.
+      - Edycja pól (oprócz reportera); jeśli brak assignee, przycisk "Przypisz mnie".
       - Zapis zmian: aktualizacja ticketa, odświeżenie tablicy, toast potwierdzenia.
-      - W trybie podglądu (dla nieautoryzowanych): pola tylko do odczytu, bez opcji edycji lub AI.
+      - W trybie podglądu: pola readonly, bez edycji.
     - Przeciąganie karty ticketa na tablicy z kolumny "Otwarty" do "W toku", aby zasygnalizować rozpoczęcie pracy.
     - Po ukończeniu zadania przeciąganie karty do kolumny "Zamknięty".
 
-3.  **Przepływ Administratora:**
+3 **Mapa podróży wraz z integracją AI (Future Step w MVP):**
+
+    - W modalu tworzenia/edycji: Po fill title/desc, klik "Poproś o sugestie AI" – loading (Spinner), analiza via backend (Openrouter.ai).
+    - Sugestie: Lista INSERT (Button "Dodaj" – wstaw do description + \n\n) i QUESTION (Checkbox "Zastosowano" – set applied, ai_enhanced=true).
+    - Po apply: Show AIRating (1-5 gwiazdek), editable do submit; zapisz rating z ticket (opcjonalna).
+    - Zapis: Jeśli ai_enhanced=true, set flag w POST/PUT /tickets; ticket pokazuje MagicWand icon w KanbanCard.
+    - Edge: Brak sugestii – toast "Opis kompletny"; błąd AI – toast + retry.
+
+4.  **Przepływ Administratora: (bez integracji AI)**
     - Administrator klika link "Panel Administratora" w nawigacji, przechodząc do `/admin`.
     - W panelu wybiera zakładkę "Zarządzanie Użytkownikami", aby dodać lub usunąć użytkownika.
+5.  **Przepływ Administratora: (z integracją AI)**
+    - To samo co w normalnym przepływie administratora
     - Przechodzi do zakładki "Zarządzanie Dokumentacją", aby zaktualizować kontekst dla AI.
 
 ## 4. Układ i struktura nawigacji
@@ -139,21 +145,29 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 
 ## 5. Kluczowe komponenty
 
-Poniżej znajduje się lista kluczowych, reużywalnych komponentów opartych na bibliotece Shadcn/ui, które będą stanowić podstawę interfejsu:
+Poniżej znajduje się lista kluczowych, reużywalnych komponentów opartych na bibliotece Shadcn/ui, które będą stanowić podstawę interfejsu (MVP):
 
-- **`Dialog`:** Używany do wszystkich okien modalnych, w tym tworzenia/edycji ticketów oraz dodawania użytkowników.
-- **`AlertDialog`:** Używany do okien dialogowych wymagających potwierdzenia akcji destrukcyjnych (np. usuwanie ticketa, usuwanie użytkownika).
-- **`Button`:** Standardowe przyciski dla wszystkich akcji (zapisz, anuluj, utwórz itp.).
-- **`Input`, `Textarea`, `Select`, `Label`:** Podstawowe elementy formularzy.
-- **`Card`:** Kontener dla kart ticketów na tablicy Kanban oraz dla sekcji w widokach profilu i uwierzytelniania.
-- **`Table`:** Używana do wyświetlania listy użytkowników w panelu Administratora.
-- **`DropdownMenu`:** Używane dla menu użytkownika w głównym pasku nawigacyjnym oraz dla menu akcji w tabeli użytkowników.
-- **`Badge`:** Kolorowe etykiety do wizualnego oznaczania typów ticketów (`Bug`, `Improvement`, `Task`).
-- **`Tooltip`:** Używany do wyświetlania pełnych tytułów ticketów po najechaniu myszą.
-- **`Skeleton`:** Używany jako wskaźnik ładowania dla całej tablicy Kanban.
-- **`Spinner`:** Używany jako wskaźnik ładowania dla akcji wewnątrz komponentów (np. podczas analizy AI w modalu).
-- **`Sonner`:** Globalne powiadomienia (typu "pop-up") informujące o powodzeniu lub niepowodzeniu operacji.
-- **`Navigation`:** Główny element implementacyjny top bara.
-- **`MarkdownViewer`:** Komponent do renderowania opisu ticketa w trybie odczytu (używając react-markdown).
-- **`SuggestionList`:** Dynamiczna lista sugestii AI z przyciskami "Dodaj" dla insert i checkboxami dla pytań.
-- **`StarRating`:** Interaktywny komponent do oceny sugestii AI (1-5 gwiazdek).
+- **`Dialog`:** Używany do wszystkich okien modalnych, w tym tworzenia/edycji ticketów.
+- **`AlertDialog`:** Do potwierdzeń destrukcyjnych (np. usuwanie).
+- **`Button`:** Dla akcji (zapisz, anuluj).
+- **`Input`, `Textarea`, `Select`, `Label`:** Elementy formularzy.
+- **`Card`:** Dla ticket cards i sekcji.
+- **`Table`:** Lista users w admin.
+- **`DropdownMenu`:** Menu użytkownika.
+- **`Badge`:** Typy ticketów.
+- **`Tooltip`:** Pełne tytuły.
+- **`Skeleton`:** Loading states.
+- **`Sonner`:** Toasts.
+- **`Navigation`:** Top bar.
+- **`MarkdownViewer`:** Future dla opisu w view (react-markdown).
+
+### 5.2 Komponenty dla Integracji AI (Future w MVP)
+
+- **`SuggestionList`:** Lista sugestii AI z Button/Checkbox (dynamic, Tailwind space-y, src/components/AISuggestionsList.tsx).
+- **`StarRating`:** Ocena 1-5 (custom z lucide-react StarIcon, clickable Buttons, src/components/AIRating.tsx).
+- **`AIAnalysisButton`:** Przycisk analizy z loading (Button + Spinner, src/components/AIAnalysisButton.tsx).
+- **`MagicWandIcon`:** Ikona w TicketCard jeśli ai_enhanced (lucide-react Wand2).
+- **`MarkdownViewer`:** Render opisu z MD (react-markdown, w view i preview, src/components/MarkdownViewer.tsx).
+- Integracja: Openrouter.ai via /api/ai endpoints (Supabase edge functions lub Astro API routes).
+
+Future deps: react-markdown dla MarkdownViewer.

@@ -33,16 +33,17 @@ W obecnych systemach do śledzenia zadań, użytkownicy często tworzą zgłosze
 - Głównym interfejsem do zarządzania ticketami jest tablica Kanban z kolumnami odpowiadającymi statusom.
 - Zmiana statusu ticketa odbywa się poprzez przeciągnięcie go do odpowiedniej kolumny (drag and drop).
 
-### 3.3. Integracja z AI
+### 3.3. Integracja z AI (Future MVP Step)
 
-- W formularzu tworzenia/edycji ticketa dostępny jest dedykowany przycisk uruchamiający analizę AI.
-- AI analizuje tytuł i opis ticketa w kontekście dokumentacji projektu.
+W formularzu tworzenia/edycji ticketa dostępny będzie dedykowany przycisk uruchamiający analizę AI (via backend z Openrouter.ai, kontekst z Supabase project_documentation).
+
+- AI analizuje tytuł i opis ticketa w kontekście dokumentacji projektu (zarządzanej przez Admin w Supabase table).
 - Dokumentacja projektu jest zarządzana przez Administratora w jednym polu tekstowym (limit 20 000 znaków).
 - System generuje dwa typy sugestii:
   - _Sugestie do wstawienia_: Konkretne fragmenty tekstu z przyciskiem "Dodaj", który wstawia je do opisu.
   - _Pytania otwarte_: Pytania kontrolne z checkboxem "Zastosowano", który użytkownik może zaznaczyć.
-- Ticket, w którym użyto sugestii AI, jest oznaczony specjalną ikoną ("magiczna różdżka").
-- Zgłaszający ma możliwość oceny jakości podpowiedzi w skali od 1 do 5 gwiazdek.
+- Ticket, w którym użyto sugestii AI, jest oznaczony specjalną ikoną ("magiczna różdżka") i odpowiednią flagą w bazie danych.
+- Zgłaszający ma możliwość oceny jakości podpowiedzi w skali od 1 do 5 gwiazdek (przechowywanych w bazie danych).
 - Jeśli AI nie znajdzie potencjalnych braków w opisie, wyświetli stosowny komunikat.
 
 ### 3.4. Panel Administratora
@@ -159,10 +160,10 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  Nie mogę zmienić pola "Osoba zgłaszająca".
   4.  Użytkownik, który nie jest autorem, nie widzi opcji edycji (chyba, że jest Administratorem).
 
-### 5.4. Funkcjonalność AI
+### 5.4. Future MVP Step: Funkcjonalność AI
 
 - ID: US-010
-- Tytuł: Uzyskiwanie sugestii AI do opisu ticketa
+- Tytuł: Uzyskiwanie sugestii AI do opisu ticketa (Future)
 - Opis: Jako użytkownik tworzący ticket, chcę móc poprosić AI o sugestie dotyczące uzupełnienia opisu, aby upewnić się, że zawarłem wszystkie kluczowe informacje.
 - Kryteria akceptacji:
   1.  W formularzu tworzenia/edycji ticketa znajduje się przycisk "Poproś o sugestie AI".
@@ -173,7 +174,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   6.  Użytkownik który nie jest zalogowany, nie może prosić o analizę ticketa pod względem sugestii AI.
 
 - ID: US-011
-- Tytuł: Aplikowanie sugestii AI
+- Tytuł: Aplikowanie sugestii AI (Future)
 - Opis: Jako użytkownik, po otrzymaniu sugestii od AI, chcę móc w łatwy sposób zastosować je w opisie mojego ticketa.
 - Kryteria akceptacji:
   1.  Przy każdej sugestii "do wstawienia" znajduje się przycisk "Dodaj", który wstawia tekst w odpowiednie miejsce opisu.
@@ -181,7 +182,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   3.  Zastosowanie co najmniej jednej sugestii (dodanie tekstu lub zaznaczenie checkboxa) powoduje oznaczenie ticketa ikoną "magicznej różdżki".
 
 - ID: US-012
-- Tytuł: Ocena jakości sugestii AI
+- Tytuł: Ocena jakości sugestii AI (Future)
 - Opis: Jako użytkownik, chcę móc ocenić jakość otrzymanych sugestii w skali 1-5 gwiazdek, aby dostarczyć feedback na temat trafności podpowiedzi.
 - Kryteria akceptacji:
   1.  Po wygenerowaniu sugestii, widoczny jest system oceny (np. 5 gwiazdek).
@@ -191,7 +192,7 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   5.  Ocenę może modyfikować tylko użytkownik który ją wygenerował (czyli zgłaszający dany ticket)
 
 - ID: US-013
-- Tytuł: Zarządzanie dokumentacją projektu (Administrator)
+- Tytuł: Zarządzanie dokumentacją projektu (Administrator) (Future)
 - Opis: Jako Administrator, chcę móc edytować dokumentację projektu w jednym miejscu, aby zapewnić AI aktualny kontekst do analizy ticketów.
 - Kryteria akceptacji:
   1.  W panelu Administratora znajduje się pole tekstowe do zarządzania dokumentacją projektu.
