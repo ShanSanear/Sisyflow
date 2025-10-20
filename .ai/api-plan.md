@@ -165,48 +165,27 @@ Based on the database schema and PRD, the main resources are:
 - Success: 204 No Content
 - Errors: 403 Forbidden, 404 Not Found
 
-### AI Suggestions
+### AI Suggestions (Future MVP Endpoints)
 
-- **POST** `/ai-suggestion-sessions/analyze`
-- Analyzes ticket title and description to generate AI suggestions (used during ticket creation/editing before saving).
-- Request:
-
-```json
-{
-  "title": "string",
-  "description": "string?"
-}
-```
-
-- Response:
-
-```json
-{
-  "session_id": "uuid",
-  "suggestions": [
-    {
-      "type": "INSERT|QUESTION",
-      "content": "string",
-      "applied": boolean
-    }
-  ]
-}
-```
-
+- **POST** `/ai-suggestion-sessions/analyze` (Future)
+- Analyzes ticket title and description to generate AI suggestions (used during ticket creation/editing before saving, via Openrouter.ai in backend API route).
+- Request: `{ "title": "string", "description": "string?" }` + fetch project docs.
+- Response: `{ "session_id": "uuid", "suggestions": [ { "type": "INSERT|QUESTION", "content": "string", "applied": boolean } ] }`
 - Success: 200 OK
-- Errors: 500 Internal Server Error (AI failure)
+- Errors: 500 (log to ai_errors via Supabase insert, user gets generic error info)
 
-- **PUT** `/ai-suggestion-sessions/:id/rating`
+- **PUT** `/ai-suggestion-sessions/:id/rating` (Future)
 - Rates an AI suggestion session.
 - Request: `{ "rating": 1-5 }`
 - Success: 200 OK
-- Errors: 400 Bad Request, 404 Not Found
-- Validating:
-  - rating between 1 and 5 or null
+- Errors: 400, 404
+- Validation: rating 1-5 or null; store in Supabase ai_suggestion_sessions.
 
-### Project Documentation
+Implementacja po basic tickets CRUD; użyj Supabase dla tables (ai_suggestion_sessions, ai_errors), backend call do Openrouter.ai.
 
-- **GET** `/project-documentation`
+### Project Documentation (Future for AI)
+
+- **GET** `/project-documentation` (Future, dla AI context)
 - Gets the project documentation.
 - Response:
 
@@ -221,7 +200,7 @@ Based on the database schema and PRD, the main resources are:
 
 - Success: 200 OK
 
-- **PUT** `/project-documentation`
+- **PUT** `/project-documentation` (ADMIN only, Future)
 - Updates project documentation (ADMIN only).
 - Request: `{ "content": "string" }`
 - Response: Updated documentation
@@ -277,9 +256,10 @@ Based on the database schema and PRD, the main resources are:
 - API validates all before DB operations.
 
 - **Business Logic**:
-- First user registration: If no profiles exist, set role to ADMIN.
-- Ticket creation: Auto-set reporter_id.
-- AI suggestions: Fetch project documentation, analyze title/description, send to Openrouter.ai, store in ai_suggestion_sessions.
-- Kanban: Use status filtering for columns.
-- Assignee logic: Allow self-assignment if unassigned.
-- Triggers update updated_at automatically.
+  - First user registration: If no profiles exist, set role to ADMIN (Supabase trigger).
+  - Ticket creation: Auto-set reporter_id.
+  - (Future) AI suggestions: Fetch project documentation (Supabase), analyze title/description via Openrouter.ai (backend), store session in Supabase; set ai_enhanced=true if applied.
+  - Kanban: Use status filtering for columns (Supabase query).
+  - Assignee logic: Allow self-assignment if unassigned (RLS policy).
+  - Triggers update updated_at automatically (Supabase).
+  - AI Errors: On 500, insert to ai_errors table (Supabase).

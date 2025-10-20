@@ -2,184 +2,171 @@
 
 ## 1. Przegląd
 
-Widok Ticket Modal View to modalne okno dialogowe służące do tworzenia nowych ticketów, edycji istniejących lub podglądu ich szczegółów w aplikacji Sisyflow. Głównym celem jest zapewnienie intuicyjnego interfejsu do zarządzania ticketami bez opuszczania głównego widoku tablicy Kanban, z integracją sugestii AI poprawiających kompletność opisów. Widok obsługuje role użytkowników, walidację danych i interakcje z API, zapewniając wysoką dostępność i responsywność, szczególnie na urządzeniach mobilnych.
+Widok Ticket Modal View to modalne okno dialogowe służące do tworzenia nowych ticketów, edycji istniejących lub podglądu ich szczegółów w aplikacji Sisyflow (wersja MVP bez integracji AI). Głównym celem jest zapewnienie intuicyjnego interfejsu do zarządzania ticketami bez opuszczania głównego widoku tablicy Kanban. Widok obsługuje role użytkowników, walidację danych i interakcje z API Supabase, zapewniając wysoką dostępność i responsywność, szczególnie na urządzeniach mobilnych. Integracja AI (sugestie, rating) jest future feature – patrz ticket-modal-with-ai-suggestions.md.
 
 ## 2. Routing widoku
 
-Widok nie jest samodzielną stroną, lecz komponentem modalnym osadzonym w głównym widoku tablicy Kanban (`/board`). Otwierany jest programowo poprzez stan aplikacji (useState w komponencie Board), wyzwalany przyciskiem „Utwórz Ticket” w top barze lub kliknięciem na kartę ticketa. Nie wymaga dedykowanej ścieżki URL, ale korzysta z query params (`/board?ticketId=uuid`) do otwierania w trybie edycji.
+Widok nie jest samodzielną stroną, lecz komponentem modalnym osadzonym w głównym widoku tablicy Kanban (`/board`). Otwierany jest programowo poprzez globalny TicketModalContext (React Context w src/lib/TicketModalContext.tsx), wyzwalany przyciskiem „Create Ticket” w NavigationBar (tryb tworzenia) lub kliknięciem na kartę ticketa (tryb edycji/podglądu). Nie wymaga dedykowanej ścieżki URL, ale korzysta z query params (`/board?ticketId=uuid`) do otwierania w trybie edycji/podglądu. Po close modala, czyść query params via history.replaceState.
+
+### 2.1 Integracja z NavigationBar
+
+Użyj TicketModalContext do komunikacji:
+
+- W NavigationBar.tsx: useTicketModal() do setOpen({ mode: 'create', ticketId: null }) zamiast window.location.href.
+- W Board.tsx (KanbanBoardView): useContext do renderowania <TicketModal /> i obsługi query params (np. const urlParams = new URLSearchParams(window.location.search); if (urlParams.get('ticketId')) setOpen({ mode: 'edit', ticketId: urlParams.get('ticketId') })).
+- Context definiuje: { isOpen: boolean, mode: 'create'|'edit'|'view', ticketId?: string, setOpen: (data: {mode: string, ticketId?: string}) => void, onClose: () => void, onSave: (ticket: FullTicketDTO) => void }.
 
 ## 3. Struktura komponentów
 
-Hierarchia komponentów:
+Hierarchia komponentów (MVP bez AI):
 
 - `TicketModal` (główny komponent modalny)
   - `Dialog` (z Shadcn/ui) – kontener modalny
-    - `DialogContent` – zawartość modalu
+    - `DialogContent` – zawartość modalu (max-w-2xl max-h-[90vh] overflow-y-auto, Tailwind responsive)
       - `TicketForm` – formularz edycji/danych
-        - `TitleInput` – pole tytułu
-        - `DescriptionEditor` – edytor Markdown z podglądem
-        - `TypeSelect` – wybór typu ticketa
+        - `TitleInput` – pole tytułu (Input z Shadcn)
+        - `DescriptionEditor` – edytor tekstu (Textarea z Shadcn, plain text dla MVP)
+        - `TypeSelect` – wybór typu ticketa (Select z Shadcn)
         - `AssigneeSection` – sekcja przypisania osoby
-        - `ReporterDisplay` – wyświetlanie osoby zgłaszającej (tylko odczyt)
-      - `AIAnalysisButton` – przycisk do analizy AI
-      - `AISuggestionsList` – lista sugestii AI (warunkowa)
-      - `AIRating` – ocena sugestii (warunkowa)
+        - `ReporterDisplay` – wyświetlanie osoby zgłaszającej (tylko odczyt, Badge/Avatar)
       - `ActionButtons` – przyciski akcji (Zapisz, Anuluj, Przypisz mnie)
 
 ## 4. Szczegóły komponentów
 
 ### TicketModal
 
-- Opis komponentu: Główny komponent zarządzający stanem modalu, trybem (create/edit/view) i integracją z API. Składa się z Dialog z Shadcn/ui, obsługuje otwieranie/zamykanie i fokus trap.
-- Główne elementy: `<Dialog open={isOpen} onOpenChange={handleClose}>`, `<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">` z `<TicketForm />`, `<AISuggestionsList />`, `<ActionButtons />`.
-- Obsługiwane zdarzenia: onOpen (załadowanie danych dla edycji), onClose (reset stanu), keydown (Esc/Enter).
-- Obsługiwana walidacja: Koordynuje walidację formularza przed zapisem; blokuje zapis jeśli błędy.
-- Typy: `TicketModalProps`, `FullTicketDTO`, `AISuggestionSessionDTO`.
-- Propsy: `{ isOpen: boolean, onClose: () => void, mode: 'create' | 'edit' | 'view', initialTicket?: FullTicketDTO, onSave: (ticket: FullTicketDTO) => void }`.
+- Opis komponentu: Główny komponent zarządzający stanem modalu, trybem (create/edit/view) i integracją z backend API aplikacji. Używa Dialog z Shadcn/ui, obsługuje otwieranie/zamykanie i focus trap (wbudowany w Dialog).
+- Główne elementy: `<Dialog open={isOpen} onOpenChange={onClose}>`, `<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">` z `<TicketForm />`, `<ActionButtons />`.
+- Obsługiwane zdarzenia: onOpen (załadowanie danych dla edycji via useEffect i fetch GET /tickets/:id), onClose (reset stanu via onClose callback), keydown (Esc/Enter via Dialog props).
+- Obsługiwana walidacja: Koordynuje walidację formularza przed zapisem; blokuje zapis jeśli błędy (use Zod schema).
+- Typy: `TicketModalProps`, `FullTicketDTO`.
+- Propsy: `{ isOpen: boolean, onClose: () => void, mode: 'create' | 'edit' | 'view', initialTicket?: FullTicketDTO, onSave: (ticket: FullTicketDTO) => void, user: UserDTO z UserContext, isAdmin: boolean }`.
 
 ### TicketForm
 
-- Opis komponentu: Formularz do wprowadzania/ edycji danych ticketa, z obsługą Markdown i walidacją client-side.
+- Opis komponentu: Formularz do wprowadzania/edycji danych ticketa, z obsługą plain text i walidacją client-side (Zod).
 - Główne elementy: `<form onSubmit={handleSubmit}>`, `<TitleInput />`, `<DescriptionEditor />`, `<TypeSelect />`, `<AssigneeSection />`, `<ReporterDisplay />`.
-- Obsługiwane zdarzenia: onSubmit (walidacja i API call), onChange (aktualizacja stanu).
-- Obsługiwana walidacja: Tytuł: wymagany, 1-200 znaków; Opis: opcjonalny, <10000 znaków; Typ: wymagany z listy ['Bug', 'Improvement', 'Task'].
+- Obsługiwane zdarzenia: onSubmit (walidacja i API call), onChange (aktualizacja stanu formData).
+- Obsługiwana walidacja: Tytuł: wymagany, 1-200 znaków; Opis: opcjonalny, <10000 znaków; Typ: wymagany z listy ['Bug', 'Improvement', 'Task']. Błędy inline pod polami (czerwone borders + <p className="text-destructive text-sm mt-1">{error}</p>).
 - Typy: `CreateTicketCommand`, `UpdateTicketCommand`.
-- Propsy: `{ formData: Partial<CreateTicketCommand>, onChange: (data: Partial<CreateTicketCommand>) => void, errors: Record<string, string>, mode: 'create' | 'edit' | 'view' }`.
+- Propsy: `{ formData: Partial<CreateTicketCommand>, onChange: (data: Partial<CreateTicketCommand>) => void, errors: Record<string, string>, mode: 'create' | 'edit' | 'view', user: UserDTO, isAdmin: boolean }`.
 
 ### DescriptionEditor
 
-- Opis komponentu: Textarea z podglądem Markdown, wykorzystujący bibliotekę jak react-markdown.
-- Główne elementy: `<div className="grid md:grid-cols-2 gap-4"> <Textarea /> <MarkdownPreview /> </div>`.
-- Obsługiwane zdarzenia: onChange (aktualizacja opisu i podglądu).
-- Obsługiwana walidacja: Limit długości, ostrzeżenie o przekroczeniu.
+- Opis komponentu: Proste pole tekstowe do opisu ticketa (dla MVP: plain text bez Markdown preview lub renderingu; future: dodaj react-markdown – patrz ticket-modal-with-ai-suggestions.md).
+- Główne elementy: `<Textarea rows={10} placeholder="Opisz ticket..." className={error ? 'border-destructive' : ''} />` z Shadcn.
+- Obsługiwane zdarzenia: onChange (aktualizacja opisu).
+- Obsługiwana walidacja: Limit długości, licznik znaków na dole (np. <p>{value.length}/10000</p>), ostrzeżenie >8000.
 - Typy: `string` dla opisu.
-- Propsy: `{ value: string, onChange: (value: string) => void, error?: string }`.
+- Propsy: `{ value: string, onChange: (value: string) => void, error?: string, mode: string }`. W 'view': readonly.
 
 ### TypeSelect
 
-- Opis komponentu: Dropdown do wyboru typu ticketa z predefiniowanymi opcjami.
-- Główne elementy: `<Select>` z Shadcn/ui, opcje: Bug, Improvement, Task.
+- Opis komponentu: Dropdown do wyboru typu ticketa z predefiniowanymi opcjami (Shadcn Select).
+- Główne elementy: `<Select>`, opcje: Bug, Improvement, Task (z value i placeholder).
 - Obsługiwane zdarzenia: onValueChange.
-- Obsługiwana walidacja: Wymagany wybór.
+- Obsługiwana walidacja: Wymagany wybór (error jeśli pusty).
 - Typy: `Ticket['type']`.
-- Propsy: `{ value: Ticket['type'], onChange: (value: Ticket['type']) => void, error?: string }`.
+- Propsy: `{ value: Ticket['type'], onChange: (value: Ticket['type']) => void, error?: string, mode: string }`. W 'view': disabled.
 
 ### AssigneeSection
 
-- Opis komponentu: Sekcja do przypisywania użytkownika, z opcją „Przypisz mnie” dla nieprzypisanych.
-- Główne elementy: `<Select>` dla admina (lista użytkowników), lub `<Button>Przypisz mnie</Button>` dla zwykłych users.
-- Obsługiwane zdarzenia: onValueChange, onClick (self-assign).
-- Obsługiwana walidacja: Opcjonalna, ale sprawdza uprawnienia.
+- Opis komponentu: Sekcja do przypisywania użytkownika, z opcją „Przypisz mnie” dla nieprzypisanych (dla usera); admin ma Select z listą users.
+- Główne elementy: Jeśli !isAdmin: `<Button variant="outline" onClick={() => onAssign(user.id || null)}>Przypisz mnie</Button>` (jeśli assignee null; unassign via inny button); dla admin: `<Select>` z fetch GET /users (lista UserDTO[]).
+- Obsługiwane zdarzenia: onClick (self-assign via PATCH /tickets/:id/assignee), onValueChange (dla admin).
+- Obsługiwana walidacja: Opcjonalna, sprawdza uprawnienia (tylko self-assign jeśli !assignee i !isAdmin).
 - Typy: `UpdateTicketAssigneeCommand`, `UserDTO[]`.
-- Propsy: `{ assignee?: Pick<Profile, 'username'>, currentUser: UserDTO, users: UserDTO[], isAdmin: boolean, onAssign: (assigneeId: string | null) => void, mode: string }`.
+- Propsy: `{ assignee?: Pick<Profile, 'username'>, currentUser: UserDTO, users: UserDTO[], isAdmin: boolean, onAssign: (assigneeId: string | null) => void, mode: string }`. W 'view': readonly display.
 
-### AISuggestionsList
+### ReporterDisplay
 
-- Opis komponentu: Dynamiczna lista sugestii AI z przyciskami „Dodaj” i checkboxami.
-- Główne elementy: `<ul>` z itemami: dla INSERT – `<Button>Dodaj</Button>`, dla QUESTION – `<Checkbox>Zastosowano</Checkbox>`.
-- Obsługiwane zdarzenia: onClick (dodaj tekst do opisu), onCheckedChange (oznacz jako zastosowane, set ai_enhanced=true).
-- Obsługiwana walidacja: Brak, ale śledzi zastosowane sugestie.
-- Typy: `AISuggestionSessionDTO`.
-- Propsy: `{ suggestions: AISuggestionSessionDTO['suggestions'], onApplyInsert: (content: string) => void, onApplyQuestion: (index: number) => void }`.
-
-### AIRating
-
-- Opis komponentu: Komponent oceny gwiazdkami 1-5 po analizie AI.
-- Główne elementy: 5 `<Button variant="ghost">` z ikonami gwiazdek, lub custom StarRating z Shadcn.
-- Obsługiwane zdarzenia: onClick (wybór ratingu).
-- Obsługiwana walidacja: Wymagany po sugestiach? Opcjonalny.
-- Typy: `RateAISuggestionCommand`.
-- Propsy: `{ rating: number | null, onRate: (rating: number) => void }`.
+- Opis komponentu: Wyświetlanie osoby zgłaszającej (nieedytowalne).
+- Główne elementy: `<div>Reporter: <span className="font-medium">{reporter.username}</span></div>` lub Avatar + Badge.
+- Propsy: `{ reporter: Pick<Profile, 'username'> }`.
 
 ### ActionButtons
 
-- Opis komponentu: Przyciski akcji na dole modalu.
-- Główne elementy: `<div className="flex justify-end gap-2"> <Button variant="outline">Anuluj</Button> <Button>Zapisz</Button> </div>`.
-- Obsługiwane zdarzenia: onClick (anuluj: close, zapisz: submit).
-- Obsługiwana walidacja: Wyłączone jeśli loading lub błędy.
+- Opis komponentu: Przyciski akcji na dole modalu (Shadcn Button).
+- Główne elementy: `<div className="flex justify-end gap-2 mt-4"> <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button> {mode !== 'view' && <Button type="submit" disabled={!isValid || loading}>Save</Button>} </div>`.
+- Obsługiwane zdarzenia: onClick (cancel: onClose, save: submit form).
+- Obsługiwana walidacja: Save wyłączony jeśli loading lub !isValid (z Zod).
 - Typy: Brak specyficznych.
-- Propsy: `{ onCancel: () => void, onSave: () => void, isLoading: boolean, isValid: boolean }`.
+- Propsy: `{ onCancel: () => void, onSave: () => void, isLoading: boolean, isValid: boolean, mode: string }`.
 
 ## 5. Typy
 
-Wykorzystujemy istniejące typy z `src/types.ts`. Nowe typy dla widoku:
+Wykorzystujemy istniejące typy z `src/types.ts`. Nowe typy dla widoku (MVP bez AI):
 
 - `TicketModalMode = 'create' | 'edit' | 'view'` – określa tryb modalu.
 - `TicketModalState` – ViewModel dla stanu modalu:
   - `mode: TicketModalMode`
   - `ticket?: FullTicketDTO` – dane początkowe dla edyt/podgląd
   - `formData: Partial<CreateTicketCommand>` – aktualne dane formularza (title: string, description?: string, type: Ticket['type'])
-  - `suggestions?: AISuggestionSessionDTO` – sesja sugestii AI (session_id: string, suggestions: Array<{type: 'INSERT' | 'QUESTION', content: string, applied: boolean}>)
-  - `rating: number | null` – ocena AI (1-5)
-  - `aiEnhanced: boolean` – flaga czy użyto AI (ustawiana po zastosowaniu sugestii)
   - `loading: boolean` – stan ładowania (API calls)
   - `errors: Record<string, string>` – błędy walidacji (np. {title: 'Pole wymagane'})
-  - `users: UserDTO[]` – lista użytkowników dla select (dla admina)
+  - `users: UserDTO[]` – lista użytkowników dla select (dla admina, fetch jeśli potrzeba, jeśli nie ma endpointa - dummy data)
 
-Powiązane typy: `FullTicketDTO` (z reporter/assignee), `AnalyzeTicketCommand` (title/description dla AI), `RateAISuggestionCommand` (rating).
+Powiązane typy: `FullTicketDTO` (z reporter/assignee, ignoruj ai_enhanced dla MVP), `CreateTicketCommand`, `UpdateTicketCommand`, `AnalyzeTicketCommand` (future).
+
+Walidacja Zod (import { z } from 'zod';):
+const ticketSchema = z.object({
+title: z.string().min(1, 'Tytuł wymagany').max(200, 'Tytuł max 200 znaków'),
+description: z.string().max(10000, 'Opis max 10000 znaków').optional(),
+type: z.enum(['Bug', 'Improvement', 'Task'], { required_error: 'Typ wymagany' })
+});
 
 ## 6. Zarządzanie stanem
 
-Stan zarządzany lokalnie w `TicketModal` za pomocą `useState` dla `TicketModalState`. Custom hook `useTicketModal` do inicjalizacji stanu, obsługi submit i resetu. Dla sugestii AI – osobny stan w `useState<AISuggestionSessionDTO | null>`. Użyj `useEffect` do ładowania danych przy otwarciu (jeśli edit/view: fetch GET /tickets/:id). Integracja z globalnym stanem (np. Redux/Zustand jeśli istnieje, ale dla MVP lokalny stan wystarczy). Po zapisaniu – callback onSave do odświeżenia tablicy w rodzicu.
+Stan zarządzany lokalnie w `TicketModal` za pomocą `useState` dla `TicketModalState`. Custom hook `useTicketModal` (w src/components/hooks/useTicketModal.ts) do inicjalizacji stanu, obsługi submit i resetu. Dla 'create': formData = { title: '', description: '', type: 'Task' }, reporter_id = user.id z UserContext. Użyj `useEffect` do ładowania danych przy otwarciu (jeśli edit/view: fetch GET /tickets/:id poprzez API backendowe). Integracja z globalnym stanem via TicketModalContext i UserContext (z NavigationBar). Po zapisaniu – callback onSave do refetch ticketów w Board.tsx (useState refetch).
 
 ## 7. Integracja API
 
-- **POST /tickets**: Tworzenie – request: `CreateTicketCommand`, response: `FullTicketDTO` (201). Użyj fetch z auth headers z locals.user.
-- **GET /tickets/:id**: Ładowanie dla edyt/view – response: `FullTicketDTO` (200).
-- **PUT /tickets/:id**: Edycja – request: `UpdateTicketCommand` (partial), response: `FullTicketDTO` (200).
+- **POST /tickets**: Tworzenie – request: `CreateTicketCommand` (bez description jeśli puste), response: `FullTicketDTO` (201). Pamiętaj o auth.
+- **GET /tickets/:id**: Ładowanie dla edit/view – response: `FullTicketDTO` (200).
+- **PUT /tickets/:id**: Edycja – request: `UpdateTicketCommand` (partial, bez reporter_id), response: `FullTicketDTO` (200).
 - **PATCH /tickets/:id/assignee**: Przypisanie – request: `{assignee_id: string | null}`, response: `FullTicketDTO` (200).
-- **POST /ai-suggestion-sessions/analyze**: Analiza AI – request: `AnalyzeTicketCommand`, response: `AISuggestionSessionDTO` (200), z loading spinnerem.
-- **PUT /ai-suggestion-sessions/:id/rating**: Ocena – request: `{rating: number | null}`, brak response body.
+- **DELETE /tickets/:id**: Usuwanie (admin only, future).
 
-Wszystkie calls z error handling (try/catch, toasts). Auth: użyj Supabase client z cookies/locals.
+Wszystkie calls z error handling (try/catch, toasts via sonner). Auth: /api/auth/\* endpoints.
 
 ## 8. Interakcje użytkownika
 
-- Otwarcie modalu: Kliknięcie „Utwórz Ticket” (create, puste pola) lub karty (edit/view, załaduj dane). Fokus na tytuł.
-- Wypełnianie formularza: Wpis title/description, wybór type/assignee. Enter submituje.
-- Analiza AI: Klik „Poproś o sugestie AI” – loading, potem lista sugestii. Jeśli brak – komunikat „Opis kompletny”.
-- Zastosowanie sugestii: „Dodaj” wstawia tekst na końcu opisu (+2 nowe linie), checkbox oznacza applied i set ai_enhanced=true.
-- Ocena: Wybór gwiazdek po sugestiach, zapisz przy submit.
-- Przypisanie: „Przypisz mnie” dla nieprzypisanych (PATCH), admin wybiera z listy.
-- Zapisz: Walidacja, API call, toast sukces, close + odśwież tablicę.
-- Anuluj/Esc: Close bez zapisu, reset stanu.
-- Podgląd (view): Pola readonly, brak submit, description renderowane jako markdown, opcja close.
-- Mobilne: Modal full-screen, touch-friendly buttons.
+- Otwarcie modalu: Z NavigationBar (create, puste pola, fokus na tytuł via useRef + useEffect) lub z karty (edit/view, załaduj dane via fetch). Użyj TicketModalContext do wyzwolenia.
+- Wypełnianie formularza: Wpis title/description, wybór type/assignee. Enter submituje form.
+- Przypisanie: „Assign me” dla nieprzypisanych (PATCH), admin wybiera z listy (Select).
+- Zapisz: Walidacja Zod, API call, toast sukces (sonner), onClose + onSave (refetch w Board).
+- Anuluj/Esc: onClose bez zapisu, reset stanu.
+- Podgląd (view): Pola readonly (disabled + plain text), brak submit, opis jako plain text, opcja close.
+- Mobilne: Modal full-screen (Tailwind sm:max-w-2xl else w-full), touch-friendly buttons.
+- Uprawnienia: Client-side check (if mode='edit' && reporter_id !== user.id && !isAdmin → switch to 'view' + toast).
 
 ## 9. Warunki i walidacja
 
-- **Client-side walidacja** (w `TicketForm`): Użyj Zod schema zgodne z API – title: z.string().min(1).max(200), description: z.string().max(10000).optional(), type: z.enum(['Bug', 'Improvement', 'Task']). Błędy inline pod polami (czerwone borders/tooltips). Blokada submit jeśli !isValid.
-- **Uprawnienia**: Sprawdź locals.user.role – admin: pełna edycja, user: tylko własne tickety (if reporter_id === user.id lub admin). Tryb tylko do podglądu dla innych.
+- **Client-side walidacja** (w `TicketForm`): Użyj Zod schema (jak w sekcji 5) – safeParse(formData) do errors. Błędy inline pod polami (czerwone borders/tooltips via Tailwind + Shadcn). Blokada submit jeśli !isValid || (errors.length > 0).
+- **Uprawnienia**: Z UserContext – admin: pełna edycja; user: tylko własne tickety (if reporter_id === user.id lub admin). Tryb view dla innych. Client-side switch + server-side via Supabase RLS.
 - **Tryby**: Create: reporter_id = current user, assignee null; Edit: editable if allowed; View: readonly.
-- **AI**: Tylko po zalogowaniu, błędy nie blokują submit.
-- **Długość**: Live counter dla description, ostrzeżenie >8000 znaków.
+- **Długość**: Live counter dla description, ostrzeżenie >8000 znaków (Tailwind text-warning).
 
 ## 10. Obsługa błędów
 
-- **Walidacja**: Inline errors (np. „Tytuł jest wymagany”) + shake animacja.
-- **API Errors**: 400/403/404/500 – toasty (Shadcn Toast): „Błąd walidacji”, „Brak uprawnień”, „Ticket nie znaleziony”, „Błąd serwera”. Dla AI: „Nieudana analiza, spróbuj ponownie” z retry button.
-- **Brzegowe**: Brak ticketów – komunikat w modalu; Offline – detect navigator.onLine, disable buttons + toast „Brak połączenia”.
-- **AI Brak**: Jeśli brak dokumentacji – komunikat o jej braku.
-- **Permissions**: Unauthorized – redirect do login.
-- Logging: console.error dla dev, Supabase errors table jeśli zintegrowane. Tabela ai_errors jesli AI jest implementowane.
+- **Walidacja**: Inline errors (np. „Title required”) + shake animacja (Tailwind @keyframes).
+- **API Errors**: 400/403/404/500 – toasty (Shadcn Sonner): „Validation error”, „Unauthorized” (switch to view), „Ticket not found”, „Server error”. Retry button dla fetch errors.
+- **Brzegowe**: Brak ticketu – toast + close; Offline – navigator.onLine, disable buttons + toast „No connetion (offline)” (disable submit).
+- **Permissions**: Unauthorized (401) – redirect do /auth.
+- Logging: console.error dla dev
 
-## 11. Kroki implementacji podstawowej
+## 11. Kroki implementacji podstawowej (MVP)
 
-1. Utwórz nowy plik `src/components/ticket/TicketModal.tsx` z importami Shadcn (Dialog, Input, Textarea, Select, Button, Checkbox) i react-markdown.
-2. Zdefiniuj typy w `src/types.ts` (dodaj TicketModalMode, TicketModalState jeśli potrzebne).
-3. Zaimplementuj `TicketForm` z walidacją Zod (import z lib/utils).
-4. Dodaj `DescriptionEditor` z podglądem Markdown (użyj @uiw/react-md-editor lub simple react-markdown).
-5. Stwórz custom hook `useTicketModal` do zarządzania stanem i API calls (użyj fetch lub Supabase SDK).
-6. Integruj `TicketModal` w `Board.tsx` (otwórz z buttonem/kartą, onSave refetch tickets).
-7. Dodaj self-assign w `AssigneeSection` z PATCH call.
-8. Testuj walidację, tryby, AI flow (mock API jeśli potrzeba).
-9. Dodaj ARIA labels, keyboard nav (focus trap w Dialog), responsive classes Tailwind.
-10. Uruchom `npm run lint:fix` i `npm run format` do cleanup.
-11. Przetestuj edge cases: błędy, mobile, permissions.
-
-## 12. Kroki implementacji w drugiej rundzie - AI
-
-1. Zaimplementuj `AISuggestionsList` i `AIRating` z logiką apply/rate.
-2. Zaimplementuj obsługę błędów i ich zapisywanie do tabeli ai_errors.
-3. Uruchom `npm run lint:fix` i `npm run format` do cleanup.
-4. Przetestuj edge cases: błędy, mobile, permissions.
+1. Utwórz `src/lib/TicketModalContext.tsx` z React Context jak w sekcji 2.1 (TypeScript).
+2. Utwórz nowy plik `src/components/ticket/TicketModal.tsx` z importami Shadcn (Dialog, Input, Textarea, Select, Button) i Zod (z `lib/validation/ticket.validation.ts` jeśli dostępne, jeśli nie - dodaj tam i zaimportuj, pamiętaj o używaniu obsługi błędów z `lib/utils.ts`).
+3. Zdefiniuj typy w `src/types.ts` (dodaj TicketModalMode, TicketModalState bez AI).
+4. Zaimplementuj `TicketForm` z walidacją Zod.
+5. Dodaj `DescriptionEditor` jako proste Textarea (bez preview).
+6. Stwórz custom hook `useTicketModal` do zarządzania stanem i API calls.
+7. Integruj `TicketModal` w `KanbanBoardView.tsx` (useContext, render if isOpen, onSave refetch tickets via API).
+8. Zaktualizuj NavigationBar.tsx: useTicketModal do setOpen('create').
+9. Dodaj self-assign w `AssigneeSection` z PATCH call (API call).
+10. Testuj walidację, tryby, uprawnienia (mock user role).
+11. Dodaj ARIA labels (aria-label dla buttons/inputs), keyboard nav (focus trap w Dialog), responsive classes Tailwind (sm: etc.).
+12. Uruchom `npm run lint:fix` i `npm run format`.
+13. Przetestuj edge cases: błędy, mobile, permissions.
