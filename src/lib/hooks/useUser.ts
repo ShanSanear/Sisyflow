@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ProfileDTO } from "../types";
-import type { UserViewModel } from "../components/layout/types";
+import type { ProfileDTO } from "../../types";
+import type { UserViewModel } from "../../components/layout/types";
 
 /**
  * Hook do zarządzania stanem zalogowanego użytkownika

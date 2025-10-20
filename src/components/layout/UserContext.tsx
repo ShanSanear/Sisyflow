@@ -1,5 +1,5 @@
 import React, { createContext, useContext, type ReactNode } from "react";
-import { useUser } from "../../hooks/useUser";
+import { useUser } from "../../lib/hooks/useUser";
 import type { UserViewModel } from "./types";
 
 /**

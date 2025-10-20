@@ -27,10 +27,21 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/db` - Supabase clients and types
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers 
-- `./src/assets` - static internal assets
-- `./public` - public assets
+  - `./src/components/ui` - Client-side components from Shadcn/ui
+  - `./src/components/auth` - Authentication-related components
+  - `./src/components/kanban` - Kanban board components
+  - `./src/components/layout` - Layout components (Header, UserContext, etc.)
+  - `./src/components/ticket` - Ticket-related components
+  - `./src/components/views` - View components (KanbanBoardView, etc.)
+- `./src/lib` - Services and helpers
+  - `./src/lib/hooks` - Custom React hooks (useAuth, useUser, useKanbanBoard, useToast)
+  - `./src/lib/services` - Business logic and API services
+  - `./src/lib/validation` - Validation schemas and helpers
+  - `./src/lib/constants.ts` - Application constants
+  - `./src/lib/utils.ts` - Utility functions
+- `./src/assets` - Static internal assets (images, icons, etc.)
+- `./src/styles` - Global styles (global.css)
+- `./public` - Public assets (favicon, etc.)
 
 When modifying the directory structure, always update this section.
 

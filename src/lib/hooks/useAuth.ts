@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DEVELOPMENT_USER_ID } from "../../lib/constants";
+import { DEVELOPMENT_USER_ID } from "../constants";
 
 interface CurrentUser {
   id: string;
