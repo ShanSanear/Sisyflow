@@ -25,11 +25,10 @@ interface TicketFormProps {
  */
 export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, errors, mode, user, isAdmin, ticket }) => {
   const {
-    register,
     handleSubmit,
     formState: { errors: formErrors },
-    setValue,
     watch,
+    setValue,
   } = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: formData,
@@ -53,7 +52,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
         onChange={(value) => setValue("title", value)}
         error={formErrors.title?.message || errors.title}
         mode={mode}
-        {...register("title")}
       />
 
       <DescriptionEditor
