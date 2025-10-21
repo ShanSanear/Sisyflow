@@ -17,13 +17,23 @@ interface TicketFormProps {
   user: UserDTO | null;
   isAdmin: boolean;
   ticket?: FullTicketDTO;
+  onAssigneeUpdate?: (assignee: { id: string; username: string } | null) => void;
 }
 
 /**
  * Formularz do wprowadzania/edycji danych ticketa
  * Używa React Hook Form z Zod resolver dla walidacji
  */
-export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, errors, mode, user, isAdmin, ticket }) => {
+export const TicketForm: React.FC<TicketFormProps> = ({
+  formData,
+  onChange,
+  errors,
+  mode,
+  user,
+  isAdmin,
+  ticket,
+  onAssigneeUpdate,
+}) => {
   const {
     handleSubmit,
     formState: { errors: formErrors },
@@ -75,10 +85,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
           assignee={ticket.assignee || undefined}
           currentUser={user}
           isAdmin={isAdmin}
-          onAssign={(assigneeId) => {
-            // TODO: Implement assign logic
-            console.log("Assign to:", assigneeId);
-          }}
+          onAssign={onAssigneeUpdate || (() => undefined)}
           mode={mode}
           ticketId={ticket.id}
         />

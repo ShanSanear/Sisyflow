@@ -27,7 +27,12 @@ export const TypeSelect: React.FC<TypeSelectProps> = ({ value, onChange, error, 
     <div className="space-y-2">
       <Label htmlFor="type">Type *</Label>
       <Select value={value} onValueChange={onChange} disabled={isDisabled}>
-        <SelectTrigger className={error ? "border-destructive" : ""}>
+        <SelectTrigger
+          className={error ? "border-destructive" : ""}
+          aria-describedby={error ? "type-error" : undefined}
+          aria-invalid={!!error}
+          aria-label="Ticket type selection"
+        >
           <SelectValue placeholder="Select ticket type..." />
         </SelectTrigger>
         <SelectContent>
@@ -38,7 +43,11 @@ export const TypeSelect: React.FC<TypeSelectProps> = ({ value, onChange, error, 
           ))}
         </SelectContent>
       </Select>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p id="type-error" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

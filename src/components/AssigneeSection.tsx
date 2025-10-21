@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/sonner";
 import type { TicketModalMode, UserDTO } from "@/types";
 
 // Dummy data for users (to be replaced with real API)
@@ -22,7 +23,7 @@ interface AssigneeSectionProps {
   assignee?: { id: string; username: string };
   currentUser: UserDTO | null;
   isAdmin: boolean;
-  onAssign: (assigneeId: string | null) => void;
+  onAssign: (assignee: { id: string; username: string } | null) => void;
   mode: TicketModalMode;
   ticketId?: string;
 }
@@ -43,6 +44,14 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   const handleAssigneeUpdate = async (assigneeId: string | null) => {
     if (!ticketId) return;
 
+    // Check if online
+    if (!navigator.onLine) {
+      toast.error("No internet connection", {
+        description: "Please check your connection and try again",
+      });
+      return;
+    }
+
     setAssigning(true);
     try {
       const response = await fetch(`/api/tickets/${ticketId}/assignee`, {
@@ -58,20 +67,25 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
       }
 
       const updatedTicket = await response.json();
-      onAssign(updatedTicket.assignee_id);
+      onAssign(updatedTicket.assignee || null);
     } catch (error) {
       console.error("Error updating assignee:", error);
-      // TODO: Show toast error
+      toast.error("Failed to update assignee", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
     } finally {
       setAssigning(false);
     }
   };
 
   const handleAssignMe = () => {
-    if (!currentUser) return;
+    if (!currentUser || !canModifyAssignment) return;
     const newAssigneeId = assignee ? null : currentUser.id;
     handleAssigneeUpdate(newAssigneeId);
   };
+
+  // Check if current user can modify this assignment
+  const canModifyAssignment = !assignee || assignee.id === currentUser?.id;
 
   const handleAdminAssign = (assigneeId: string | null) => {
     handleAssigneeUpdate(assigneeId);
@@ -102,7 +116,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           onValueChange={(value) => handleAdminAssign(value || null)}
           disabled={assigning}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Select ticket assignee">
             <SelectValue placeholder="Select user..." />
           </SelectTrigger>
           <SelectContent>
@@ -119,14 +133,32 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           {assignee ? (
             <>
               <Badge variant="secondary">{assignee.username}</Badge>
-              <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
-                {assigning ? "Updating..." : "Unassign"}
-              </Button>
+              {canModifyAssignment && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAssignMe}
+                  disabled={assigning}
+                  aria-label={assigning ? "Unassigning ticket..." : "Unassign ticket from me"}
+                >
+                  {assigning ? "Updating..." : "Unassign"}
+                </Button>
+              )}
             </>
           ) : (
-            <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
-              {assigning ? "Assigning..." : "Assign to me"}
-            </Button>
+            canModifyAssignment && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAssignMe}
+                disabled={assigning}
+                aria-label={assigning ? "Assigning ticket to you..." : "Assign ticket to me"}
+              >
+                {assigning ? "Assigning..." : "Assign to me"}
+              </Button>
+            )
           )}
         </div>
       )}

@@ -85,10 +85,12 @@ const NavigationBarContent: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={handleCreateTicket} className="gap-2" aria-label="Create a new ticket">
-            <PlusCircleIcon className="h-4 w-4" />
-            Create ticket
-          </Button>
+          {user && (
+            <Button onClick={handleCreateTicket} className="gap-2" aria-label="Create a new ticket">
+              <PlusCircleIcon className="h-4 w-4" />
+              Create ticket
+            </Button>
+          )}
 
           <UserMenu
             user={user ? { ...user, initials: user.username.slice(0, 2) } : null}

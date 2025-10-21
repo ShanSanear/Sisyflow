@@ -1,28 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
 import { useUser } from "@/lib/hooks/useUser";
-import type { FullTicketDTO } from "@/types";
+import type { FullTicketDTO, UserDTO } from "@/types";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
-import type { TicketType } from "@/components/views/KanbanBoardView.types";
+import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
 
 /**
  * Główny komponent modalny dla zarządzania ticketami
  * Obsługuje tryby create, edit i view z walidacją i integracją API
  */
 export const TicketModal: React.FC = () => {
-  const { isOpen, mode, ticketId, onClose, onSave } = useTicketModal();
+  const { isOpen, mode, ticketId, onClose, onSave, setOpen } = useTicketModal();
   const { user, isAdmin } = useUser();
   const [ticket, setTicket] = useState<FullTicketDTO | undefined>();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TicketFormData>({
     title: "",
     description: "",
-    type: "TASK" as TicketType,
+    type: "TASK",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  const validateForm = useCallback((data: TicketFormData) => {
+    const result = ticketSchema.safeParse(data);
+    if (result.success) {
+      setErrors({});
+      setIsFormValid(true);
+    } else {
+      const newErrors: Record<string, string> = {};
+      result.error.errors.forEach((error) => {
+        if (error.path.length > 0) {
+          newErrors[error.path[0] as string] = error.message;
+        }
+      });
+      setErrors(newErrors);
+      setIsFormValid(false);
+    }
+  }, []);
 
   // Ładowanie danych ticketa dla trybów edit/view
   useEffect(() => {
@@ -38,11 +56,13 @@ export const TicketModal: React.FC = () => {
           }
           const ticketData: FullTicketDTO = await response.json();
           setTicket(ticketData);
-          setFormData({
+          const newFormData: TicketFormData = {
             title: ticketData.title,
             description: ticketData.description || "",
             type: ticketData.type,
-          });
+          };
+          setFormData(newFormData);
+          validateForm(newFormData);
         } catch (error) {
           console.error("Error fetching ticket:", error);
           toast.error("Failed to load ticket");
@@ -56,22 +76,46 @@ export const TicketModal: React.FC = () => {
     } else {
       // Reset dla trybu create
       setTicket(undefined);
-      setFormData({
+      const newFormData: TicketFormData = {
         title: "",
         description: "",
         type: "TASK",
-      });
-      setErrors({});
+      };
+      setFormData(newFormData);
+      validateForm(newFormData);
     }
-  }, [mode, ticketId, onClose]);
+  }, [mode, ticketId, onClose, validateForm]);
 
   // Sprawdzenie uprawnień - jeśli nie admin i nie właściciel, przełącz na view
   useEffect(() => {
     if (mode === "edit" && ticket && user && !isAdmin && ticket.reporter.id !== user.id) {
-      toast.warning("You don't have permission to edit this ticket");
-      // Can switch to view mode here, but leaving as is for now
+      toast.warning("You don't have permission to edit this ticket. Switching to view mode.");
+      // Switch to view mode by updating the context
+      setOpen({ mode: "view", ticketId: ticket.id });
     }
-  }, [mode, ticket, user, isAdmin]);
+  }, [mode, ticket, user, isAdmin, setOpen]);
+
+  // Funkcja sprawdzająca czy użytkownik może edytować ticket
+  const canEditTicket = (ticket: FullTicketDTO | undefined, user: UserDTO | null, isAdmin: boolean): boolean => {
+    return isAdmin || Boolean(ticket && user && ticket.reporter.id === user.id);
+  };
+
+  // Handler do przełączania w tryb edycji
+  const handleEditMode = () => {
+    if (ticket) {
+      // Resetuj formData do wartości z ticket (zachowaj dane ale wyczyść ewentualne niezapisane zmiany)
+      const newFormData: TicketFormData = {
+        title: ticket.title,
+        description: ticket.description || "",
+        type: ticket.type,
+      };
+      setFormData(newFormData);
+      validateForm(newFormData);
+
+      // Przełącz na tryb edit
+      setOpen({ mode: "edit", ticketId: ticket.id });
+    }
+  };
 
   const handleSave = async (data: typeof formData) => {
     if (!user) return;
@@ -122,21 +166,36 @@ export const TicketModal: React.FC = () => {
     }
   };
 
-  const handleFormChange = (data: Partial<typeof formData>) => {
-    setFormData((prev) => ({ ...prev, ...data }));
-    // Wyczyść błędy przy zmianie
-    setErrors({});
+  const handleFormChange = (data: Partial<TicketFormData>) => {
+    const newData = { ...formData, ...data };
+    setFormData(newData);
+    // Sprawdź walidację formularza
+    validateForm(newData);
+  };
+
+  const handleAssigneeUpdate = (newAssignee: { id: string; username: string } | null) => {
+    if (ticket) {
+      setTicket({
+        ...ticket,
+        assignee: newAssignee || undefined,
+      });
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" && "Create new ticket"}
             {mode === "edit" && "Edit ticket"}
             {mode === "view" && "View ticket"}
           </DialogTitle>
+          <DialogDescription>
+            {mode === "create" && "Fill in the details to create a new ticket"}
+            {mode === "edit" && "Make changes to the ticket details"}
+            {mode === "view" && "View ticket information"}
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (
@@ -153,8 +212,17 @@ export const TicketModal: React.FC = () => {
               user={user}
               isAdmin={isAdmin}
               ticket={ticket}
+              onAssigneeUpdate={handleAssigneeUpdate}
             />
-            <ActionButtons onCancel={onClose} onSave={() => handleSave(formData)} isLoading={loading} mode={mode} />
+            <ActionButtons
+              onCancel={onClose}
+              onSave={() => handleSave(formData)}
+              onEdit={handleEditMode}
+              isLoading={loading}
+              isValid={isFormValid}
+              mode={mode}
+              canEdit={canEditTicket(ticket, user, isAdmin)}
+            />
           </>
         )}
       </DialogContent>

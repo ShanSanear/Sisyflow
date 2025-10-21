@@ -13,6 +13,8 @@ interface BoardContainerProps {
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  onTicketClick?: (ticketId: string) => void;
+  onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
 
 export const BoardContainer: React.FC<BoardContainerProps> = ({
@@ -21,6 +23,8 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  onTicketClick,
+  onTicketEdit,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -120,7 +124,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
             </TooltipProvider>
           </div>
           <div
-            className="flex gap-6 overflow-x-auto justify-start lg:justify-center"
+            className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center"
             role="application"
             aria-label="Kanban board with drag and drop functionality"
           >
@@ -133,6 +137,8 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
                 savingTicketId={savingTicketId}
                 canMoveTicket={canMoveTicket}
                 handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+                onTicketClick={onTicketClick}
+                onTicketEdit={onTicketEdit}
               />
             ))}
           </div>
