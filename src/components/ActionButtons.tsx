@@ -16,13 +16,24 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, 
   const isViewMode = mode === "view";
 
   return (
-    <div className="flex justify-end gap-2 pt-4 border-t">
-      <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isLoading}
+        aria-label={isViewMode ? "Close ticket details" : "Cancel and close ticket form"}
+      >
         {isViewMode ? "Close" : "Cancel"}
       </Button>
 
       {!isViewMode && (
-        <Button type="button" onClick={onSave} disabled={isLoading}>
+        <Button
+          type="button"
+          onClick={onSave}
+          disabled={isLoading}
+          aria-label={isLoading ? "Saving ticket..." : "Save ticket changes"}
+        >
           {isLoading ? "Saving..." : "Save"}
         </Button>
       )}

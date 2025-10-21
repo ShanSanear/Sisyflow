@@ -102,7 +102,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           onValueChange={(value) => handleAdminAssign(value || null)}
           disabled={assigning}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Select ticket assignee">
             <SelectValue placeholder="Select user..." />
           </SelectTrigger>
           <SelectContent>
@@ -119,12 +119,26 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           {assignee ? (
             <>
               <Badge variant="secondary">{assignee.username}</Badge>
-              <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAssignMe}
+                disabled={assigning}
+                aria-label={assigning ? "Unassigning ticket..." : "Unassign ticket from me"}
+              >
                 {assigning ? "Updating..." : "Unassign"}
               </Button>
             </>
           ) : (
-            <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAssignMe}
+              disabled={assigning}
+              aria-label={assigning ? "Assigning ticket to you..." : "Assign ticket to me"}
+            >
               {assigning ? "Assigning..." : "Assign to me"}
             </Button>
           )}

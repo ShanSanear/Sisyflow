@@ -27,8 +27,14 @@ export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, error, 
         disabled={isDisabled}
         className={error ? "border-destructive" : ""}
         placeholder="Enter ticket title..."
+        aria-describedby={error ? "title-error" : undefined}
+        aria-invalid={!!error}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p id="title-error" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -130,7 +130,7 @@ export const TicketModal: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" && "Create new ticket"}

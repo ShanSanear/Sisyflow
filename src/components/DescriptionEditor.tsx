@@ -30,14 +30,20 @@ export const DescriptionEditor: React.FC<DescriptionEditorProps> = ({ value, onC
         className={error ? "border-destructive" : ""}
         placeholder="Describe the ticket..."
         rows={6}
+        aria-describedby={error ? "description-error description-help" : "description-help"}
+        aria-invalid={!!error}
       />
-      <div className="flex justify-between text-sm text-muted-foreground">
+      <div id="description-help" className="flex justify-between text-sm text-muted-foreground">
         <span className={isNearLimit ? "text-warning" : ""}>
           {charCount}/{maxChars} characters
         </span>
         {isNearLimit && <span className="text-warning">Approaching character limit</span>}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p id="description-error" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

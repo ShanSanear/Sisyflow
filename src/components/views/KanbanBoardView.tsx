@@ -112,14 +112,12 @@ export const KanbanBoardView: React.FC = () => {
   }
 
   return (
-    <>
-      <BoardContainer
-        boardState={boardState}
-        handleDragEnd={handleDragEnd}
-        savingTicketId={savingTicketId}
-        canMoveTicket={canMoveTicket}
-        handleStatusChangeViaMenu={handleStatusChangeViaMenu}
-      />
-    </>
+    <BoardContainer
+      boardState={boardState}
+      handleDragEnd={handleDragEnd}
+      savingTicketId={savingTicketId}
+      canMoveTicket={canMoveTicket}
+      handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+    />
   );
 };
