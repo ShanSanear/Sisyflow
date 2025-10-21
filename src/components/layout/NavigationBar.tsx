@@ -2,24 +2,26 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
-import { UserProvider, useUserContext } from "./UserContext";
+import { useUserContext } from "./UserContext";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { PlusCircleIcon } from "lucide-react";
 import { toast } from "../ui/sonner";
+import { useTicketModal } from "../../lib/contexts/TicketModalContext";
 
 const NavigationBarContent: React.FC = () => {
-  const { user, isLoading, error, refetch } = useUserContext();
+  const { user, isLoading, error, refetchUser } = useUserContext();
+  const { setOpen } = useTicketModal();
   const lastErrorMessageRef = useRef<string | null>(null);
 
   const handleCreateTicket = () => {
-    //TODO proper handling of modal opening;
+    setOpen({ mode: "create" });
   };
 
   const handleRefetch = useCallback(() => {
     toast.info("Retrying user data fetch");
-    void refetch();
-  }, [refetch]);
+    void refetchUser();
+  }, [refetchUser]);
 
   const handleLogout = useCallback(async () => {
     const response = await fetch("/api/auth/sign-out", {
@@ -79,7 +81,7 @@ const NavigationBarContent: React.FC = () => {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-1 items-center gap-6">
           <Logo />
-          <NavLinks user={user} />
+          <NavLinks user={user ? { ...user, initials: user.username.slice(0, 2) } : null} />
         </div>
 
         <div className="flex items-center gap-3">
@@ -88,7 +90,11 @@ const NavigationBarContent: React.FC = () => {
             Create ticket
           </Button>
 
-          <UserMenu user={user} isLoading={false} onLogout={handleLogout} />
+          <UserMenu
+            user={user ? { ...user, initials: user.username.slice(0, 2) } : null}
+            isLoading={false}
+            onLogout={handleLogout}
+          />
         </div>
       </div>
 
@@ -107,9 +113,5 @@ const NavigationBarContent: React.FC = () => {
 };
 
 export const NavigationBar: React.FC = () => {
-  return (
-    <UserProvider>
-      <NavigationBarContent />
-    </UserProvider>
-  );
+  return <NavigationBarContent />;
 };

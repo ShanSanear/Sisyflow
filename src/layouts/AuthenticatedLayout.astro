@@ -1,6 +1,6 @@
 ---
 import Layout from "./Layout.astro";
-import { NavigationBar } from "../components/layout/NavigationBar.tsx";
+import { NavigationBarIsland } from "../components/layout/NavigationBarIsland.tsx";
 import { Toaster } from "../components/ui/sonner";
 
 interface Props {
@@ -17,7 +17,7 @@ if (!user) {
 ---
 
 <Layout title={title}>
-  <NavigationBar client:load />
+  <NavigationBarIsland client:load />
 
   <main class="min-h-screen bg-muted/20">
     <slot />

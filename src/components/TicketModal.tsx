@@ -106,6 +106,10 @@ export const TicketModal: React.FC = () => {
 
       const savedTicket: FullTicketDTO = await response.json();
       onSave(savedTicket);
+
+      // Emit custom event for components to react to ticket changes
+      window.dispatchEvent(new CustomEvent("ticket:saved", { detail: savedTicket }));
+
       toast.success(mode === "create" ? "Ticket created" : "Ticket updated");
       onClose();
     } catch (error) {
