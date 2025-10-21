@@ -27,19 +27,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
   const {
     handleSubmit,
     formState: { errors: formErrors },
-    watch,
     setValue,
+    watch,
   } = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: formData,
   });
 
   const watchedValues = watch();
-
-  // Aktualizuj formData przy zmianach
-  React.useEffect(() => {
-    onChange(watchedValues);
-  }, [watchedValues, onChange]);
 
   const handleFormSubmit = () => {
     // Submit jest obsługiwany przez ActionButtons
@@ -49,36 +44,45 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <TitleInput
         value={watchedValues.title || " "}
-        onChange={(value) => setValue("title", value)}
+        onChange={(value) => {
+          setValue("title", value);
+          onChange({ title: value });
+        }}
         error={formErrors.title?.message || errors.title}
         mode={mode}
       />
-
       <DescriptionEditor
         value={watchedValues.description || " "}
-        onChange={(value) => setValue("description", value)}
+        onChange={(value) => {
+          setValue("description", value);
+          onChange({ description: value });
+        }}
         error={formErrors.description?.message || errors.description}
         mode={mode}
       />
-
       <TypeSelect
         value={watchedValues.type}
-        onChange={(value) => setValue("type", value)}
+        onChange={(value) => {
+          setValue("type", value);
+          onChange({ type: value });
+        }}
         error={formErrors.type?.message || errors.type}
         mode={mode}
       />
 
-      <AssigneeSection
-        assignee={ticket?.assignee || undefined}
-        currentUser={user}
-        isAdmin={isAdmin}
-        onAssign={(assigneeId) => {
-          // TODO: Implement assign logic
-          console.log("Assign to:", assigneeId);
-        }}
-        mode={mode}
-        ticketId={ticket?.id}
-      />
+      {mode !== "create" && ticket && (
+        <AssigneeSection
+          assignee={ticket.assignee || undefined}
+          currentUser={user}
+          isAdmin={isAdmin}
+          onAssign={(assigneeId) => {
+            // TODO: Implement assign logic
+            console.log("Assign to:", assigneeId);
+          }}
+          mode={mode}
+          ticketId={ticket.id}
+        />
+      )}
 
       {(mode === "edit" || mode === "view") && ticket && <ReporterDisplay reporter={ticket.reporter} />}
     </form>

@@ -79,7 +79,8 @@ export const TicketModal: React.FC = () => {
     setLoading(true);
     try {
       let response: Response;
-
+      console.log("handleSave data:", data);
+      console.log("HandleSave mode:", mode);
       if (mode === "create") {
         response = await fetch("/api/tickets", {
           method: "POST",
