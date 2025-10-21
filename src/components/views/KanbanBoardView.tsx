@@ -51,9 +51,12 @@ export const KanbanBoardView: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
         <div className="max-w-full mx-auto px-6">
-          <div className="flex gap-6 overflow-x-auto justify-start lg:justify-center">
+          <div className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="flex flex-col w-80 min-h-[600px] bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+              <div
+                key={index}
+                className="flex flex-col w-full sm:w-80 min-h-[600px] bg-gray-50 dark:bg-gray-900 rounded-lg p-4"
+              >
                 <Skeleton className="h-6 w-24 mb-4" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, cardIndex) => (

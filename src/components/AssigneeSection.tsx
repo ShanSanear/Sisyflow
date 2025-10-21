@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/sonner";
 import type { TicketModalMode, UserDTO } from "@/types";
 
 // Dummy data for users (to be replaced with real API)
@@ -43,6 +44,14 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   const handleAssigneeUpdate = async (assigneeId: string | null) => {
     if (!ticketId) return;
 
+    // Check if online
+    if (!navigator.onLine) {
+      toast.error("No internet connection", {
+        description: "Please check your connection and try again",
+      });
+      return;
+    }
+
     setAssigning(true);
     try {
       const response = await fetch(`/api/tickets/${ticketId}/assignee`, {
@@ -61,7 +70,9 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
       onAssign(updatedTicket.assignee || null);
     } catch (error) {
       console.error("Error updating assignee:", error);
-      // TODO: Show toast error
+      toast.error("Failed to update assignee", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
     } finally {
       setAssigning(false);
     }

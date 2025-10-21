@@ -122,7 +122,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
             </TooltipProvider>
           </div>
           <div
-            className="flex gap-6 overflow-x-auto justify-start lg:justify-center"
+            className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center"
             role="application"
             aria-label="Kanban board with drag and drop functionality"
           >

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
@@ -6,23 +6,41 @@ import { useUser } from "@/lib/hooks/useUser";
 import type { FullTicketDTO } from "@/types";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
-import type { TicketType } from "@/components/views/KanbanBoardView.types";
+import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
 
 /**
  * Główny komponent modalny dla zarządzania ticketami
  * Obsługuje tryby create, edit i view z walidacją i integracją API
  */
 export const TicketModal: React.FC = () => {
-  const { isOpen, mode, ticketId, onClose, onSave } = useTicketModal();
+  const { isOpen, mode, ticketId, onClose, onSave, setOpen } = useTicketModal();
   const { user, isAdmin } = useUser();
   const [ticket, setTicket] = useState<FullTicketDTO | undefined>();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TicketFormData>({
     title: "",
     description: "",
-    type: "TASK" as TicketType,
+    type: "TASK",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  const validateForm = useCallback((data: TicketFormData) => {
+    const result = ticketSchema.safeParse(data);
+    if (result.success) {
+      setErrors({});
+      setIsFormValid(true);
+    } else {
+      const newErrors: Record<string, string> = {};
+      result.error.errors.forEach((error) => {
+        if (error.path.length > 0) {
+          newErrors[error.path[0] as string] = error.message;
+        }
+      });
+      setErrors(newErrors);
+      setIsFormValid(false);
+    }
+  }, []);
 
   // Ładowanie danych ticketa dla trybów edit/view
   useEffect(() => {
@@ -38,11 +56,13 @@ export const TicketModal: React.FC = () => {
           }
           const ticketData: FullTicketDTO = await response.json();
           setTicket(ticketData);
-          setFormData({
+          const newFormData: TicketFormData = {
             title: ticketData.title,
             description: ticketData.description || "",
             type: ticketData.type,
-          });
+          };
+          setFormData(newFormData);
+          validateForm(newFormData);
         } catch (error) {
           console.error("Error fetching ticket:", error);
           toast.error("Failed to load ticket");
@@ -56,22 +76,24 @@ export const TicketModal: React.FC = () => {
     } else {
       // Reset dla trybu create
       setTicket(undefined);
-      setFormData({
+      const newFormData: TicketFormData = {
         title: "",
         description: "",
         type: "TASK",
-      });
-      setErrors({});
+      };
+      setFormData(newFormData);
+      validateForm(newFormData);
     }
-  }, [mode, ticketId, onClose]);
+  }, [mode, ticketId, onClose, validateForm]);
 
   // Sprawdzenie uprawnień - jeśli nie admin i nie właściciel, przełącz na view
   useEffect(() => {
     if (mode === "edit" && ticket && user && !isAdmin && ticket.reporter.id !== user.id) {
-      toast.warning("You don't have permission to edit this ticket");
-      // Can switch to view mode here, but leaving as is for now
+      toast.warning("You don't have permission to edit this ticket. Switching to view mode.");
+      // Switch to view mode by updating the context
+      setOpen({ mode: "view", ticketId: ticket.id });
     }
-  }, [mode, ticket, user, isAdmin]);
+  }, [mode, ticket, user, isAdmin, setOpen]);
 
   const handleSave = async (data: typeof formData) => {
     if (!user) return;
@@ -122,10 +144,11 @@ export const TicketModal: React.FC = () => {
     }
   };
 
-  const handleFormChange = (data: Partial<typeof formData>) => {
-    setFormData((prev) => ({ ...prev, ...data }));
-    // Wyczyść błędy przy zmianie
-    setErrors({});
+  const handleFormChange = (data: Partial<TicketFormData>) => {
+    const newData = { ...formData, ...data };
+    setFormData(newData);
+    // Sprawdź walidację formularza
+    validateForm(newData);
   };
 
   const handleAssigneeUpdate = (newAssignee: { id: string; username: string } | null) => {
@@ -169,7 +192,13 @@ export const TicketModal: React.FC = () => {
               ticket={ticket}
               onAssigneeUpdate={handleAssigneeUpdate}
             />
-            <ActionButtons onCancel={onClose} onSave={() => handleSave(formData)} isLoading={loading} mode={mode} />
+            <ActionButtons
+              onCancel={onClose}
+              onSave={() => handleSave(formData)}
+              isLoading={loading}
+              isValid={isFormValid}
+              mode={mode}
+            />
           </>
         )}
       </DialogContent>

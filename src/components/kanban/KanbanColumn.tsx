@@ -29,7 +29,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col w-80 min-h-[600px] rounded-lg p-4 transition-colors ${
+      className={`flex flex-col w-full sm:w-80 min-h-[600px] rounded-lg p-4 transition-colors ${
         isOver
           ? "bg-blue-50 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700"
           : "bg-gray-50 dark:bg-gray-900 border-2 border-transparent"

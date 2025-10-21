@@ -6,13 +6,14 @@ interface ActionButtonsProps {
   onCancel: () => void;
   onSave: () => void;
   isLoading: boolean;
+  isValid?: boolean;
   mode: TicketModalMode;
 }
 
 /**
  * Przyciski akcji na dole modalu ticketa
  */
-export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, isLoading, mode }) => {
+export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, isLoading, isValid = true, mode }) => {
   const isViewMode = mode === "view";
 
   return (
@@ -31,7 +32,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, 
         <Button
           type="button"
           onClick={onSave}
-          disabled={isLoading}
+          disabled={isLoading || !isValid}
           aria-label={isLoading ? "Saving ticket..." : "Save ticket changes"}
         >
           {isLoading ? "Saving..." : "Save"}
