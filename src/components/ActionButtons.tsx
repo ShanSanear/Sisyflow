@@ -18,12 +18,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, 
   return (
     <div className="flex justify-end gap-2 pt-4 border-t">
       <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-        {isViewMode ? "Zamknij" : "Anuluj"}
+        {isViewMode ? "Close" : "Cancel"}
       </Button>
 
       {!isViewMode && (
         <Button type="button" onClick={onSave} disabled={isLoading}>
-          {isLoading ? "Zapisywanie..." : "Zapisz"}
+          {isLoading ? "Saving..." : "Save"}
         </Button>
       )}
     </div>

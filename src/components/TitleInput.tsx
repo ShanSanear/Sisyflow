@@ -18,7 +18,7 @@ export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, error, 
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="title">Tytuł *</Label>
+      <Label htmlFor="title">Title *</Label>
       <Input
         id="title"
         type="text"
@@ -26,7 +26,7 @@ export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, error, 
         onChange={(e) => onChange(e.target.value)}
         disabled={isDisabled}
         className={error ? "border-destructive" : ""}
-        placeholder="Wprowadź tytuł ticketa..."
+        placeholder="Enter ticket title..."
       />
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>

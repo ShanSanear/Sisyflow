@@ -21,21 +21,21 @@ export const DescriptionEditor: React.FC<DescriptionEditorProps> = ({ value, onC
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="description">Opis</Label>
+      <Label htmlFor="description">Description</Label>
       <Textarea
         id="description"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={isDisabled}
         className={error ? "border-destructive" : ""}
-        placeholder="Opisz ticket..."
+        placeholder="Describe the ticket..."
         rows={6}
       />
       <div className="flex justify-between text-sm text-muted-foreground">
         <span className={isNearLimit ? "text-warning" : ""}>
-          {charCount}/{maxChars} znaków
+          {charCount}/{maxChars} characters
         </span>
-        {isNearLimit && <span className="text-warning">Zbliżasz się do limitu znaków</span>}
+        {isNearLimit && <span className="text-warning">Approaching character limit</span>}
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>

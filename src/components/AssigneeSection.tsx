@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import type { TicketModalMode, UserDTO } from "@/types";
 
-// Dummy data dla użytkowników (do zastąpienia prawdziwym API)
+// Dummy data for users (to be replaced with real API)
 const DUMMY_USERS: UserDTO[] = [
   { id: "1", username: "john.doe", email: "john@example.com", role: "USER", created_at: new Date().toISOString() },
   { id: "2", username: "jane.smith", email: "jane@example.com", role: "USER", created_at: new Date().toISOString() },
@@ -40,36 +40,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
 }) => {
   const [assigning, setAssigning] = useState(false);
 
-  const handleAssignMe = async () => {
-    if (!currentUser || !ticketId) return;
-
-    setAssigning(true);
-    try {
-      const response = await fetch(`/api/tickets/${ticketId}/assignee`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assignee_id: assignee ? null : currentUser.id, // Toggle assign/unassign
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update assignee");
-      }
-
-      const updatedTicket = await response.json();
-      onAssign(updatedTicket.assignee_id);
-    } catch (error) {
-      console.error("Error updating assignee:", error);
-      // TODO: Show toast error
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleAdminAssign = async (assigneeId: string | null) => {
+  const handleAssigneeUpdate = async (assigneeId: string | null) => {
     if (!ticketId) return;
 
     setAssigning(true);
@@ -96,15 +67,25 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
     }
   };
 
+  const handleAssignMe = () => {
+    if (!currentUser) return;
+    const newAssigneeId = assignee ? null : currentUser.id;
+    handleAssigneeUpdate(newAssigneeId);
+  };
+
+  const handleAdminAssign = (assigneeId: string | null) => {
+    handleAssigneeUpdate(assigneeId);
+  };
+
   if (mode === "view") {
     return (
       <div className="space-y-2">
-        <Label>Przypisany</Label>
+        <Label>Assignee</Label>
         <div>
           {assignee ? (
             <Badge variant="secondary">{assignee.username}</Badge>
           ) : (
-            <span className="text-sm text-muted-foreground">Nieprzypisany</span>
+            <span className="text-sm text-muted-foreground">Unassigned</span>
           )}
         </div>
       </div>
@@ -113,7 +94,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label>Przypisany</Label>
+      <Label>Assignee</Label>
 
       {isAdmin ? (
         <Select
@@ -122,10 +103,10 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           disabled={assigning}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Wybierz użytkownika..." />
+            <SelectValue placeholder="Select user..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nieprzypisany</SelectItem>
+            <SelectItem value="">Unassigned</SelectItem>
             {DUMMY_USERS.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 {user.username}
@@ -139,12 +120,12 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
             <>
               <Badge variant="secondary">{assignee.username}</Badge>
               <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
-                {assigning ? "Aktualizowanie..." : "Odprzypisz"}
+                {assigning ? "Updating..." : "Unassign"}
               </Button>
             </>
           ) : (
             <Button type="button" variant="outline" size="sm" onClick={handleAssignMe} disabled={assigning}>
-              {assigning ? "Przypisywanie..." : "Przypisz mnie"}
+              {assigning ? "Assigning..." : "Assign to me"}
             </Button>
           )}
         </div>

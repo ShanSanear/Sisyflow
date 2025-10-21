@@ -2,10 +2,11 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import type { TicketModalMode } from "@/types";
+import type { TicketType } from "@/components/views/KanbanBoardView.types";
 
 interface TypeSelectProps {
-  value: "BUG" | "IMPROVEMENT" | "TASK";
-  onChange: (value: "BUG" | "IMPROVEMENT" | "TASK") => void;
+  value: TicketType;
+  onChange: (value: TicketType) => void;
   error?: string;
   mode: TicketModalMode;
 }
@@ -24,10 +25,10 @@ export const TypeSelect: React.FC<TypeSelectProps> = ({ value, onChange, error, 
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="type">Typ *</Label>
+      <Label htmlFor="type">Type *</Label>
       <Select value={value} onValueChange={onChange} disabled={isDisabled}>
         <SelectTrigger className={error ? "border-destructive" : ""}>
-          <SelectValue placeholder="Wybierz typ ticketa..." />
+          <SelectValue placeholder="Select ticket type..." />
         </SelectTrigger>
         <SelectContent>
           {typeOptions.map((option) => (

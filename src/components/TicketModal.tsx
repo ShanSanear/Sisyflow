@@ -44,7 +44,7 @@ export const TicketModal: React.FC = () => {
           });
         } catch (error) {
           console.error("Error fetching ticket:", error);
-          toast.error("Nie udało się załadować ticketa");
+          toast.error("Failed to load ticket");
           onClose();
         } finally {
           setLoading(false);
@@ -67,8 +67,8 @@ export const TicketModal: React.FC = () => {
   // Sprawdzenie uprawnień - jeśli nie admin i nie właściciel, przełącz na view
   useEffect(() => {
     if (mode === "edit" && ticket && user && !isAdmin && ticket.reporter.id !== user.id) {
-      toast.warning("Nie masz uprawnień do edycji tego ticketa");
-      // Tu można przełączyć na view mode, ale na razie zostawimy
+      toast.warning("You don't have permission to edit this ticket");
+      // Can switch to view mode here, but leaving as is for now
     }
   }, [mode, ticket, user, isAdmin]);
 
@@ -106,18 +106,18 @@ export const TicketModal: React.FC = () => {
 
       const savedTicket: FullTicketDTO = await response.json();
       onSave(savedTicket);
-      toast.success(mode === "create" ? "Ticket utworzony" : "Ticket zaktualizowany");
+      toast.success(mode === "create" ? "Ticket created" : "Ticket updated");
       onClose();
     } catch (error) {
       console.error("Error saving ticket:", error);
-      toast.error(error instanceof Error ? error.message : "Nie udało się zapisać ticketa");
+      toast.error(error instanceof Error ? error.message : "Failed to save ticket");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFormChange = (data: typeof formData) => {
-    setFormData(data);
+  const handleFormChange = (data: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...data }));
     // Wyczyść błędy przy zmianie
     setErrors({});
   };
@@ -127,15 +127,15 @@ export const TicketModal: React.FC = () => {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" && "Utwórz nowy ticket"}
-            {mode === "edit" && "Edytuj ticket"}
-            {mode === "view" && "Podgląd ticketa"}
+            {mode === "create" && "Create new ticket"}
+            {mode === "edit" && "Edit ticket"}
+            {mode === "view" && "View ticket"}
           </DialogTitle>
         </DialogHeader>
 
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <div className="text-sm text-muted-foreground">Ładowanie...</div>
+            <div className="text-sm text-muted-foreground">Loading...</div>
           </div>
         ) : (
           <>

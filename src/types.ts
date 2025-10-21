@@ -129,5 +129,8 @@ export interface TicketModalState {
   users: UserDTO[];
 }
 
-// FullTicketDTO: Extended TicketDTO for modal operations
-export type FullTicketDTO = TicketDTO;
+// FullTicketDTO: Extended TicketDTO for modal operations with full reporter/assignee info
+export type FullTicketDTO = Omit<TicketDTO, "reporter" | "assignee"> & {
+  reporter: Pick<Profile, "id" | "username">;
+  assignee?: Pick<Profile, "id" | "username">;
+};
