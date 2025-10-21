@@ -1,15 +1,16 @@
 import React, { createContext, useContext, type ReactNode } from "react";
 import { useUser } from "../../lib/hooks/useUser";
-import type { UserViewModel } from "./types";
+import type { UserDTO } from "../../types";
 
 /**
  * Interfejs kontekstu użytkownika
  */
 interface UserContextType {
-  user: UserViewModel | null;
+  user: UserDTO | null;
+  isAdmin: boolean;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetchUser: () => Promise<void>;
 }
 
 /**
