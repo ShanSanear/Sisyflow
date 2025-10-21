@@ -11,6 +11,7 @@ interface KanbanColumnProps {
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
   onTicketClick?: (ticketId: string) => void;
+  onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -21,6 +22,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   canMoveTicket,
   handleStatusChangeViaMenu,
   onTicketClick,
+  onTicketEdit,
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -54,6 +56,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             isSaving={savingTicketId === ticket.id}
             onStatusChange={handleStatusChangeViaMenu}
             onClick={onTicketClick}
+            onEdit={onTicketEdit}
           />
         ))}
         {tickets.length === 0 && (

@@ -24,6 +24,15 @@ Użyj TicketModalContext do komunikacji:
 - **Query Params Handling:** W `KanbanBoardView.tsx`: `import { getCurrentInstance } from 'astro'; const { url } = Astro; const urlParams = new URLSearchParams(url.search); if (urlParams.get('ticketId')) { setOpen({ mode: 'edit', ticketId: urlParams.get('ticketId') }); }`. OnClose: `const newUrl = new URL(Astro.url); newUrl.searchParams.delete('ticketId'); history.replaceState({}, '', newUrl.toString());` (kompatybilne z Astro client-side routing).
 - **Layout** Użyj React 19 islands w Astro 5 dla hydratacji; unikaj pełnego Supabase SDK na frontendzie – tylko fetch do /api z auto-auth.
 
+### 2.3 Mechanizm przełączania między trybami View/Edit
+
+- **Domyślny tryb:** Modal otwiera się domyślnie w trybie "view" (nie "edit") przy kliknięciu na kartę ticketa, zapewniając bezpieczny podgląd przed edycją.
+- **Przycisk Edit:** W trybie "view" widoczny jest przycisk "Edit" obok przycisku "Close" (w tym samym miejscu gdzie przycisk "Save" w trybie edit). Przycisk widoczny tylko jeśli użytkownik ma uprawnienia do edycji (admin lub właściciel ticketa).
+- **Dropdown menu:** W TicketCard.tsx dropdown (MoreHorizontal) rozszerzony o opcję "Edit ticket" - pozwala natychmiastowe przejście do trybu edycji bez otwierania modala w trybie view.
+- **Sprawdzenie uprawnień:** Client-side sprawdzenie czy użytkownik może edytować ticket (admin || ticket.reporter.id === user.id). Jeśli brak uprawnień, przycisk "Edit" nie jest widoczny.
+- **Zachowanie stanu:** Przy przełączaniu między trybami view/edit stan formularza jest resetowany (zakładamy, że użytkownik nie chce zachować niezapisanych zmian przy przełączaniu trybów).
+- **UX:** Przełączanie trybów nie wymaga przeładowania danych - formularz już ma załadowane dane z trybu view.
+
 ## 3. Struktura komponentów
 
 Hierarchia komponentów (MVP bez AI):
@@ -106,12 +115,14 @@ Dla admin: useEffect(() => { if (isAdmin) { fetch('/api/users').then(setUsers); 
 
 ### ActionButtons
 
-- Opis komponentu: Przyciski akcji na dole modalu (Shadcn Button).
-- Główne elementy: `<div className="flex justify-end gap-2 mt-4"> <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button> {mode !== 'view' && <Button type="submit" disabled={!isValid || loading}>Save</Button>} </div>`.
-- Obsługiwane zdarzenia: onClick (cancel: onClose, save: submit form).
-- Obsługiwana walidacja: Save wyłączony jeśli loading lub !isValid (z Zod).
+- Opis komponentu: Przyciski akcji na dole modalu (Shadcn Button) - obsługuje wszystkie trzy tryby z różnymi zestawami przycisków.
+- Główne elementy:
+  - Tryb create/edit: `<Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>` + `<Button type="submit" disabled={!isValid || loading}>Save</Button>`
+  - Tryb view: `<Button type="button" variant="outline" onClick={onCancel}>Close</Button>` + `{canEdit && <Button type="button" onClick={onEdit}>Edit</Button>}`
+- Obsługiwane zdarzenia: onClick (cancel/close: onClose, save: submit form, edit: przełącz na tryb edit).
+- Obsługiwana walidacja: Save wyłączony jeśli loading lub !isValid (z Zod); Edit przycisk widoczny tylko jeśli canEdit.
 - Typy: Brak specyficznych.
-- Propsy: `{ onCancel: () => void, onSave: () => void, isLoading: boolean, isValid: boolean, mode: string }`.
+- Propsy: `{ onCancel: () => void, onSave: () => void, onEdit?: () => void, isLoading: boolean, isValid: boolean, mode: string, canEdit?: boolean }`.
 
 ## 5. Typy
 
@@ -153,14 +164,16 @@ Stan zarządzany lokalnie w `TicketModal` za pomocą `useState` dla `TicketModal
 
 ## 8. Interakcje użytkownika
 
-- Otwarcie modalu: Z NavigationBar (create, puste pola, fokus na tytuł via useRef + useEffect) lub z karty (edit/view, załaduj dane via fetch). Użyj TicketModalContext do wyzwolenia.
+- Otwarcie modalu: Z NavigationBar (create, puste pola, fokus na tytuł via useRef + useEffect) lub z karty (view domyślnie, załaduj dane via fetch). Użyj TicketModalContext do wyzwolenia.
 - Wypełnianie formularza: Wpis title/description, wybór type/assignee. Enter submituje form.
-- Przypisanie: „Assign me” dla nieprzypisanych (PATCH), admin wybiera z listy (Select).
+- Przypisanie: „Assign me" dla nieprzypisanych (PATCH), admin wybiera z listy (Select).
 - Zapisz: Walidacja Zod, API call, toast sukces (sonner), onClose + onSave (refetch w Board).
 - Anuluj/Esc: onClose bez zapisu, reset stanu.
-- Podgląd (view): Pola readonly (disabled + plain text), brak submit, opis jako plain text, opcja close.
+- Podgląd (view): Pola readonly (disabled + plain text), brak submit, opis jako plain text, opcje: Close + Edit (jeśli uprawnienia).
+- Przełączanie trybów: Z view do edit via przycisk "Edit" (zachowuje dane, resetuje stan formularza).
 - Mobilne: Modal full-screen (Tailwind sm:max-w-2xl else w-full), touch-friendly buttons.
-- Uprawnienia: Client-side check (if mode='edit' && reporter_id !== user.id && !isAdmin → switch to 'view' + toast).
+- Uprawnienia: Client-side check (if mode='edit' && reporter_id !== user.id && !isAdmin → switch to 'view' + toast); przycisk Edit widoczny tylko dla uprawnionych.
+- Dropdown w karcie: Opcja "Edit ticket" pozwala natychmiastowe otwarcie w trybie edit.
 
 Sync z query params: Użyj Astro's URLSearchParams(window.location.search); if (urlParams.get('ticketId')) setOpen({ mode: 'edit', ticketId: urlParams.get('ticketId') }); onClose: const newUrl = new URL(window.location); newUrl.searchParams.delete('ticketId'); history.replaceState({}, '', newUrl.toString());
 
@@ -190,10 +203,16 @@ Sync z query params: Użyj Astro's URLSearchParams(window.location.search); if (
 7. Integruj `TicketModal` w `KanbanBoardView.tsx` (useContext, render if isOpen, onSave refetch tickets via API).
 8. Zaktualizuj NavigationBar.tsx: useTicketModal do setOpen('create').
 9. Dodaj self-assign w `AssigneeSection` z PATCH call (API call).
-10. Testuj walidację, tryby, uprawnienia (mock user role).
-11. Dodaj ARIA labels (aria-label dla buttons/inputs), keyboard nav (focus trap w Dialog), responsive classes Tailwind (sm: etc.).
-12. Uruchom `npm run lint:fix` i `npm run format` (z workspace rules).
-13. Przetestuj edge cases: błędy, mobile, permissions.
+10. Dodaj mechanizm przełączania między trybami view/edit:
+    - Zmień domyślny tryb w `KanbanBoardView.tsx` z "edit" na "view"
+    - Rozszerz `ActionButtons` o przycisk "Edit" dla trybu view
+    - Dodaj funkcję `canEditTicket()` w `TicketModal.tsx`
+    - Dodaj handler `handleEditMode()` do przełączania trybów
+    - Dodaj opcję "Edit ticket" w dropdown `TicketCard.tsx`
+11. Testuj walidację, tryby, uprawnienia i przełączanie trybów (mock user role).
+12. Dodaj ARIA labels (aria-label dla buttons/inputs), keyboard nav (focus trap w Dialog), responsive classes Tailwind (sm: etc.).
+13. Uruchom `npm run lint:fix` i `npm run format` (z workspace rules).
+14. Przetestuj edge cases: błędy, mobile, permissions, przełączanie trybów.
 
 Dla Shadcn UI komponentów (Dialog, Input, etc.): Użyj npx shadcn-ui@latest add [component] (auto-instaluje deps). sonner jest już w src/components/ui/sonner.tsx (dodaj via shadcn-ui add sonner jeśli potrzeba); zainstaluj react-hook-form @hookform/resolvers/zod osobno dla walidacji formularzy.
 
@@ -202,3 +221,11 @@ Dla Shadcn UI komponentów (Dialog, Input, etc.): Użyj npx shadcn-ui@latest add
 - Przed implementacją: Uruchom `npx shadcn-ui@latest add dialog input textarea select button badge avatar` (dla Dialog, Input, etc.). Dla walidacji: `npm install react-hook-form @hookform/resolvers/zod` (dodaj do package.json). Dla future Markdown (z prd.md): `npm install react-markdown` (użyj w DescriptionEditor dla preview w view mode i insertach AI).
 - Konflikt z PRD: W MVP opis to plain text (bez Markdown renderingu), ale struktura pozwala na future upgrade (patrz ticket-modal-with-ai-suggestions.md). W prd.md zaktualizuj linię 28: "Opis (plain text w MVP, future: Markdown)".
 - Auth w fetch (np. AssigneeSection): Użyj relative paths jak `fetch('/api/users')` – middleware auto-dodaje Authorization: Bearer z cookies (z api-plan.md). Obsługa błędów: `if (!res.ok) { toast.error('Unauthorized'); onClose(); }`.
+
+### 4.8 Mechanizm przełączania między trybami View/Edit
+
+- **Domyślny tryb:** `setOpen({ mode: "view", ticketId })`.
+- **Rozszerzenie ActionButtons:** Wymagany prop `onEdit?: () => void` i `canEdit?: boolean`. W trybie view pokaż przycisk "Edit" obok "Close" jeśli `canEdit` jest true.
+- **Rozszerzenie TicketCard dropdown:** Dodaj opcję "Edit ticket" w dropdown menu, która otwiera modal bezpośrednio w trybie edit.
+- **Sprawdzenie uprawnień:** W `TicketModal.tsx` dodaj funkcję `canEditTicket(ticket: FullTicketDTO, user: UserDTO | null, isAdmin: boolean): boolean` zwracającą `isAdmin || (ticket && user && ticket.reporter.id === user.id)`.
+- **Obsługa przełączania:** Dodaj handler `handleEditMode()` w `TicketModal.tsx` który resetuje formData do wartości z ticket i przełącza tryb poprzez `setOpen({ mode: "edit", ticketId: ticket?.id })`.

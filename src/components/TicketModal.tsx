@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
 import { useUser } from "@/lib/hooks/useUser";
-import type { FullTicketDTO } from "@/types";
+import type { FullTicketDTO, UserDTO } from "@/types";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
 import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
@@ -94,6 +94,28 @@ export const TicketModal: React.FC = () => {
       setOpen({ mode: "view", ticketId: ticket.id });
     }
   }, [mode, ticket, user, isAdmin, setOpen]);
+
+  // Funkcja sprawdzająca czy użytkownik może edytować ticket
+  const canEditTicket = (ticket: FullTicketDTO | undefined, user: UserDTO | null, isAdmin: boolean): boolean => {
+    return isAdmin || Boolean(ticket && user && ticket.reporter.id === user.id);
+  };
+
+  // Handler do przełączania w tryb edycji
+  const handleEditMode = () => {
+    if (ticket) {
+      // Resetuj formData do wartości z ticket (zachowaj dane ale wyczyść ewentualne niezapisane zmiany)
+      const newFormData: TicketFormData = {
+        title: ticket.title,
+        description: ticket.description || "",
+        type: ticket.type,
+      };
+      setFormData(newFormData);
+      validateForm(newFormData);
+
+      // Przełącz na tryb edit
+      setOpen({ mode: "edit", ticketId: ticket.id });
+    }
+  };
 
   const handleSave = async (data: typeof formData) => {
     if (!user) return;
@@ -195,9 +217,11 @@ export const TicketModal: React.FC = () => {
             <ActionButtons
               onCancel={onClose}
               onSave={() => handleSave(formData)}
+              onEdit={handleEditMode}
               isLoading={loading}
               isValid={isFormValid}
               mode={mode}
+              canEdit={canEditTicket(ticket, user, isAdmin)}
             />
           </>
         )}

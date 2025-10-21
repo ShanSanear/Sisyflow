@@ -19,6 +19,10 @@ export const KanbanBoardView: React.FC = () => {
   const { setOpen } = useTicketModal();
 
   const handleTicketClick = (ticketId: string) => {
+    setOpen({ mode: "view", ticketId });
+  };
+
+  const handleTicketEdit = (ticketId: string) => {
     setOpen({ mode: "edit", ticketId });
   };
 
@@ -126,6 +130,7 @@ export const KanbanBoardView: React.FC = () => {
       canMoveTicket={canMoveTicket}
       handleStatusChangeViaMenu={handleStatusChangeViaMenu}
       onTicketClick={handleTicketClick}
+      onTicketEdit={handleTicketEdit}
     />
   );
 };

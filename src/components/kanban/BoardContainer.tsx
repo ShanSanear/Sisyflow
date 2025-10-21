@@ -14,6 +14,7 @@ interface BoardContainerProps {
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
   onTicketClick?: (ticketId: string) => void;
+  onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
 
 export const BoardContainer: React.FC<BoardContainerProps> = ({
@@ -23,6 +24,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   canMoveTicket,
   handleStatusChangeViaMenu,
   onTicketClick,
+  onTicketEdit,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -136,6 +138,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
                 canMoveTicket={canMoveTicket}
                 handleStatusChangeViaMenu={handleStatusChangeViaMenu}
                 onTicketClick={onTicketClick}
+                onTicketEdit={onTicketEdit}
               />
             ))}
           </div>

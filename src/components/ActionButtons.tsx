@@ -5,15 +5,25 @@ import type { TicketModalMode } from "@/types";
 interface ActionButtonsProps {
   onCancel: () => void;
   onSave: () => void;
+  onEdit?: () => void;
   isLoading: boolean;
   isValid?: boolean;
   mode: TicketModalMode;
+  canEdit?: boolean;
 }
 
 /**
  * Przyciski akcji na dole modalu ticketa
  */
-export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, isLoading, isValid = true, mode }) => {
+export const ActionButtons: React.FC<ActionButtonsProps> = ({
+  onCancel,
+  onSave,
+  onEdit,
+  isLoading,
+  isValid = true,
+  mode,
+  canEdit = false,
+}) => {
   const isViewMode = mode === "view";
 
   return (
@@ -27,6 +37,18 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onCancel, onSave, 
       >
         {isViewMode ? "Close" : "Cancel"}
       </Button>
+
+      {isViewMode && canEdit && onEdit && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onEdit}
+          disabled={isLoading}
+          aria-label="Switch to edit mode for this ticket"
+        >
+          Edit
+        </Button>
+      )}
 
       {!isViewMode && (
         <Button

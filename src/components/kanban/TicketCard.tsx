@@ -18,6 +18,7 @@ interface TicketCardProps {
   isSaving: boolean; // Flaga określająca stan zapisywania
   onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void; // Handler for status change via context menu
   onClick?: (ticketId: string) => void; // Handler for clicking on ticket card
+  onEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
 
 export const TicketCard: React.FC<TicketCardProps> = ({
@@ -27,6 +28,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   isSaving,
   onStatusChange,
   onClick,
+  onEdit,
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
@@ -143,6 +145,14 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
+                {onEdit && (
+                  <DropdownMenuItem
+                    onClick={() => onEdit(ticket.id)}
+                    className="border-b border-gray-200 dark:border-gray-700 mb-1"
+                  >
+                    Edit ticket
+                  </DropdownMenuItem>
+                )}
                 {getStatusOptions().map((option) => (
                   <DropdownMenuItem
                     key={option.status}
