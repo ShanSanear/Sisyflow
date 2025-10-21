@@ -1,12 +1,47 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BoardContainer } from "../kanban/BoardContainer";
 import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
 import { useKanbanBoard } from "../../lib/hooks/useKanbanBoard";
+import { useTicketModal } from "../../lib/contexts/TicketModalContext";
 
 export const KanbanBoardView: React.FC = () => {
-  const { boardState, isLoading, error, savingTicketId, handleDragEnd, handleStatusChangeViaMenu, canMoveTicket } =
-    useKanbanBoard();
+  const {
+    boardState,
+    isLoading,
+    error,
+    savingTicketId,
+    handleDragEnd,
+    handleStatusChangeViaMenu,
+    canMoveTicket,
+    refetch,
+  } = useKanbanBoard();
+  const { setOpen } = useTicketModal();
+
+  // Handle query params for opening modal with specific ticket
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticketId = urlParams.get("ticketId");
+    const ticketMode = urlParams.get("mode");
+
+    if (ticketId) {
+      setOpen({
+        mode: ticketMode === "view" ? "view" : "edit",
+        ticketId,
+      });
+    }
+  }, [setOpen]);
+
+  // Handle ticket save events
+  useEffect(() => {
+    const handleTicketSaved = () => {
+      // Refetch board data to show updated ticket
+      refetch();
+    };
+
+    window.addEventListener("ticket:saved", handleTicketSaved);
+    return () => window.removeEventListener("ticket:saved", handleTicketSaved);
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -77,12 +112,14 @@ export const KanbanBoardView: React.FC = () => {
   }
 
   return (
-    <BoardContainer
-      boardState={boardState}
-      handleDragEnd={handleDragEnd}
-      savingTicketId={savingTicketId}
-      canMoveTicket={canMoveTicket}
-      handleStatusChangeViaMenu={handleStatusChangeViaMenu}
-    />
+    <>
+      <BoardContainer
+        boardState={boardState}
+        handleDragEnd={handleDragEnd}
+        savingTicketId={savingTicketId}
+        canMoveTicket={canMoveTicket}
+        handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+      />
+    </>
   );
 };

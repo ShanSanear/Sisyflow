@@ -1,6 +1,5 @@
 ---
-description: 
-globs: *.tsx
+globs: *.tsx,**/*.tsx
 alwaysApply: false
 ---
 ### Guidelines for React
@@ -15,3 +14,4 @@ alwaysApply: false
 - Implement useId() for generating unique IDs for accessibility attributes
 - Consider using the new useOptimistic hook for optimistic UI updates in forms
 - Use useTransition for non-urgent state updates to keep the UI responsive
+- use import type where appropriate

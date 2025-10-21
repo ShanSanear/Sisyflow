@@ -1,8 +1,8 @@
 ---
 import AuthenticatedLayout from "../layouts/AuthenticatedLayout.astro";
-import { KanbanBoardView } from "../components/views/KanbanBoardView.tsx";
+import { KanbanBoardIsland } from "../components/views/KanbanBoardIsland.tsx";
 ---
 
 <AuthenticatedLayout title="Board">
-  <KanbanBoardView client:load />
+  <KanbanBoardIsland client:load />
 </AuthenticatedLayout>

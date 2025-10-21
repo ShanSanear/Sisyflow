@@ -7,6 +7,9 @@ export type AISuggestionSession = Tables<"ai_suggestion_sessions">;
 export type ProjectDocumentation = Tables<"project_documentation">;
 export type AIError = Tables<"ai_errors">;
 
+// Ticket Modal types
+export type TicketModalMode = "create" | "edit" | "view";
+
 // Pagination DTO - shared across list endpoints
 export interface PaginationDTO {
   page: number;
@@ -76,9 +79,6 @@ export interface UpdateTicketAssigneeCommand {
   assignee_id: Ticket["assignee_id"];
 }
 
-// FullTicketDTO: Used in GET /tickets/:id (response)
-export type FullTicketDTO = TicketDTO;
-
 // AI Suggestion DTOs
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
 export interface AnalyzeTicketCommand {
@@ -118,3 +118,19 @@ export type AIErrorDTO = Pick<
   AIError,
   "id" | "ticket_id" | "user_id" | "error_message" | "error_details" | "created_at"
 >;
+
+// Ticket Modal State
+export interface TicketModalState {
+  mode: TicketModalMode;
+  ticket?: FullTicketDTO;
+  formData: Partial<CreateTicketCommand>;
+  loading: boolean;
+  errors: Record<string, string>;
+  users: UserDTO[];
+}
+
+// FullTicketDTO: Extended TicketDTO for modal operations with full reporter/assignee info
+export type FullTicketDTO = Omit<TicketDTO, "reporter" | "assignee"> & {
+  reporter: Pick<Profile, "id" | "username">;
+  assignee?: Pick<Profile, "id" | "username">;
+};

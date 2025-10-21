@@ -115,8 +115,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `
         )
         .eq("id", ticket.id)
@@ -143,8 +143,10 @@ export class TicketService {
         ai_enhanced: fullTicket.ai_enhanced,
         created_at: fullTicket.created_at,
         updated_at: fullTicket.updated_at,
-        reporter: { username: fullTicket.reporter.username },
-        assignee: fullTicket.assignee ? { username: fullTicket.assignee.username } : undefined,
+        reporter: { id: fullTicket.reporter.id, username: fullTicket.reporter.username },
+        assignee: fullTicket.assignee
+          ? { id: fullTicket.assignee.id, username: fullTicket.assignee.username }
+          : undefined,
       };
 
       return result;
@@ -183,8 +185,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `,
         { count: "exact" }
       );
@@ -299,8 +301,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `
         )
         .eq("id", ticketId)
@@ -335,8 +337,8 @@ export class TicketService {
         ai_enhanced: ticket.ai_enhanced,
         created_at: ticket.created_at,
         updated_at: ticket.updated_at,
-        reporter: { username: ticket.reporter.username },
-        assignee: ticket.assignee ? { username: ticket.assignee.username } : undefined,
+        reporter: { id: ticket.reporter.id, username: ticket.reporter.username },
+        assignee: ticket.assignee ? { id: ticket.assignee.id, username: ticket.assignee.username } : undefined,
       };
 
       return result;
@@ -431,8 +433,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `
         )
         .eq("id", ticketId)
@@ -566,8 +568,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `
         )
         .eq("id", ticketId)
@@ -594,8 +596,10 @@ export class TicketService {
         ai_enhanced: updatedTicket.ai_enhanced,
         created_at: updatedTicket.created_at,
         updated_at: updatedTicket.updated_at,
-        reporter: { username: updatedTicket.reporter.username },
-        assignee: updatedTicket.assignee ? { username: updatedTicket.assignee.username } : undefined,
+        reporter: { id: updatedTicket.reporter.id, username: updatedTicket.reporter.username },
+        assignee: updatedTicket.assignee
+          ? { id: updatedTicket.assignee.id, username: updatedTicket.assignee.username }
+          : undefined,
       };
 
       return result;
@@ -706,8 +710,8 @@ export class TicketService {
           ai_enhanced,
           created_at,
           updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(username),
-          assignee:profiles!tickets_assignee_id_fkey(username)
+          reporter:profiles!tickets_reporter_id_fkey(id, username),
+          assignee:profiles!tickets_assignee_id_fkey(id, username)
         `
         )
         .eq("id", ticketId)

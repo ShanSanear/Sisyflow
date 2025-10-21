@@ -1,40 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ProfileDTO } from "../../types";
-import type { UserViewModel } from "../../components/layout/types";
+import type { UserDTO } from "../../types";
 
 /**
  * Hook do zarządzania stanem zalogowanego użytkownika
  * Abstrahuje logikę pobierania i cachowania danych użytkownika
  */
 export const useUser = () => {
-  const [user, setUser] = useState<UserViewModel | null>(null);
+  const [user, setUser] = useState<UserDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   /**
-   * Funkcja pomocnicza do tworzenia inicjałów z username
+   * Sprawdza czy użytkownik jest administratorem
    */
-  const createInitials = useCallback((username: string): string => {
-    return username
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase())
-      .slice(0, 2)
-      .join("");
-  }, []);
-
-  /**
-   * Mapuje ProfileDTO na UserViewModel
-   */
-  const mapProfileToViewModel = useCallback(
-    (profile: ProfileDTO): UserViewModel => {
-      return {
-        username: profile.username,
-        role: profile.role,
-        initials: createInitials(profile.username),
-      };
-    },
-    [createInitials]
-  );
+  const isAdmin = user?.role === "ADMIN";
 
   /**
    * Pobiera dane użytkownika z API
@@ -61,10 +40,8 @@ export const useUser = () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const profileData: ProfileDTO = await response.json();
-      const userViewModel = mapProfileToViewModel(profileData);
-
-      setUser(userViewModel);
+      const userData: UserDTO = await response.json();
+      setUser(userData);
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error occurred");
       setError(error);
@@ -72,7 +49,7 @@ export const useUser = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [mapProfileToViewModel]);
+  }, []);
 
   // Pobierz dane użytkownika przy montowaniu komponentu
   useEffect(() => {
@@ -81,8 +58,9 @@ export const useUser = () => {
 
   return {
     user,
+    isAdmin,
     isLoading,
     error,
-    refetch: fetchUser, // Możliwość ponownego pobrania danych
+    refetchUser: fetchUser, // Możliwość ponownego pobrania danych
   };
 };
