@@ -1,0 +1,103 @@
+---
+alwaysApply: false
+---
+# Purpose
+Avoid runtime errors from React context hooks in Astro by ensuring providers and consumers live in the same hydrated React island.
+
+# Core rule
+- If a React component calls a context hook (e.g., `useUserContext`, `useTicketModal`), it must be rendered under its Provider within the same React island (`client:*` boundary).
+
+## Do
+- Wrap consumer components with their Providers inside a single wrapper “island” component.
+- Hydrate only the wrapper island in `.astro` files using one `client:*` directive.
+- Group related consumers under one island when they need the same Provider.
+
+## Don’t
+- Don’t hydrate Providers and Consumers separately (e.g., Provider with `client:load` in a layout and Consumer with `client:load` elsewhere). Separate islands do not share React context.
+- Don’t rely on server-rendered Providers to supply context to client-hydrated Consumers.
+
+# Recommended pattern
+- Create a wrapper “island” per feature that needs context.
+
+```tsx
+// src/components/layout/NavigationBarIsland.tsx
+import React from "react";
+import { NavigationBar } from "./NavigationBar";
+import { UserProvider } from "./UserContext";
+import { TicketModalProvider } from "../../lib/contexts/TicketModalContext";
+
+export const NavigationBarIsland: React.FC = () => {
+  return (
+    <UserProvider>
+      <TicketModalProvider>
+        <NavigationBar />
+      </TicketModalProvider>
+    </UserProvider>
+  );
+};
+```
+
+```astro
+---
+// src/layouts/AuthenticatedLayout.astro
+import Layout from "./Layout.astro";
+import { NavigationBarIsland } from "../components/layout/NavigationBarIsland.tsx";
+import { Toaster } from "../components/ui/sonner";
+---
+<Layout title={title}>
+  <NavigationBarIsland client:load />
+  <main class="min-h-screen bg-muted/20">
+    <slot />
+  </main>
+  <Toaster position="top-right" richColors closeButton />
+</Layout>
+```
+
+- For views that need a feature-specific provider:
+
+```tsx
+// src/components/views/KanbanBoardIsland.tsx
+import React from "react";
+import { KanbanBoardView } from "./KanbanBoardView";
+import { TicketModalProvider } from "../../lib/contexts/TicketModalContext";
+
+export const KanbanBoardIsland: React.FC = () => {
+  return (
+    <TicketModalProvider>
+      <KanbanBoardView />
+    </TicketModalProvider>
+  );
+};
+```
+
+```astro
+---
+// src/pages/board.astro
+import AuthenticatedLayout from "../layouts/AuthenticatedLayout.astro";
+import { KanbanBoardIsland } from "../components/views/KanbanBoardIsland.tsx";
+---
+<AuthenticatedLayout title="Board">
+  <KanbanBoardIsland client:load />
+</AuthenticatedLayout>
+```
+
+# Common symptoms
+- Errors like:
+  - “useUserContext must be used within a UserProvider”
+  - “useTicketModal must be used within a TicketModalProvider”
+- Cause: consumer is hydrated in a different island from its provider.
+
+# How to fix
+- Create a wrapper island that nests the Provider(s) and the Consumer(s).
+- Hydrate the wrapper island with a single `client:*` directive.
+- Remove separate `client:*` hydration from inner components/providers.
+
+# Checklist before shipping
+- All components that call `useUserContext` or `useTicketModal` render under `UserProvider`/`TicketModalProvider` within the same island.
+- `.astro` files hydrate only the wrapper island, not both providers and consumers separately.
+- No component that uses context is directly hydrated with `client:*` unless its provider is in the same subtree.
+- Page-level guards (e.g., `Astro.locals.user` redirects) are handled on the server before hydration.
+
+This rule ensures React context is available at runtime in Astro’s island architecture and prevents context scope errors.
+
+
