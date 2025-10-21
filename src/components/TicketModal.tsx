@@ -6,6 +6,7 @@ import { useUser } from "@/lib/hooks/useUser";
 import type { FullTicketDTO } from "@/types";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
+import type { TicketType } from "@/components/views/KanbanBoardView.types";
 
 /**
  * Główny komponent modalny dla zarządzania ticketami
@@ -19,7 +20,7 @@ export const TicketModal: React.FC = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "TASK" as const,
+    type: "TASK" as TicketType,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
