@@ -122,7 +122,8 @@ Based on the database schema and PRD, the main resources are:
 {
   "title": "string",
   "description": "string?",
-  "type": "BUG|IMPROVEMENT|TASK"
+  "type": "BUG|IMPROVEMENT|TASK",
+  "ai_enhanced?": boolean
 }
 ```
 
@@ -131,7 +132,7 @@ Based on the database schema and PRD, the main resources are:
 - Errors: 400 Bad Request (validation)
 - Validations:
   - Title of length between 1 and 200
-  - Description of length less than 10000
+  - Description: optional, max 10000 chars (Zod oraz Supabase check)
 
 - **GET** `/api/tickets/:id`
 - Gets a single ticket with related data.

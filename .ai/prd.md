@@ -25,7 +25,7 @@ W obecnych systemach do śledzenia zadań, użytkownicy często tworzą zgłosze
 - Użytkownicy mogą tworzyć tickety trzech typów: `Bug`, `Improvement`, `Task`.
 - Każdy ticket składa się z następujących pól:
   - Tytuł (pole wymagane).
-  - Opis (obsługuje formatowanie Markdown).
+  - Opis (plain text w MVP, future: obsługuje formatowanie Markdown).
   - Typ (pole wymagane, wybór z predefiniowanej listy).
   - Osoba zgłaszająca (ustawiana automatycznie).
   - Osoba przypisana.

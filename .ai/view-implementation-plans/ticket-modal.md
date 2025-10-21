@@ -17,6 +17,13 @@ Użyj TicketModalContext do komunikacji:
 - Context definiuje: { isOpen: boolean, mode: 'create'|'edit'|'view', ticketId?: string, setOpen: (data: {mode: string, ticketId?: string}) => void, onClose: () => void, onSave: (ticket: FullTicketDTO) => void }.
 - Założenie: Istnieje src/lib/contexts/UserContext.tsx z hookiem useUser() zwracającym { user: UserDTO | null, isAdmin: boolean, refetchUser: () => Promise<void> }. Użyj useUser() w TicketModal do pobierania roli. Jeśli UserContext nie istnieje, stwórz go z tokenem z cookies (via middleware w src/middleware/index.ts, który injectuje supabase z context.locals.supabase z src/db/supabase.client.ts). Fetch roli via GET /api/profiles/me, gdzie backend używa supabase.auth.getUser() z tokenem z locals.
 
+### 2.2 Implementacja Auth i Kontekstów w Astro
+
+- **UserContext:** Jeśli nie istnieje, stwórz `src/lib/contexts/UserContext.tsx` jako React Context. Użyj `useEffect` do fetch `/api/profiles/me` (z auth via cookies – middleware w `src/middleware/index.ts` auto-dodaje Bearer token z Supabase session do headers fetch). Hook `useUser()` zwraca `{ user: UserDTO | null, isAdmin: boolean, refetchUser: () => Promise<void> }`. Nie używaj Supabase SDK bezpośrednio na frontendzie (tylko fetch); middleware (`src/middleware/index.ts`) parsuje cookies (np. `supabase.auth.token`) i injectuje do `context.locals.user` dla API routes. Przykład: W middleware: `const { data: { user } } = await supabase.auth.getUser(event.locals.supabaseAccessToken); context.locals.user = user;`.
+- **TicketModalContext:** Stwórz `src/lib/contexts/TicketModalContext.tsx` z Providerem w `src/components/layout/Layout.tsx` (embedowanym w każdej .astro page via `<Layout>`). Context: `{ isOpen: boolean, mode: 'create'|'edit'|'view', ticketId?: string, setOpen: (data: {mode: string, ticketId?: string}) => void, onClose: () => void, onSave: (ticket: FullTicketDTO) => void }`. W `src/pages/Board.astro`: `<Client:load code="./KanbanBoardView.tsx" />` i w KanbanBoardView: `const { isOpen, ... } = useTicketModal();` + `<TicketModal client:load />` (jako React island).
+- **Query Params Handling:** W `KanbanBoardView.tsx`: `import { getCurrentInstance } from 'astro'; const { url } = Astro; const urlParams = new URLSearchParams(url.search); if (urlParams.get('ticketId')) { setOpen({ mode: 'edit', ticketId: urlParams.get('ticketId') }); }`. OnClose: `const newUrl = new URL(Astro.url); newUrl.searchParams.delete('ticketId'); history.replaceState({}, '', newUrl.toString());` (kompatybilne z Astro client-side routing).
+- **Layout** Użyj React 19 islands w Astro 5 dla hydratacji; unikaj pełnego Supabase SDK na frontendzie – tylko fetch do /api z auto-auth.
+
 ## 3. Struktura komponentów
 
 Hierarchia komponentów (MVP bez AI):
@@ -64,8 +71,8 @@ Użyj React Hook Form z Zod resolver: import { useForm } from 'react-hook-form';
 
 ### DescriptionEditor
 
-- Opis komponentu: Proste pole tekstowe do opisu ticketa (dla MVP: plain text bez Markdown preview lub renderingu; future: dodaj react-markdown – patrz ticket-modal-with-ai-suggestions.md).
-- Główne elementy: `<Textarea rows={10} placeholder="Opisz ticket..." className={error ? 'border-destructive' : ''} />` z Shadcn.
+- Opis komponentu: Proste pole tekstowe do opisu ticketa (w MVP: plain text bez Markdown; future: dodaj react-markdown dla preview/renderingu – patrz ticket-modal-with-ai-suggestions.md sekcja 4. DescriptionEditor z Markdown Preview).
+- Główne elementy: `<Textarea rows={10} placeholder="Opisz ticket..." className={error ? 'border-destructive' : ''} />` z Shadcn. W 'view': readonly + future: <Markdown>{value}</Markdown> (import z 'react-markdown').
 - Obsługiwane zdarzenia: onChange (aktualizacja opisu).
 - Obsługiwana walidacja: Limit długości, licznik znaków na dole (np. <p>{value.length}/10000</p>), ostrzeżenie >8000.
 - Typy: `string` dla opisu.
@@ -119,7 +126,7 @@ Wykorzystujemy istniejące typy z `src/types.ts`. Nowe typy dla widoku (MVP bez 
   - `errors: Record<string, string>` – błędy walidacji (np. {title: 'Pole wymagane'})
   - `users: UserDTO[]` – lista użytkowników dla select (dla admina, fetch jeśli potrzeba, jeśli nie ma endpointa - dummy data)
 
-Rozszerz FullTicketDTO: interface FullTicketDTO extends Ticket { reporter: { id: string; username: string }; assignee?: { id: string; username: string }; }. Dodaj import: "import { UserDTO } from '../types';".
+Rozszerz FullTicketDTO: interface FullTicketDTO extends Ticket { reporter: { id: string; username: string }; assignee?: { id: string; username: string }; ai_enhanced?: boolean; } (ai_enhanced: false w MVP, true po apply AI w future). Dodaj w src/types.ts: export interface CreateTicketCommand { title: string; description?: string; type: Ticket['type']; } export interface UpdateTicketCommand extends Partial<CreateTicketCommand> {} (bez reporter_id). Import: "import type { UserDTO, Ticket } from '../types';".
 
 Powiązane typy: `FullTicketDTO` (z reporter/assignee, ignoruj ai_enhanced dla MVP), `CreateTicketCommand`, `UpdateTicketCommand`, `AnalyzeTicketCommand` (future).
 
@@ -142,8 +149,7 @@ Stan zarządzany lokalnie w `TicketModal` za pomocą `useState` dla `TicketModal
 - **PUT /api/tickets/:id**: Edycja – request: `UpdateTicketCommand` (partial, bez reporter_id), response: `FullTicketDTO` (200).
 - **PATCH /api/tickets/:id/assignee**: Przypisanie – request: `{assignee_id: string | null}`, response: `FullTicketDTO` (200).
 - **DELETE /api/tickets/:id**: Usuwanie (admin only, future).
-
-Wszystkie calls z error handling (try/catch, toasts via sonner). Auth: /api/auth/\* endpoints. Użyj custom hook useApi (opcjonalny, stwórz w src/lib/hooks/useApi.ts jako wrapper na fetch, jesli go nie ma - użyj standardowego fetch): const { data, error } = useApi('/tickets', { method: 'POST', body: formData }); if (error) toast.error(error.message);. Auth: middleware auto-dodaje headers z tokenem z cookies via src/middleware/index.ts (bez manualnego Supabase SDK na frontendzie).
+  Wszystkie calls z error handling (try/catch, toasts via sonner). Auth: Użyj fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }) – middleware (`src/middleware/index.ts`) auto-dodaje Authorization: Bearer z Supabase session cookies (bez manualnego Supabase SDK na frontendzie; backend w API routes używa supabase.auth.getUser() z locals). Obsługa RLS: Server-side via Supabase policies (np. reporter_id = auth.uid() dla create). Jeśli useApi nie istnieje, stwórz `src/lib/hooks/useApi.ts` jako wrapper: export const useApi = (url: string, options?: RequestInit) => { const [data, setData] = useState(); const [error, setError] = useState(); useEffect(() => { fetch(url, options).then(res => res.json()).then(setData).catch(setError); }, [url]); return { data, error }; }.
 
 ## 8. Interakcje użytkownika
 
@@ -186,7 +192,13 @@ Sync z query params: Użyj Astro's URLSearchParams(window.location.search); if (
 9. Dodaj self-assign w `AssigneeSection` z PATCH call (API call).
 10. Testuj walidację, tryby, uprawnienia (mock user role).
 11. Dodaj ARIA labels (aria-label dla buttons/inputs), keyboard nav (focus trap w Dialog), responsive classes Tailwind (sm: etc.).
-12. Uruchom `npm run lint:fix` i `npm run format`.
+12. Uruchom `npm run lint:fix` i `npm run format` (z workspace rules).
 13. Przetestuj edge cases: błędy, mobile, permissions.
 
 Dla Shadcn UI komponentów (Dialog, Input, etc.): Użyj npx shadcn-ui@latest add [component] (auto-instaluje deps). sonner jest już w src/components/ui/sonner.tsx (dodaj via shadcn-ui add sonner jeśli potrzeba); zainstaluj react-hook-form @hookform/resolvers/zod osobno dla walidacji formularzy.
+
+### 4.7 Zależności i Instalacja Komponentów
+
+- Przed implementacją: Uruchom `npx shadcn-ui@latest add dialog input textarea select button badge avatar` (dla Dialog, Input, etc.). Dla walidacji: `npm install react-hook-form @hookform/resolvers/zod` (dodaj do package.json). Dla future Markdown (z prd.md): `npm install react-markdown` (użyj w DescriptionEditor dla preview w view mode i insertach AI).
+- Konflikt z PRD: W MVP opis to plain text (bez Markdown renderingu), ale struktura pozwala na future upgrade (patrz ticket-modal-with-ai-suggestions.md). W prd.md zaktualizuj linię 28: "Opis (plain text w MVP, future: Markdown)".
+- Auth w fetch (np. AssigneeSection): Użyj relative paths jak `fetch('/api/users')` – middleware auto-dodaje Authorization: Bearer z cookies (z api-plan.md). Obsługa błędów: `if (!res.ok) { toast.error('Unauthorized'); onClose(); }`.

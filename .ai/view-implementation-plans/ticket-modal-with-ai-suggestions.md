@@ -36,14 +36,15 @@ Ten dokument zawiera elementy integracji AI (sugestie, analiza, rating, ai_enhan
 - Główne elementy: `<div className="grid md:grid-cols-2 gap-4"> <Textarea onChange={updatePreview} /> <div className="prose max-h-96 overflow-auto"> <MarkdownPreview value={markdownValue} /> </div> </div>` (użyj react-markdown dla preview, import Markdown from 'react-markdown';).
 - Obsługiwane zdarzenia: onChange – update value i live preview.
 - Typy: `string` (Markdown-supported).
-- Propsy: `{ value: string, onChange: (value: string) => void, error?: string }`. W 'view': render full Markdown via Markdown component. Dependency: Dodaj do package.json: 'react-markdown' (dla preview Markdown w view mode i future). W view mode: <Markdown>{value}</Markdown> (import Markdown from 'react-markdown').
+- Propsy: `{ value: string, onChange: (value: string) => void, error?: string }`. W 'view': render full Markdown via Markdown component. Dependency: Dodaj do package.json w main ticket-modal.md: 'react-markdown' (dla preview Markdown w view mode i future insertach AI). W MVP: Użyj tylko w 'view' jeśli opis ma Markdown (z prd.md), ale plain w textarea.
 
 ## 7. Integracja API (AI Parts, Future)
 
-- **POST /api/ai-suggestion-sessions/analyze**: Analiza AI – request: `AnalyzeTicketCommand` ({title, description}), response: `AISuggestionSessionDTO` (200), z loading spinnerem (Openrouter.ai via backend, fetch project docs z GET /api/project-documentation).
+- **POST /api/ai-suggestion-sessions/analyze**: Analiza AI – request: `AnalyzeTicketCommand` ({title, description}), response: `AISuggestionSessionDTO` (200), z loading spinnerem (Openrouter.ai via backend, fetch project docs z GET /api/project-documentation). Backend w API route fetch docs via GET /api/project-documentation z Supabase, potem Openrouter.ai call; frontend: fetch('/api/ai-suggestion-sessions/analyze', { body: JSON.stringify({title, description}) }) z auto-auth via middleware.
+
 - **PUT /api/ai-suggestion-sessions/:id/rating**: Ocena – request: `{rating: number | null}`, brak response body (200).
 
-Calls via fetch do /api, error handling (log to ai_errors table via Supabase insert jeśli 500). if (res.status === 500) { await supabase.from('ai_errors').insert({ ticket_id: ticketId, error_message: error.message }); // supabase z context.locals via middleware toast.error('AI error, contact admin if this error persists'); }.
+Calls via fetch do /api, error handling (log to ai_errors table via Supabase insert jeśli 500). Errors: W backendzie (API route): if (500) { await supabase.from('ai_errors').insert({ ... }); } Frontend: toast.error('AI error, contact admin if this error persists'); retry via button.
 
 ## 8. Interakcje użytkownika (AI Flow, Future)
 
@@ -54,6 +55,7 @@ Calls via fetch do /api, error handling (log to ai_errors table via Supabase ins
 
 ## 11.2 Kroki implementacji AI (Future Step w MVP)
 
+0. Instalacja: `npm install lucide-react` (dla MagicWand icon w TicketCard, z ui-plan.md). Dodaj do Shadcn: `npx shadcn-ui@latest add checkbox` (dla QUESTION).
 1. Dodaj AIAnalysisButton po TicketForm (src/components/AIAnalysisButton.tsx).
 2. Implementuj AISuggestionsList i AIRating z logiką apply/rate (src/components/AISuggestionsList.tsx, src/components/AIRating.tsx).
 3. Integruj API calls (POST /api/ai-suggestion-sessions/analyze, PUT /api/ai-suggestion-sessions/:id/rating) z error handling (toast + insert to ai_errors).

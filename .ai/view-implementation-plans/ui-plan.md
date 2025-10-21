@@ -35,10 +35,10 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
 - **Nazwa widoku:** Ticket Modal View
 - **Wyzwalacz:** Otwierany przez przycisk "Utwórz Ticket" w top barze (tryb tworzenia) lub kliknięcie na kartę ticketa na tablicy (tryb edycji/podglądu), via TicketModalContext (patrz ticket-modal.md, src/lib/contexts/TicketModalContext.tsx).
 - **Główny cel:** Umożliwienie tworzenia nowego ticketa, edycji istniejącego lub podglądu szczegółów bez opuszczania widoku tablicy Kanban (MVP bez AI; future AI w ticket-modal-with-ai-suggestions.md).
-- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza (title Input, description Textarea plain, type Select). W trybie edycji: załadowane dane ticketa (tytuł, opis plain text, typ, osoba przypisana, osoba zgłaszająca - readonly). Informacja o osobie zgłaszającej (nieedytowalna).
+- **Kluczowe informacje do wyświetlenia:** W trybie tworzenia: puste pola formularza (title Input, description Textarea plain, type Select). W trybie edycji: załadowane dane ticketa (tytuł, opis plain text, typ, osoba przypisana, osoba zgłaszająca - readonly). Informacja o osobie zgłaszającej (nieedytowalna). (opis: plain text w MVP z Textarea; future: Markdown preview via react-markdown).
 - **Kluczowe komponenty widoku:** `Dialog` (modal), `Input` (tytuł), `Textarea` (opis, plain dla MVP), `Select` (typ), `Button` ("Przypisz mnie"), przyciski akcji (Zapisz, Anuluj).
 - **UX, dostępność i względy bezpieczeństwa:**
-  - **UX:** Walidacja inline; toast po zapisaniu i odświeżenie tablicy; Enter do submit. Integracja: Użyj TicketModalContext z src/lib/contexts/. Walidacja: Zod + React Hook Form. API paths: /api/... (Astro routes).
+  - **UX:** Walidacja inline; toast po zapisaniu i odświeżenie tablicy; Enter do submit. Integracja: Użyj TicketModalContext z src/lib/contexts/. Walidacja: Zod + React Hook Form (zainstaluj deps: npm install react-hook-form @hookform/resolvers/zod). API paths: /api/... (Astro routes).
   - **Dostępność:** Focus trap w Dialog; ARIA labels dla pól.
   - **Bezpieczeństwo:** Client-side check uprawnień (UserContext); server RLS w Supabase.
 - **Przypadki brzegowe i stany błędów:**
