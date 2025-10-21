@@ -18,6 +18,10 @@ export const KanbanBoardView: React.FC = () => {
   } = useKanbanBoard();
   const { setOpen } = useTicketModal();
 
+  const handleTicketClick = (ticketId: string) => {
+    setOpen({ mode: "edit", ticketId });
+  };
+
   // Handle query params for opening modal with specific ticket
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -118,6 +122,7 @@ export const KanbanBoardView: React.FC = () => {
       savingTicketId={savingTicketId}
       canMoveTicket={canMoveTicket}
       handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+      onTicketClick={handleTicketClick}
     />
   );
 };

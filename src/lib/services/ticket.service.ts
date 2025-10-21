@@ -657,12 +657,13 @@ export class TicketService {
         }
       }
 
-      // Sprawdź uprawnienia: użytkownik musi być administratorem lub przypisywać siebie
+      // Sprawdź uprawnienia: użytkownik musi być administratorem, przypisywać siebie lub odprzypisywać się od własnych ticketów
       const isSelfAssignment = validatedData.assignee_id === userId;
+      const isSelfUnassignment = validatedData.assignee_id === null && existingTicket.assignee_id === userId;
 
       // Sprawdź rolę użytkownika - dla ADMIN pozwól na aktualizację
       let isAdmin = false;
-      if (!isSelfAssignment) {
+      if (!isSelfAssignment && !isSelfUnassignment) {
         const { data: userProfile, error: profileError } = await this.supabase
           .from("profiles")
           .select("role")
@@ -676,9 +677,9 @@ export class TicketService {
         isAdmin = userProfile.role === "ADMIN";
       }
 
-      if (!isSelfAssignment && !isAdmin) {
+      if (!isSelfAssignment && !isSelfUnassignment && !isAdmin) {
         throw new Error(
-          "Access denied: You don't have permission to assign this ticket. Only administrators can assign tickets to other users, or you can assign tickets to yourself."
+          "Access denied: You don't have permission to assign this ticket. Only administrators can assign tickets to other users, or you can assign/unassign tickets to/from yourself."
         );
       }
 

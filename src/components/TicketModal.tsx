@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
 import { useUser } from "@/lib/hooks/useUser";
 import type { FullTicketDTO } from "@/types";
@@ -128,6 +128,15 @@ export const TicketModal: React.FC = () => {
     setErrors({});
   };
 
+  const handleAssigneeUpdate = (newAssignee: { id: string; username: string } | null) => {
+    if (ticket) {
+      setTicket({
+        ...ticket,
+        assignee: newAssignee || undefined,
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -137,6 +146,11 @@ export const TicketModal: React.FC = () => {
             {mode === "edit" && "Edit ticket"}
             {mode === "view" && "View ticket"}
           </DialogTitle>
+          <DialogDescription>
+            {mode === "create" && "Fill in the details to create a new ticket"}
+            {mode === "edit" && "Make changes to the ticket details"}
+            {mode === "view" && "View ticket information"}
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (
@@ -153,6 +167,7 @@ export const TicketModal: React.FC = () => {
               user={user}
               isAdmin={isAdmin}
               ticket={ticket}
+              onAssigneeUpdate={handleAssigneeUpdate}
             />
             <ActionButtons onCancel={onClose} onSave={() => handleSave(formData)} isLoading={loading} mode={mode} />
           </>

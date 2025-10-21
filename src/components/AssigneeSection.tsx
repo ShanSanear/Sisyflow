@@ -22,7 +22,7 @@ interface AssigneeSectionProps {
   assignee?: { id: string; username: string };
   currentUser: UserDTO | null;
   isAdmin: boolean;
-  onAssign: (assigneeId: string | null) => void;
+  onAssign: (assignee: { id: string; username: string } | null) => void;
   mode: TicketModalMode;
   ticketId?: string;
 }
@@ -58,7 +58,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
       }
 
       const updatedTicket = await response.json();
-      onAssign(updatedTicket.assignee_id);
+      onAssign(updatedTicket.assignee || null);
     } catch (error) {
       console.error("Error updating assignee:", error);
       // TODO: Show toast error
@@ -68,10 +68,13 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   };
 
   const handleAssignMe = () => {
-    if (!currentUser) return;
+    if (!currentUser || !canModifyAssignment) return;
     const newAssigneeId = assignee ? null : currentUser.id;
     handleAssigneeUpdate(newAssigneeId);
   };
+
+  // Check if current user can modify this assignment
+  const canModifyAssignment = !assignee || assignee.id === currentUser?.id;
 
   const handleAdminAssign = (assigneeId: string | null) => {
     handleAssigneeUpdate(assigneeId);
@@ -119,28 +122,32 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           {assignee ? (
             <>
               <Badge variant="secondary">{assignee.username}</Badge>
+              {canModifyAssignment && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAssignMe}
+                  disabled={assigning}
+                  aria-label={assigning ? "Unassigning ticket..." : "Unassign ticket from me"}
+                >
+                  {assigning ? "Updating..." : "Unassign"}
+                </Button>
+              )}
+            </>
+          ) : (
+            canModifyAssignment && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAssignMe}
                 disabled={assigning}
-                aria-label={assigning ? "Unassigning ticket..." : "Unassign ticket from me"}
+                aria-label={assigning ? "Assigning ticket to you..." : "Assign ticket to me"}
               >
-                {assigning ? "Updating..." : "Unassign"}
+                {assigning ? "Assigning..." : "Assign to me"}
               </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAssignMe}
-              disabled={assigning}
-              aria-label={assigning ? "Assigning ticket to you..." : "Assign ticket to me"}
-            >
-              {assigning ? "Assigning..." : "Assign to me"}
-            </Button>
+            )
           )}
         </div>
       )}

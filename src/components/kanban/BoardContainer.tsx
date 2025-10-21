@@ -13,6 +13,7 @@ interface BoardContainerProps {
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  onTicketClick?: (ticketId: string) => void;
 }
 
 export const BoardContainer: React.FC<BoardContainerProps> = ({
@@ -21,6 +22,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  onTicketClick,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -133,6 +135,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
                 savingTicketId={savingTicketId}
                 canMoveTicket={canMoveTicket}
                 handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+                onTicketClick={onTicketClick}
               />
             ))}
           </div>

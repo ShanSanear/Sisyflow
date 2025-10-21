@@ -17,9 +17,17 @@ interface TicketCardProps {
   canMove: boolean; // Flaga określająca uprawnienia do przeciągania
   isSaving: boolean; // Flaga określająca stan zapisywania
   onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void; // Handler for status change via context menu
+  onClick?: (ticketId: string) => void; // Handler for clicking on ticket card
 }
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, canMove, isSaving, onStatusChange }) => {
+export const TicketCard: React.FC<TicketCardProps> = ({
+  ticket,
+  currentStatus,
+  canMove,
+  isSaving,
+  onStatusChange,
+  onClick,
+}) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
     disabled: !canMove || isSaving,
@@ -103,6 +111,19 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
     </p>
   );
 
+  const handleCardClick = () => {
+    if (onClick && !isDragging) {
+      onClick(ticket.id);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === "Enter" || e.key === " ") && onClick && !isDragging) {
+      e.preventDefault();
+      onClick(ticket.id);
+    }
+  };
+
   const CardContent = (
     <>
       <div className="flex items-start justify-between mb-2">
@@ -158,6 +179,8 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
               tabIndex={canMove && !isSaving ? 0 : -1}
               aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
               aria-describedby="drag-instructions"
+              onClick={handleCardClick}
+              onKeyDown={handleKeyDown}
             >
               {CardContent}
             </div>
@@ -177,6 +200,8 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, currentStatus, c
           tabIndex={canMove && !isSaving ? 0 : -1}
           aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
           aria-describedby="drag-instructions"
+          onClick={handleCardClick}
+          onKeyDown={handleKeyDown}
         >
           {CardContent}
         </div>
