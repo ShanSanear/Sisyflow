@@ -98,7 +98,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
 
       {isAdmin ? (
         <Select
-          value={assignee?.id || ""}
+          value={assignee?.id || " "}
           onValueChange={(value) => handleAdminAssign(value || null)}
           disabled={assigning}
         >
@@ -106,7 +106,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
             <SelectValue placeholder="Select user..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value=" ">Unassigned</SelectItem>
             {DUMMY_USERS.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 {user.username}

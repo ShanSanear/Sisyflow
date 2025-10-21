@@ -48,14 +48,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <TitleInput
-        value={watchedValues.title || ""}
+        value={watchedValues.title || " "}
         onChange={(value) => setValue("title", value)}
         error={formErrors.title?.message || errors.title}
         mode={mode}
       />
 
       <DescriptionEditor
-        value={watchedValues.description || ""}
+        value={watchedValues.description || " "}
         onChange={(value) => setValue("description", value)}
         error={formErrors.description?.message || errors.description}
         mode={mode}
@@ -69,7 +69,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, erro
       />
 
       <AssigneeSection
-        assignee={ticket?.assignee}
+        assignee={ticket?.assignee || undefined}
         currentUser={user}
         isAdmin={isAdmin}
         onAssign={(assigneeId) => {

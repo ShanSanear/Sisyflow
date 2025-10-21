@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { BoardContainer } from "../kanban/BoardContainer";
 import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
-import { TicketModal } from "../TicketModal";
 import { useKanbanBoard } from "../../lib/hooks/useKanbanBoard";
 import { useTicketModal } from "../../lib/contexts/TicketModalContext";
 
@@ -121,7 +120,6 @@ export const KanbanBoardView: React.FC = () => {
         canMoveTicket={canMoveTicket}
         handleStatusChangeViaMenu={handleStatusChangeViaMenu}
       />
-      <TicketModal />
     </>
   );
 };
