@@ -31,6 +31,12 @@ export interface CreateUserCommand {
   role: Profile["role"];
 }
 
+// Paginated Users Response DTO
+export interface PaginatedUsersResponseDTO {
+  users: UserDTO[];
+  pagination: PaginationDTO;
+}
+
 // Profile DTOs
 // ProfileDTO: Used in GET /profiles/me (response), PUT /profiles/me (response)
 export type ProfileDTO = Pick<Profile, "id" | "username" | "role" | "created_at" | "updated_at">;
