@@ -9,6 +9,7 @@ import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
+import markdown from "@eslint/markdown";
 
 // File path setup
 const __filename = fileURLToPath(import.meta.url);
@@ -56,11 +57,23 @@ const reactConfig = tseslint.config({
   },
 });
 
+const markdownConfig = tseslint.config({
+  files: ["**/*.md"],
+  plugins: {
+    markdown,
+  },
+  language: "markdown/commonmark",
+  rules: {
+    "markdown/no-html": "error",
+  },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
   jsxA11yConfig,
   reactConfig,
+  markdownConfig,
   eslintPluginAstro.configs["flat/recommended"],
   eslintPluginPrettier
 );
