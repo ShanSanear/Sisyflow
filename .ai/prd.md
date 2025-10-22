@@ -96,10 +96,11 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
 - Kryteria akceptacji:
   1.  W panelu Administratora znajduje się formularz do dodawania użytkowników.
   2.  Formularz wymaga podania adresu e-mail, nazwy użytkownika i hasła.
-  3.  Po zatwierdzeniu formularza, w systemie tworzone jest nowe konto z rolą "Użytkownik".
-  4.  Nie można utworzyć użytkownika z adresem e-mail, bądź nazwą użytkownika które już istnieją w systemie. W takim przypadku wyświetlany jest błąd.
-  5.  Nowy użytkownik pojawia się na liście użytkowników w panelu Administratora.
-  6.  Wejście na stronę panelu administratora NIE JEST możliwe bez uprzedniego zalogowania się i posiadania roli ADMIN.
+  3.  Hasło musi spełniać określone wymagania: minimum 8 znaków, co najmniej jedna duża litera, jedna mała litera i jedna cyfra.
+  4.  Po zatwierdzeniu formularza, w systemie tworzone jest nowe konto z rolą "Użytkownik".
+  5.  Nie można utworzyć użytkownika z adresem e-mail, bądź nazwą użytkownika które już istnieją w systemie. W takim przypadku wyświetlany jest błąd.
+  6.  Nowy użytkownik pojawia się na liście użytkowników w panelu Administratora.
+  7.  Wejście na stronę panelu administratora NIE JEST możliwe bez uprzedniego zalogowania się i posiadania roli ADMIN.
 
 - ID: US-004
 - Tytuł: Usuwanie użytkownika

@@ -96,6 +96,7 @@ AdminPage.astro
   - `isOpen: boolean`: Kontroluje widoczność okna.
   - `onOpenChange: (isOpen: boolean) => void`: Funkcja zwrotna przy zmianie stanu okna.
   - `onAddUser: (command: CreateUserCommand) => Promise<void>`: Asynchroniczna funkcja do obsługi przesłania formularza.
+  - **Doprecyzowanie:** Logika komponentu będzie na stałe ustawiać rolę tworzonego użytkownika na `"USER"`, zgodnie z wymaganiami MVP. Formularz nie będzie zawierał pola wyboru roli.
 
 ### `DeleteUserAlert`
 
@@ -135,9 +136,10 @@ Logika biznesowa oraz stan widoku `UserManagementView` zostaną wyizolowane w de
   - `users: UserViewModel[]`: Lista użytkowników.
   - `isLoading: boolean`: Stan ładowania początkowej listy użytkowników.
   - `error: Error | null`: Obiekt błędu, jeśli wystąpił problem z API.
-  - `currentUser: User | null`: Dane zalogowanego użytkownika (pobrane z `useUser` hooka), potrzebne do walidacji (np. uniemożliwienie samousunięcia).
+  - `currentUser: UserDTO | null`: Dane zalogowanego użytkownika (pobrane z `useUser` hooka), potrzebne do walidacji (np. uniemożliwienie samousunięcia).
+- **Adnotacja dot. `useUser`:** Hook `useUser` jest już dostępny w aplikacji i zwraca obiekt `{ user, isAdmin, ... }`. Potrzebny obiekt `currentUser` jest dostępny w polu `user` i jest typu `UserDTO`, które zawiera wymagane pole `id`.
 - **Udostępniane funkcje:**
-  - `addUser(command: CreateUserCommand): Promise<void>`: Wysyła żądanie `POST` do API, a po sukcesie dodaje nowego użytkownika do lokalnego stanu.
+  - `addUser(command: CreateUserCommand): Promise<void>`: Wysyła żądanie `POST` do API, a po sukcesie dodaje nowego użytkownika do lokalnego stanu. Rola użytkownika jest na stałe ustawiana na `"USER"`.
   - `deleteUser(userId: string): Promise<void>`: Ustawia flagę `isDeleting` na `true` dla danego użytkownika, wysyła żądanie `DELETE`, a po sukcesie usuwa użytkownika z lokalnego stanu.
 
 ## 7. Integracja API
@@ -147,7 +149,8 @@ Integracja z API będzie realizowana wewnątrz hooka `useAdminUsers` przy użyci
 - **Pobieranie użytkowników:**
   - **Endpoint:** `GET /api/users`
   - **Akcja:** Wywoływane w `useEffect` przy pierwszym renderowaniu komponentu `UserManagementView`.
-  - **Typ odpowiedzi:** `{ users: UserDTO[], pagionation: {page: number, limit: number, total: number} }`
+  - **Typ odpowiedzi:** `PaginatedUsersResponseDTO` (zdefiniowany w `@/src/types.ts`), który zawiera `{ users: UserDTO[], pagination: { ... } }`.
+  - **Doprecyzowanie (Paginacja):** W ramach MVP, interfejs użytkownika nie będzie implementował kontrolek do paginacji (np. przycisków "następna/poprzednia strona"). Hook `useAdminUsers` będzie odpowiedzialny za pobranie wszystkich użytkowników, potencjalnie poprzez wykonanie wielokrotnych zapytań do API, jeśli odpowiedź będzie podzielona na strony.
 - **Dodawanie użytkownika:**
   - **Endpoint:** `POST /api/users`
   - **Akcja:** Wywoływane przez funkcję `addUser` po pomyślnej walidacji formularza.
@@ -176,7 +179,7 @@ Integracja z API będzie realizowana wewnątrz hooka `useAdminUsers` przy użyci
 
 - **Ochrona ścieżki:** Middleware na serwerze (Astro) musi przekierować niezalogowanych użytkowników lub użytkowników bez roli `ADMIN` próbujących uzyskać dostęp do `/admin` na główną stronę aplikacji: `/`.
 - **Formularz dodawania użytkownika:** Walidacja po stronie klienta (w `AddUserDialog`) musi sprawdzać obecność i format danych (`username`, `email`, `password`) przed wysłaniem żądania do API.
-- **Uniemożliwienie samousunięcia:** W komponencie `UserActionsDropdown` przycisk "Usuń" musi być nieaktywny (`disabled`) dla wiersza należącego do zalogowanego administratora. Warunek: `user.id === currentUserId`.
+- **Uniemożliwienie samousunięcia:** W komponencie `UserActionsDropdown` przycisk "Usuń" musi być nieaktywny (`disabled`) dla wiersza należącego do zalogowanego administratora. Warunek: `user.id === currentUser.id`.
 
 ## 10. Obsługa błędów
 
