@@ -17,3 +17,4 @@ alwaysApply: false
 - Implement hybrid rendering with server-side rendering where needed
 - Use Astro.cookies for server-side cookie management
 - Leverage import.meta.env for environment variables
+- Frontend by default is served under port 3000
