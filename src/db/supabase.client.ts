@@ -31,3 +31,24 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
 
   return supabase;
 };
+
+/**
+ * Tworzy instancję Supabase z service role key dla operacji administracyjnych
+ * Używane tylko dla funkcji wymagających uprawnień administratora Supabase Auth
+ */
+export const createSupabaseAdminInstance = () => {
+  return createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_SERVICE_ROLE_KEY, {
+    cookies: {
+      getAll() {
+        return []; // Brak ciasteczek dla admin operacji
+      },
+      setAll() {
+        // Brak ustawiania ciasteczek dla admin operacji
+      },
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+};
