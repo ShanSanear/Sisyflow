@@ -17,6 +17,9 @@ const PUBLIC_PATHS = [
   "/api/auth/sign-up",
 ];
 
+// Admin paths - Require ADMIN role
+const ADMIN_PATHS = ["/admin"];
+
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
   const localsWithUser = locals as LocalsWithUser;
   // Skip auth check for public paths
@@ -43,6 +46,13 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
       id: user.id,
       role: profile?.role || "USER", // Default to USER if profile not found
     };
+
+    // Check admin paths
+    if (ADMIN_PATHS.some((path) => url.pathname.startsWith(path))) {
+      if (localsWithUser.user.role !== "ADMIN") {
+        return redirect("/");
+      }
+    }
   } else if (!PUBLIC_PATHS.includes(url.pathname)) {
     // Redirect to login for protected routes
     return redirect("/login");
