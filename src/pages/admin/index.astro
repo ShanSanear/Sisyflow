@@ -1,0 +1,16 @@
+---
+import AuthenticatedLayout from "../../layouts/AuthenticatedLayout.astro";
+import AdminPanelView from "../../components/views/AdminPanelView.tsx";
+
+const user = Astro.locals.user;
+
+if (!user || user.role !== "ADMIN") {
+  return Astro.redirect("/");
+}
+---
+
+<AuthenticatedLayout title="Panel Administratora">
+  <div class="container mx-auto py-8">
+    <AdminPanelView client:load />
+  </div>
+</AuthenticatedLayout>

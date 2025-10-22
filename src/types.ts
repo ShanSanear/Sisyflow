@@ -125,6 +125,11 @@ export type AIErrorDTO = Pick<
   "id" | "ticket_id" | "user_id" | "error_message" | "error_details" | "created_at"
 >;
 
+// User ViewModel for Admin Panel
+export type UserViewModel = UserDTO & {
+  isDeleting?: boolean; // true, gdy żądanie usunięcia tego użytkownika jest w toku
+};
+
 // Ticket Modal State
 export interface TicketModalState {
   mode: TicketModalMode;
