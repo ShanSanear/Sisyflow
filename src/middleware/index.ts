@@ -35,11 +35,13 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
   } = await supabase.auth.getUser();
 
   if (user) {
+    // Get user role from profiles table
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+
     localsWithUser.user = {
       email: user.email || "",
       id: user.id,
-      // TODO: get role from profiles table
-      role: "ADMIN" as const,
+      role: profile?.role || "USER", // Default to USER if profile not found
     };
   } else if (!PUBLIC_PATHS.includes(url.pathname)) {
     // Redirect to login for protected routes
