@@ -8,16 +8,141 @@ import {
   AuthUserCreationError,
 } from "../../../lib/services/user.service";
 import { createSupabaseServerInstance } from "../../../db/supabase.client";
-import type { CreateUserCommand, UserDTO } from "../../../types";
-import { createUserSchema } from "../../../lib/validation/schemas/user";
+import type { CreateUserCommand, UserDTO, PaginationDTO } from "../../../types";
+import { createUserSchema, getUsersQuerySchema } from "../../../lib/validation/schemas/user";
 import {
   isZodError,
   createZodValidationResponse,
   isDatabaseConnectionError,
   createDatabaseConnectionErrorResponse,
+  calculatePagination,
 } from "../../../lib/utils";
 
 export const prerender = false;
+
+/**
+ * GET /api/users
+ *
+ * Pobiera paginowaną listę wszystkich użytkowników systemu. Dostęp mają wyłącznie użytkownicy z rolą administratora (ADMIN).
+ * Łączy dane z tabeli profiles z informacjami o email z Supabase Auth.
+ *
+ * Query Parameters:
+ * - limit (opcjonalny): liczba użytkowników na stronę (domyślnie 50, maksymalnie 100)
+ * - offset (opcjonalny): przesunięcie w wynikach (domyślnie 0)
+ *
+ * Response: 200 OK - obiekt zawierający listę użytkowników i metadane paginacji
+ * Error Responses: 401 Unauthorized, 403 Forbidden, 400 Bad Request, 500 Internal Server Error
+ */
+export const GET: APIRoute = async ({ request, locals, cookies, url }) => {
+  try {
+    // Sprawdź czy użytkownik jest uwierzytelniony
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const currentUserId = locals.user.id;
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
+
+    // Sprawdź czy użytkownik ma rolę ADMIN
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", currentUserId)
+      .single();
+
+    if (profileError || !userProfile) {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "User profile not found",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (userProfile.role !== "ADMIN") {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "Access denied. Only administrators can view user list.",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Parsuj i waliduj parametry query
+    const urlParams = new URL(url).searchParams;
+    const queryParams = {
+      limit: urlParams.get("limit") || undefined,
+      offset: urlParams.get("offset") || undefined,
+    };
+
+    const validatedQuery = getUsersQuerySchema.parse(queryParams);
+
+    // Pobierz użytkowników używając UserService
+    const userService = createUserService(supabase);
+    const { users, total } = await userService.getUsersPaginated(validatedQuery.limit, validatedQuery.offset);
+
+    // Oblicz metadane paginacji
+    const pagination: PaginationDTO = calculatePagination(validatedQuery.offset, validatedQuery.limit, total);
+
+    // Zwróć pomyślną odpowiedź
+    return new Response(
+      JSON.stringify({
+        users,
+        pagination,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching users:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("user list retrieval");
+    }
+
+    // Obsługa błędów walidacji Zod
+    if (isZodError(error)) {
+      return createZodValidationResponse(error);
+    }
+
+    // Dla innych błędów
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
 
 /**
  * POST /api/users

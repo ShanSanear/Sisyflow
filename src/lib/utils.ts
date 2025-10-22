@@ -137,3 +137,19 @@ export function extractSupabaseError(error: unknown, operation: string): Error {
 
   return new Error(detailedMessage);
 }
+
+/**
+ * Helper function to calculate pagination metadata
+ * @param offset - Current offset in results
+ * @param limit - Number of items per page
+ * @param total - Total number of items
+ * @returns Pagination metadata object
+ */
+export function calculatePagination(offset: number, limit: number, total: number) {
+  const page = Math.floor(offset / limit) + 1;
+  return {
+    page,
+    limit,
+    total,
+  };
+}

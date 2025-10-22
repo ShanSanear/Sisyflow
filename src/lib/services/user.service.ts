@@ -52,6 +52,27 @@ export class AuthUserCreationError extends UserServiceError {
   }
 }
 
+export class UserDeletionError extends UserServiceError {
+  constructor(message = "Failed to delete user") {
+    super(message);
+    this.name = "UserDeletionError";
+  }
+}
+
+export class SelfDeletionError extends UserServiceError {
+  constructor(message = "Users cannot delete their own account") {
+    super(message);
+    this.name = "SelfDeletionError";
+  }
+}
+
+export class UserToDeleteNotFoundError extends UserServiceError {
+  constructor(message = "User to delete not found") {
+    super(message);
+    this.name = "UserToDeleteNotFoundError";
+  }
+}
+
 /**
  * Service odpowiedzialny za operacje na użytkownikach
  * Implementuje logikę biznesową dla tworzenia i zarządzania użytkownikami
@@ -176,6 +197,141 @@ export class UserService {
 
       // Dla innych błędów, opakuj w bardziej przyjazny komunikat
       throw new Error(`Failed to create user: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Pobiera paginowaną listę wszystkich użytkowników systemu
+   * Łączy dane z tabeli profiles z informacjami o email z Supabase Auth
+   * Sortuje wyniki po created_at DESC
+   *
+   * @param limit Liczba użytkowników na stronę (1-100)
+   * @param offset Przesunięcie w wynikach (minimum 0)
+   * @returns Obiekt zawierający listę użytkowników i łączną liczbę użytkowników
+   * @throws Error jeśli wystąpi błąd bazy danych
+   */
+  async getUsersPaginated(limit: number, offset: number): Promise<{ users: UserDTO[]; total: number }> {
+    try {
+      // Najpierw pobierz łączną liczbę użytkowników
+      const { count: total, error: countError } = await this.supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      if (countError) {
+        throw extractSupabaseError(countError, "Failed to count users");
+      }
+
+      // Następnie pobierz użytkowników z paginacją i JOIN z auth.users
+      // Uwaga: Supabase nie obsługuje bezpośredniego JOIN między profiles a auth.users w pojedynczym zapytaniu
+      // Musimy wykonać dwa zapytania: jeden dla profili, drugi dla emaili z auth
+
+      const { data: profiles, error: profilesError } = await this.supabase
+        .from("profiles")
+        .select("id, username, role, created_at")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (profilesError) {
+        throw extractSupabaseError(profilesError, "Failed to fetch user profiles");
+      }
+
+      if (!profiles || profiles.length === 0) {
+        return { users: [], total: total || 0 };
+      }
+
+      // Pobierz emaile dla użytkowników z Supabase Auth
+      const { data: authUsers, error: authError } = await this.supabaseAdmin.auth.admin.listUsers();
+
+      if (authError) {
+        throw extractSupabaseError(authError, "Failed to fetch auth users");
+      }
+
+      // Mapuj profile z emailami z auth
+      const users: UserDTO[] = profiles
+        .map((profile) => {
+          const authUser = authUsers.users.find((user) => user.id === profile.id);
+          if (!authUser || !authUser.email) {
+            console.warn(`No email found for user ${profile.id}`);
+            return null;
+          }
+
+          return {
+            id: profile.id,
+            email: authUser.email,
+            username: profile.username,
+            role: profile.role,
+            created_at: profile.created_at,
+          };
+        })
+        .filter((user): user is UserDTO => user !== null);
+
+      return {
+        users,
+        total: total || 0,
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch users: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Usuwa użytkownika z systemu wraz z jego profilem i aktualizuje powiązane tickety
+   * Wykonuje operację dwuetapową: sprawdzenie uprawnień, a następnie usunięcie przez Supabase Auth SDK
+   * które automatycznie usuwa rekord z auth.users i profiles (cascade delete) oraz ustawia null dla reporter_id/assignee_id w ticketach
+   *
+   * @param userIdToDelete ID użytkownika do usunięcia
+   * @param adminUserId ID administratora wykonującego operację
+   * @throws Error jeśli walidacja nie powiedzie się, użytkownik nie ma uprawnień, próbuje usunąć samego siebie lub wystąpi błąd bazy danych
+   */
+  async deleteUser(userIdToDelete: string, adminUserId: string): Promise<void> {
+    try {
+      // Sprawdź czy użytkownik wykonujący operację ma rolę ADMIN
+      const { data: adminProfile, error: adminCheckError } = await this.supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", adminUserId)
+        .single();
+
+      if (adminCheckError || !adminProfile) {
+        throw new UserProfileNotFoundError();
+      }
+
+      if (adminProfile.role !== ("ADMIN" as Profile["role"])) {
+        throw new AccessDeniedError("Only administrators can delete users");
+      }
+
+      // Zabrania użytkownikowi usunięcia własnego konta
+      if (userIdToDelete === adminUserId) {
+        throw new SelfDeletionError();
+      }
+
+      // Sprawdź czy użytkownik do usunięcia istnieje
+      const { data: userToDelete, error: userCheckError } = await this.supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userIdToDelete)
+        .single();
+
+      if (userCheckError || !userToDelete) {
+        throw new UserToDeleteNotFoundError();
+      }
+
+      // Usuń użytkownika używając Supabase Auth SDK
+      // To automatycznie usunie rekord z auth.users i profiles (przez cascade delete)
+      // oraz ustawi null dla reporter_id i assignee_id w ticketach
+      const { error: deleteError } = await this.supabaseAdmin.auth.admin.deleteUser(userIdToDelete);
+
+      if (deleteError) {
+        throw extractSupabaseError(deleteError, "Failed to delete user from auth");
+      }
+    } catch (error) {
+      // Przekaż błędy walidacji Zod bez zmian
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      throw new UserDeletionError(`Failed to delete user: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 }

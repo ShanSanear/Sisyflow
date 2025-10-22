@@ -17,6 +17,7 @@ import {
   updateTicketAssigneeSchema,
 } from "../validation/ticket.validation";
 import { POSTGREST_ERROR_CODES } from "../constants";
+import { calculatePagination } from "../utils";
 import { z } from "zod";
 
 /**
@@ -253,14 +254,8 @@ export class TicketService {
         };
       });
 
-      // Przygotuj metadane paginacji dla dummy data
-      // const total = ticketDTOs.length;
-      const page = Math.floor(validatedParams.offset / validatedParams.limit) + 1;
-      const pagination: PaginationDTO = {
-        page,
-        limit: validatedParams.limit,
-        total: count || 0,
-      };
+      // Przygotuj metadane paginacji
+      const pagination: PaginationDTO = calculatePagination(validatedParams.offset, validatedParams.limit, count || 0);
 
       return {
         tickets: ticketDTOs,

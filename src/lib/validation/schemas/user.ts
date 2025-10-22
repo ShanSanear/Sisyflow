@@ -33,3 +33,44 @@ export const createUserSchema = z.object({
  * Typ wywnioskowany ze schematu createUserSchema
  */
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+/**
+ * Schema walidacji dla parametrów query w GET /api/users
+ * Implementuje walidację parametrów paginacji:
+ * - limit: opcjonalny, domyślnie 50, maksymalnie 100, minimum 1
+ * - offset: opcjonalny, domyślnie 0, minimum 0
+ */
+export const getUsersQuerySchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .refine((val) => val >= 1 && val <= 100, {
+      message: "Limit must be between 1 and 100",
+    }),
+  offset: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 0))
+    .refine((val) => val >= 0, {
+      message: "Offset must be greater than or equal to 0",
+    }),
+});
+
+/**
+ * Typ wywnioskowany ze schematu getUsersQuerySchema
+ */
+export type GetUsersQueryInput = z.infer<typeof getUsersQuerySchema>;
+
+/**
+ * Schema walidacji dla parametrów ścieżki zawierających user ID
+ * Implementuje walidację formatu UUID dla identyfikatora użytkownika
+ */
+export const userIdParamsSchema = z.object({
+  id: z.string().uuid("Invalid UUID format for user ID").trim(),
+});
+
+/**
+ * Typ wywnioskowany ze schematu userIdParamsSchema
+ */
+export type UserIdParamsInput = z.infer<typeof userIdParamsSchema>;
