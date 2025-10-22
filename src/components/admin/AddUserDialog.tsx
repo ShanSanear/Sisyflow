@@ -1,23 +1,24 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createUserSchema } from "@/lib/validation/schemas/user";
 import type { CreateUserCommand } from "@/types";
+import { z } from "zod";
 
-const addUserSchema = z.object({
-  username: z.string().min(3, "Nazwa użytkownika musi mieć co najmniej 3 znaki"),
-  email: z.string().email("Nieprawidłowy format adresu e-mail"),
-  password: z
-    .string()
-    .min(8, "Hasło musi mieć co najmniej 8 znaków")
-    .regex(/[A-Z]/, "Hasło musi zawierać co najmniej jedną wielką literę")
-    .regex(/[a-z]/, "Hasło musi zawierać co najmniej jedną małą literę")
-    .regex(/\d/, "Hasło musi zawierać co najmniej jedną cyfrę"),
-});
+// Extend schema with confirm password validation
+const addUserSchema = createUserSchema
+  .omit({ role: true })
+  .extend({
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // This will show the error on confirmPassword field
+  });
 
 type AddUserFormData = z.infer<typeof addUserSchema>;
 
@@ -42,14 +43,16 @@ export function AddUserDialog({ isOpen, onOpenChange, onAddUser }: AddUserDialog
   const onSubmit = async (data: AddUserFormData) => {
     setIsSubmitting(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, ...userData } = data;
       const command: CreateUserCommand = {
-        ...data,
-        role: "USER", // Stała rola dla MVP
+        ...userData,
+        role: "USER" as const, // Fixed role for MVP
       };
       await onAddUser(command);
       reset();
     } catch {
-      // Błąd jest obsługiwany w hooku
+      // Error is handled in the hook
     } finally {
       setIsSubmitting(false);
     }
@@ -66,33 +69,54 @@ export function AddUserDialog({ isOpen, onOpenChange, onAddUser }: AddUserDialog
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Dodaj użytkownika</DialogTitle>
+          <DialogTitle>Add user</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
-            <Label htmlFor="username">Nazwa użytkownika</Label>
-            <Input id="username" {...register("username")} placeholder="Wprowadź nazwę użytkownika" />
+            <Label htmlFor="username" className="block text-sm font-medium mb-2">
+              Username
+            </Label>
+            <Input id="username" {...register("username")} placeholder="Enter username" />
             {errors.username && <p className="text-sm text-destructive mt-1">{errors.username.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} placeholder="Wprowadź adres e-mail" />
+            <Label htmlFor="email" className="block text-sm font-medium mb-2">
+              Email
+            </Label>
+            <Input id="email" {...register("email")} placeholder="Enter email address" />
             {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="password">Hasło</Label>
-            <Input id="password" type="password" {...register("password")} placeholder="Wprowadź hasło" />
+            <Label htmlFor="password" className="block text-sm font-medium mb-2">
+              Password
+            </Label>
+            <Input id="password" type="password" {...register("password")} placeholder="Enter password" />
             {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
+              Confirm Password
+            </Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              {...register("confirmPassword")}
+              placeholder="Confirm password"
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+            )}
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
-              Anuluj
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Dodawanie..." : "Dodaj"}
+              {isSubmitting ? "Adding..." : "Add"}
             </Button>
           </DialogFooter>
         </form>

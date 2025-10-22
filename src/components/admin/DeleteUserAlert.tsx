@@ -21,19 +21,19 @@ export function DeleteUserAlert({ userToDelete, onConfirm, onCancel }: DeleteUse
     <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Usuń użytkownika</AlertDialogTitle>
+          <AlertDialogTitle>Delete user</AlertDialogTitle>
           <AlertDialogDescription>
-            Czy na pewno chcesz usunąć użytkownika <strong>{userToDelete?.username}</strong>? Tej akcji nie można
-            cofnąć.
+            Are you sure you want to delete user <strong>{userToDelete?.username}</strong>? This action cannot be
+            undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => userToDelete && onConfirm(userToDelete.id)}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Usuń
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

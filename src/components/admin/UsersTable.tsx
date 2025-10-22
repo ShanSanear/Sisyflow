@@ -6,23 +6,27 @@ import type { UserViewModel } from "@/types";
 interface UsersTableProps {
   users: UserViewModel[];
   currentUserId: string;
-  onDelete: (userId: string) => void;
+  onDelete: (user: UserViewModel) => void;
   isLoading: boolean;
 }
+
+const TableHeaders = () => (
+  <TableHeader>
+    <TableRow>
+      <TableHead>Username</TableHead>
+      <TableHead>Email</TableHead>
+      <TableHead>Role</TableHead>
+      <TableHead>Created At</TableHead>
+      <TableHead>Actions</TableHead>
+    </TableRow>
+  </TableHeader>
+);
 
 export function UsersTable({ users, currentUserId, onDelete, isLoading }: UsersTableProps) {
   if (isLoading) {
     return (
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nazwa użytkownika</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Rola</TableHead>
-            <TableHead>Data utworzenia</TableHead>
-            <TableHead>Akcje</TableHead>
-          </TableRow>
-        </TableHeader>
+        <TableHeaders />
         <TableBody>
           {Array.from({ length: 5 }).map((_, index) => (
             <TableRow key={index}>
@@ -51,31 +55,29 @@ export function UsersTable({ users, currentUserId, onDelete, isLoading }: UsersT
   if (users.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Brak użytkowników do wyświetlenia.</p>
+        <p className="text-muted-foreground">No users to display.</p>
       </div>
     );
   }
 
   return (
     <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nazwa użytkownika</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Rola</TableHead>
-          <TableHead>Data utworzenia</TableHead>
-          <TableHead>Akcje</TableHead>
-        </TableRow>
-      </TableHeader>
+      <TableHeaders />
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
+          <TableRow key={user.id} className={user.isDeleting ? "opacity-50 pointer-events-none" : ""}>
             <TableCell>{user.username}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.role}</TableCell>
             <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
             <TableCell>
-              <UserActionsDropdown user={user} currentUserId={currentUserId} onDelete={onDelete} />
+              {user.isDeleting ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <UserActionsDropdown user={user} currentUserId={currentUserId} onDelete={onDelete} />
+              )}
             </TableCell>
           </TableRow>
         ))}

@@ -16,7 +16,7 @@ export default function UserManagementView() {
       await addUser(command);
       setIsAddDialogOpen(false);
     } catch {
-      // Błąd jest obsługiwany w hooku
+      // Error is handled in the hook
     }
   };
 
@@ -25,15 +25,16 @@ export default function UserManagementView() {
       await deleteUser(userId);
       setUserToDelete(null);
     } catch {
-      // Błąd jest obsługiwany w hooku
+      // Error is handled in the hook
     }
   };
 
   if (error) {
+    console.error("Error loading users:", error);
     return (
       <div className="text-center py-8">
-        <p className="text-destructive mb-4">Wystąpił błąd podczas ładowania użytkowników.</p>
-        <Button onClick={refetchUsers}>Spróbuj ponownie</Button>
+        <p className="text-destructive mb-4">An error occurred while loading users.</p>
+        <Button onClick={refetchUsers}>Try again</Button>
       </div>
     );
   }
@@ -41,14 +42,14 @@ export default function UserManagementView() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Użytkownicy</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)}>Dodaj użytkownika</Button>
+        <h2 className="text-2xl font-semibold">Users</h2>
+        <Button onClick={() => setIsAddDialogOpen(true)}>Add user</Button>
       </div>
 
       <UsersTable
         users={users}
         currentUserId={currentUser?.id || ""}
-        onDelete={setUserToDelete}
+        onDelete={(user) => setUserToDelete(user)}
         isLoading={isLoading}
       />
 

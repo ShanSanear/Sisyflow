@@ -11,7 +11,7 @@ import type { UserViewModel } from "@/types";
 interface UserActionsDropdownProps {
   user: UserViewModel;
   currentUserId: string;
-  onDelete: (userId: string) => void;
+  onDelete: (user: UserViewModel) => void;
 }
 
 export function UserActionsDropdown({ user, currentUserId, onDelete }: UserActionsDropdownProps) {
@@ -21,17 +21,17 @@ export function UserActionsDropdown({ user, currentUserId, onDelete }: UserActio
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Otwórz menu</span>
+          <span className="sr-only">Open menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => onDelete(user.id)}
+          onClick={() => onDelete(user)}
           disabled={!canDelete}
           className="text-destructive focus:text-destructive"
         >
-          Usuń
+          Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -5,22 +5,22 @@ export default function AdminPanelView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Panel Administratora</h1>
-        <p className="text-muted-foreground">Zarządzaj użytkownikami i innymi aspektami systemu.</p>
+        <h1 className="text-3xl font-bold">Admin Panel</h1>
+        <p className="text-muted-foreground">Manage users and other system aspects.</p>
       </div>
 
       <Tabs defaultValue="users" className="w-full">
         <TabsList>
-          <TabsTrigger value="users">Zarządzanie Użytkownikami</TabsTrigger>
-          {/* Przyszłe zakładki */}
-          {/* <TabsTrigger value="documentation">Dokumentacja Projektu</TabsTrigger> */}
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          {/* Future tabs */}
+          {/* <TabsTrigger value="documentation">Project Documentation</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="users">
           <UserManagementView />
         </TabsContent>
 
-        {/* Przyszłe TabsContent */}
+        {/* Future TabsContent */}
       </Tabs>
     </div>
   );

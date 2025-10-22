@@ -14,14 +14,16 @@ export const useAdminUsers = () => {
   const { showSuccess, showError } = useToast();
 
   /**
-   * Pobiera listę użytkowników z API
+   * Fetches list of users from API
+   * For MVP, fetches all users with a high limit instead of implementing pagination controls
    */
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/users", {
+      // Use high limit to get all users for MVP (no pagination UI)
+      const response = await fetch("/api/users?limit=100", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -44,7 +46,7 @@ export const useAdminUsers = () => {
   }, []);
 
   /**
-   * Dodaje nowego użytkownika
+   * Adds a new user
    */
   const addUser = useCallback(
     async (command: CreateUserCommand) => {
@@ -58,7 +60,7 @@ export const useAdminUsers = () => {
         });
 
         if (response.status === 409) {
-          showError("Użytkownik o tej nazwie lub adresie e-mail już istnieje.");
+          showError("User with this username or email already exists.");
           return;
         }
 
@@ -68,10 +70,10 @@ export const useAdminUsers = () => {
 
         const newUser: UserDTO = await response.json();
         setUsers((prev) => [...prev, newUser]);
-        showSuccess("Użytkownik został dodany pomyślnie.");
+        showSuccess("User added successfully.");
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Unknown error occurred");
-        showError("Wystąpił błąd podczas dodawania użytkownika.");
+        showError("An error occurred while adding the user.");
         throw error;
       }
     },
@@ -79,12 +81,12 @@ export const useAdminUsers = () => {
   );
 
   /**
-   * Usuwa użytkownika
+   * Deletes a user
    */
   const deleteUser = useCallback(
     async (userId: string) => {
       try {
-        // Ustaw flagę isDeleting
+        // Set isDeleting flag
         setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, isDeleting: true } : user)));
 
         const response = await fetch(`/api/users/${userId}`, {
@@ -94,24 +96,29 @@ export const useAdminUsers = () => {
           },
         });
 
+        if (response.status === 404) {
+          showError("User not found.");
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         setUsers((prev) => prev.filter((user) => user.id !== userId));
-        showSuccess("Użytkownik został usunięty pomyślnie.");
+        showSuccess("User deleted successfully.");
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Unknown error occurred");
-        // Resetuj flagę isDeleting
+        // Reset isDeleting flag
         setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, isDeleting: false } : user)));
-        showError("Nie udało się usunąć użytkownika.");
+        showError("Failed to delete user.");
         throw error;
       }
     },
     [showSuccess, showError]
   );
 
-  // Pobierz użytkowników przy montowaniu
+  // Fetch users on mount
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
