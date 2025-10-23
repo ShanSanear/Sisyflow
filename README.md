@@ -29,7 +29,7 @@ Sisyflow is an MVP issue tracker focused on improving the completeness and clari
 - **Backend (planned)**: Supabase (PostgreSQL, auth, SDK, self-hostable)
 - **AI (planned)**: OpenRouter.ai (access to multiple model providers, budget controls)
 - **CI/CD & Hosting (planned)**: GitHub Actions; DigitalOcean via Docker image
-- **Dev & quality**: ESLint (with React, Astro, TS rules), Prettier (with Astro plugin), Husky + lint-staged
+- **Dev & quality**: ESLint (with React, Astro, TS rules), Prettier (with Astro plugin), Husky + lint-staged, Vitest & React Testing Library (unit/component tests), Playwright (E2E tests)
 
 ## Getting started locally
 
