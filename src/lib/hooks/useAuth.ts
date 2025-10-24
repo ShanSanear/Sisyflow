@@ -12,7 +12,7 @@ interface CurrentUser {
  */
 export const useAuth = () => {
   // Mock user data - replace with real auth logic when implemented
-  const [currentUser] = useState<CurrentUser>({
+  const [currentUser] = useState<CurrentUser | null>({
     id: DEVELOPMENT_USER_ID, // This should be replaced with actual user ID
     role: "ADMIN", // Change to "USER" to test non-admin permissions
   });
