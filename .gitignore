@@ -16,6 +16,7 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.test
 
 # macOS-specific files
 .DS_Store
@@ -29,3 +30,6 @@ pnpm-debug.log*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Playwright authentication state
+playwright/.auth/

@@ -51,7 +51,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form data-testid="ticket-modal-form" onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <TitleInput
         value={watchedValues.title || " "}
         onChange={(value) => {

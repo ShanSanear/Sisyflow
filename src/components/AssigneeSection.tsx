@@ -93,7 +93,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
 
   if (mode === "view") {
     return (
-      <div className="space-y-2">
+      <div data-testid="ticket-modal-assignee-section-view" className="space-y-2">
         <Label>Assignee</Label>
         <div>
           {assignee ? (
@@ -107,34 +107,41 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   }
 
   return (
-    <div className="space-y-2">
+    <div data-testid="ticket-modal-assignee-section-edit" className="space-y-2">
       <Label>Assignee</Label>
 
       {isAdmin ? (
         <Select
+          data-testid="ticket-modal-assignee-section-edit-select"
           value={assignee?.id || " "}
           onValueChange={(value) => handleAdminAssign(value || null)}
           disabled={assigning}
         >
-          <SelectTrigger aria-label="Select ticket assignee">
+          <SelectTrigger
+            data-testid="ticket-modal-assignee-section-edit-select-trigger"
+            aria-label="Select ticket assignee"
+          >
             <SelectValue placeholder="Select user..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent data-testid="ticket-modal-assignee-section-edit-select-content">
             <SelectItem value=" ">Unassigned</SelectItem>
             {DUMMY_USERS.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
+              <SelectItem data-testid="ticket-modal-assignee-section-edit-select-item" key={user.id} value={user.id}>
                 {user.username}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       ) : (
-        <div className="flex items-center gap-2">
+        <div data-testid="ticket-modal-assignee-section-edit-buttons" className="flex items-center gap-2">
           {assignee ? (
             <>
-              <Badge variant="secondary">{assignee.username}</Badge>
+              <Badge data-testid="ticket-modal-assignee-section-edit-buttons-badge" variant="secondary">
+                {assignee.username}
+              </Badge>
               {canModifyAssignment && (
                 <Button
+                  data-testid="ticket-modal-assignee-section-edit-buttons-button"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -149,6 +156,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
           ) : (
             canModifyAssignment && (
               <Button
+                data-testid="ticket-modal-assignee-section-edit-buttons-button"
                 type="button"
                 variant="outline"
                 size="sm"

@@ -63,7 +63,10 @@ const NavigationBarContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <header
+        data-testid="navigation-bar-loading"
+        className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur"
+      >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-9 w-24" aria-hidden="true" />
           <Skeleton className="hidden h-9 w-48 lg:block" aria-hidden="true" />
@@ -77,8 +80,11 @@ const NavigationBarContent: React.FC = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header data-testid="navigation-bar" className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <div
+        data-testid="navigation-bar-content"
+        className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+      >
         <div className="flex flex-1 items-center gap-6">
           <Logo />
           <NavLinks user={user ? { ...user, initials: user.username.slice(0, 2) } : null} />
@@ -86,7 +92,12 @@ const NavigationBarContent: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {user && (
-            <Button onClick={handleCreateTicket} className="gap-2" aria-label="Create a new ticket">
+            <Button
+              data-testid="navigation-bar-create-ticket"
+              onClick={handleCreateTicket}
+              className="gap-2"
+              aria-label="Create a new ticket"
+            >
               <PlusCircleIcon className="h-4 w-4" />
               Create ticket
             </Button>
@@ -101,10 +112,18 @@ const NavigationBarContent: React.FC = () => {
       </div>
 
       {error && (
-        <div className="border-t border-destructive/20 bg-destructive/10">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-sm text-destructive sm:px-6 lg:px-8">
+        <div data-testid="navigation-bar-error" className="border-t border-destructive/20 bg-destructive/10">
+          <div
+            data-testid="navigation-bar-error-content"
+            className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-sm text-destructive sm:px-6 lg:px-8"
+          >
             <span>Failed to load user data.</span>
-            <Button variant="outline" size="sm" onClick={handleRefetch}>
+            <Button
+              data-testid="navigation-bar-error-refetch-button"
+              variant="outline"
+              size="sm"
+              onClick={handleRefetch}
+            >
               Try again
             </Button>
           </div>

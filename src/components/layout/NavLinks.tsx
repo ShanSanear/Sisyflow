@@ -31,8 +31,9 @@ export const NavLinks: React.FC<NavLinksProps> = ({ user }) => {
   }, []);
 
   return (
-    <nav aria-label="Primary navigation" className="hidden items-center gap-2 lg:flex">
+    <nav data-testid="nav-links" aria-label="Primary navigation" className="hidden items-center gap-2 lg:flex">
       <a
+        data-testid="nav-links-kanban-board"
         href="/"
         className={cn(baseLinkClasses, pathname === "/" && "text-foreground")}
         aria-current={pathname === "/" ? "page" : undefined}
@@ -42,6 +43,7 @@ export const NavLinks: React.FC<NavLinksProps> = ({ user }) => {
 
       {user?.role === "ADMIN" && (
         <a
+          data-testid="nav-links-admin-panel"
           href="/admin"
           className={cn(baseLinkClasses, pathname.startsWith("/admin") && "text-foreground")}
           aria-current={pathname.startsWith("/admin") ? "page" : undefined}

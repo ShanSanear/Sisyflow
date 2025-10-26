@@ -184,6 +184,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               style={style}
               {...listeners}
               {...attributes}
+              data-testid={`ticket-card-${ticket.id}`}
               className={cardClassName}
               role="button"
               tabIndex={canMove && !isSaving ? 0 : -1}
@@ -205,6 +206,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           style={style}
           {...listeners}
           {...attributes}
+          data-testid={`ticket-card-${ticket.id}`}
           className={cardClassName}
           role="button"
           tabIndex={canMove && !isSaving ? 0 : -1}

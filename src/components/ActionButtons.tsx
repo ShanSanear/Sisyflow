@@ -27,8 +27,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   const isViewMode = mode === "view";
 
   return (
-    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t">
+    <div
+      data-testid="ticket-modal-action-buttons"
+      className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t"
+    >
       <Button
+        data-testid="ticket-modal-action-buttons-close-cancel"
         type="button"
         variant="outline"
         onClick={onCancel}
@@ -40,6 +44,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       {isViewMode && canEdit && onEdit && (
         <Button
+          data-testid="ticket-modal-action-buttons-edit"
           type="button"
           variant="outline"
           onClick={onEdit}
@@ -52,6 +57,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       {!isViewMode && (
         <Button
+          data-testid="ticket-modal-action-buttons-save"
           type="button"
           onClick={onSave}
           disabled={isLoading || !isValid}

@@ -20,9 +20,10 @@ export const DescriptionEditor: React.FC<DescriptionEditorProps> = ({ value, onC
   const isNearLimit = charCount > 8000;
 
   return (
-    <div className="space-y-2">
+    <div data-testid="ticket-modal-description-editor" className="space-y-2">
       <Label htmlFor="description">Description</Label>
       <Textarea
+        data-testid="ticket-modal-description-editor-textarea"
         id="description"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -33,14 +34,22 @@ export const DescriptionEditor: React.FC<DescriptionEditorProps> = ({ value, onC
         aria-describedby={error ? "description-error description-help" : "description-help"}
         aria-invalid={!!error}
       />
-      <div id="description-help" className="flex justify-between text-sm text-muted-foreground">
+      <div
+        data-testid="ticket-modal-description-editor-help"
+        id="description-help"
+        className="flex justify-between text-sm text-muted-foreground"
+      >
         <span className={isNearLimit ? "text-warning" : ""}>
           {charCount}/{maxChars} characters
         </span>
         {isNearLimit && <span className="text-warning">Approaching character limit</span>}
       </div>
       {error && (
-        <p id="description-error" className="text-sm text-destructive">
+        <p
+          data-testid="ticket-modal-description-editor-error"
+          id="description-error"
+          className="text-sm text-destructive"
+        >
           {error}
         </p>
       )}

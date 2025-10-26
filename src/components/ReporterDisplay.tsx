@@ -11,7 +11,7 @@ interface ReporterDisplayProps {
  */
 export const ReporterDisplay: React.FC<ReporterDisplayProps> = ({ reporter }) => {
   return (
-    <div className="space-y-2">
+    <div data-testid="ticket-modal-reporter-display" className="space-y-2">
       <Label>Reporter</Label>
       <Badge variant="outline">{reporter.username}</Badge>
     </div>
