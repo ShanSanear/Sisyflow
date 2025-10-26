@@ -17,9 +17,10 @@ export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, error, 
   const isDisabled = mode === "view";
 
   return (
-    <div className="space-y-2">
+    <div data-testid="ticket-modal-form-title-input" className="space-y-2">
       <Label htmlFor="title">Title *</Label>
       <Input
+        data-testid="ticket-modal-form-title-input-input"
         id="title"
         type="text"
         value={value}

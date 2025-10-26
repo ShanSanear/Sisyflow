@@ -24,7 +24,7 @@ export const TypeSelect: React.FC<TypeSelectProps> = ({ value, onChange, error, 
   ] as const;
 
   return (
-    <div className="space-y-2">
+    <div data-testid="ticket-modal-form-type-select" className="space-y-2">
       <Label htmlFor="type">Type *</Label>
       <Select value={value} onValueChange={onChange} disabled={isDisabled}>
         <SelectTrigger

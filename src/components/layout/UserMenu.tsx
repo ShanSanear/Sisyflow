@@ -44,9 +44,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu data-testid="user-menu">
       <DropdownMenuTrigger asChild>
         <Button
+          data-testid="user-menu-trigger"
           variant="ghost"
           className="flex items-center gap-2 px-2 py-1.5 text-sm"
           aria-haspopup="menu"
@@ -59,7 +60,13 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-48" role="menu" aria-label="User options">
+      <DropdownMenuContent
+        data-testid="user-menu-content"
+        align="end"
+        className="w-48"
+        role="menu"
+        aria-label="User options"
+      >
         <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} role="menuitem">
           <User className="mr-2 h-4 w-4" />
           My profile

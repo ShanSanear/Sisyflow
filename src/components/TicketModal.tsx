@@ -183,15 +183,18 @@ export const TicketModal: React.FC = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle>
+    <Dialog data-testid="ticket-modal" open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        data-testid="ticket-modal-content"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
+      >
+        <DialogHeader data-testid="ticket-modal-header">
+          <DialogTitle data-testid="ticket-modal-title">
             {mode === "create" && "Create new ticket"}
             {mode === "edit" && "Edit ticket"}
             {mode === "view" && "View ticket"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription data-testid="ticket-modal-description">
             {mode === "create" && "Fill in the details to create a new ticket"}
             {mode === "edit" && "Make changes to the ticket details"}
             {mode === "view" && "View ticket information"}
@@ -199,12 +202,13 @@ export const TicketModal: React.FC = () => {
         </DialogHeader>
 
         {loading ? (
-          <div className="flex justify-center items-center py-8">
+          <div data-testid="ticket-modal-loading" className="flex justify-center items-center py-8">
             <div className="text-sm text-muted-foreground">Loading...</div>
           </div>
         ) : (
           <>
             <TicketForm
+              data-testid="ticket-modal-form"
               formData={formData}
               onChange={handleFormChange}
               errors={errors}
@@ -215,6 +219,7 @@ export const TicketModal: React.FC = () => {
               onAssigneeUpdate={handleAssigneeUpdate}
             />
             <ActionButtons
+              data-testid="ticket-modal-action-buttons"
               onCancel={onClose}
               onSave={() => handleSave(formData)}
               onEdit={handleEditMode}
