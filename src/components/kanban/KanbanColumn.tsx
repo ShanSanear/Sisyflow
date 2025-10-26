@@ -31,6 +31,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
+      data-testid={`kanban-column-${id}`}
       className={`flex flex-col w-full sm:w-80 min-h-[600px] rounded-lg p-4 transition-colors ${
         isOver
           ? "bg-blue-50 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700"

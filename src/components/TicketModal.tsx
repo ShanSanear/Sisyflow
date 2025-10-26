@@ -183,11 +183,8 @@ export const TicketModal: React.FC = () => {
   };
 
   return (
-    <Dialog data-testid="ticket-modal" open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        data-testid="ticket-modal-content"
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
-      >
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent data-testid="ticket-modal" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader data-testid="ticket-modal-header">
           <DialogTitle data-testid="ticket-modal-title">
             {mode === "create" && "Create new ticket"}

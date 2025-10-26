@@ -90,6 +90,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               className="w-full"
               {...register("email")}
               disabled={isLoading}
+              data-test-id="email-input"
             />
             {errors.email && <p className="text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>}
           </div>
@@ -105,6 +106,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               className="w-full"
               {...register("password")}
               disabled={isLoading}
+              data-test-id="password-input"
             />
             {errors.password && <p className="text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>}
           </div>
@@ -113,6 +115,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             disabled={isLoading}
+            data-test-id="login-button"
           >
             {isLoading ? (
               <>
