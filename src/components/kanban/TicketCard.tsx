@@ -153,15 +153,12 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                     Edit ticket
                   </DropdownMenuItem>
                 )}
-                {getStatusOptions().map((option) => (
-                  <DropdownMenuItem
-                    key={option.status}
-                    onClick={() => onStatusChange(ticket.id, option.status)}
-                    disabled={!canMove}
-                  >
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
+                {canMove &&
+                  getStatusOptions().map((option) => (
+                    <DropdownMenuItem key={option.status} onClick={() => onStatusChange(ticket.id, option.status)}>
+                      {option.label}
+                    </DropdownMenuItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
