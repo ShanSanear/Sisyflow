@@ -71,6 +71,25 @@ export const userIdParamsSchema = z.object({
 });
 
 /**
+ * Schema walidacji dla aktualizacji profilu użytkownika (PUT /profiles/me)
+ * Implementuje walidację zgodnie z wymaganiami biznesowymi:
+ * - username: 3-50 znaków, wymagany, tylko litery, cyfry, podkreślenia i kropki
+ */
+export const updateProfileSchema = z.object({
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters long")
+    .max(50, "Username cannot exceed 50 characters")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores and dots")
+    .trim(),
+});
+
+/**
  * Typ wywnioskowany ze schematu userIdParamsSchema
  */
 export type UserIdParamsInput = z.infer<typeof userIdParamsSchema>;
+
+/**
+ * Typ wywnioskowany ze schematu updateProfileSchema
+ */
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
