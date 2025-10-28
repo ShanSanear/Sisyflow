@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test } from "./fixtures/auth.fixture";
+import { expect } from "@playwright/test";
 import { NavigationBarPOM } from "./poms/NavigationBarPOM";
 import { TicketModalPOM } from "./poms/TicketModalPOM";
 import { KanbanBoardPOM } from "./poms/KanbanBoardPOM";
@@ -8,7 +9,9 @@ test.describe("Ticket Creation Flow", () => {
   let ticketModal: TicketModalPOM;
   let kanbanBoard: KanbanBoardPOM;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, loginAs }) => {
+    // Login as admin for these tests
+    await loginAs("admin");
     // Navigate to the homepage before each test
     await page.goto("/");
     navigationBar = new NavigationBarPOM(page);
@@ -16,7 +19,7 @@ test.describe("Ticket Creation Flow", () => {
     kanbanBoard = new KanbanBoardPOM(page);
   });
 
-  test("should allow a user to create a new ticket", async ({ page }) => {
+  test("should allow a user to create a new ticket", async ({ page, logout }) => {
     // 1. Click the "Create a new ticket" button.
     await navigationBar.clickCreateTicket();
 
@@ -50,6 +53,8 @@ test.describe("Ticket Creation Flow", () => {
     await kanbanBoard.expectTicketToBeInColumn(newTicketId, "OPEN");
     const ticketCard = kanbanBoard.getTicketCard(newTicketId);
     await expect(ticketCard).toContainText(ticketTitle);
+
+    await logout();
     // Optional: Verify a success toast message is shown
     // This requires the toast to have a data-testid or a specific role/text
     // For example:
