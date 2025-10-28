@@ -85,6 +85,52 @@ export interface UpdateTicketAssigneeCommand {
   assignee_id: Ticket["assignee_id"];
 }
 
+// Assignee Component Types
+// Assignee: Used for assignee objects in components (same as FullTicketDTO assignee)
+export type Assignee = Pick<Profile, "id" | "username">;
+
+export interface AssigneeSectionProps {
+  assignee?: Assignee;
+  currentUser: UserDTO | null;
+  isAdmin: boolean;
+  onAssign: (assignee: Assignee | null) => void;
+  mode: TicketModalMode;
+  ticketId?: string;
+  reporterId?: string;
+  isUpdating?: boolean;
+}
+
+export interface AssigneeViewModeProps {
+  assignee?: Assignee | null;
+  currentUser: UserDTO | null;
+  onAssign: (assignee: Assignee | null) => void;
+  canModifyAssignment: boolean;
+  isUpdating: boolean;
+}
+
+export interface AssigneeEditModeProps {
+  assignee?: Assignee | null;
+  currentUser: UserDTO | null;
+  isAdmin: boolean;
+  onAssign: (assignee: Assignee | null) => void;
+  canModifyAssignment: boolean;
+  isUpdating: boolean;
+}
+
+export interface AssigneeAdminSelectProps {
+  assignee?: Assignee | null;
+  onAssign: (assignee: Assignee | null) => void;
+  isUpdating: boolean;
+}
+
+export interface AssigneeUserActionsProps {
+  assignee?: Assignee | null;
+  currentUser: UserDTO | null;
+  canModifyAssignment: boolean;
+  onAssign: (assignee: Assignee | null) => void;
+  isUpdating: boolean;
+}
+
 // AI Suggestion DTOs
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
 export interface AnalyzeTicketCommand {
