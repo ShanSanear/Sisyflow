@@ -138,6 +138,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
+                  data-testid="ticket-card-dropdown-trigger"
                   className="h-6 w-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 opacity-60 hover:opacity-100 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -147,7 +148,12 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               <DropdownMenuContent align="end" className="w-40">
                 {onEdit && (
                   <DropdownMenuItem
-                    onClick={() => onEdit(ticket.id)}
+                    data-testid="ticket-card-edit-button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEdit(ticket.id);
+                    }}
                     className="border-b border-gray-200 dark:border-gray-700 mb-1"
                   >
                     Edit ticket
@@ -155,7 +161,14 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 )}
                 {canMove &&
                   getStatusOptions().map((option) => (
-                    <DropdownMenuItem key={option.status} onClick={() => onStatusChange(ticket.id, option.status)}>
+                    <DropdownMenuItem
+                      key={option.status}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onStatusChange(ticket.id, option.status);
+                      }}
+                    >
                       {option.label}
                     </DropdownMenuItem>
                   ))}
