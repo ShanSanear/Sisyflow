@@ -214,6 +214,10 @@ export interface Database {
     };
     Views: Record<never, never>;
     Functions: {
+      count_profiles: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       get_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["user_role"];

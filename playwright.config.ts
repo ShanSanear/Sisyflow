@@ -12,6 +12,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  globalTeardown: "./tests-e2e/global.teardown.ts",
   testDir: "./tests-e2e",
   /* Run tests in files in parallel */
   fullyParallel: true,

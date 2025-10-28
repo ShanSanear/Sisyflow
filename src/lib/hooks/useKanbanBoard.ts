@@ -283,7 +283,20 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to update ticket status: ${response.status} ${response.statusText}`);
+          // Try to get error message from response
+          let errorMessage = "Failed to move ticket. Please try again.";
+          try {
+            const errorData = await response.json();
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+          } catch {
+            // If response is not JSON, use the status text
+            if (response.status === 403) {
+              errorMessage = "You don't have permission to move this ticket.";
+            }
+          }
+          throw new Error(errorMessage);
         }
 
         // Refresh data to ensure consistency
@@ -303,7 +316,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         revertedBoardState[oldStatus].tickets.push(ticketToMove);
         setBoardState(revertedBoardState);
 
-        showError("Failed to move ticket. Please try again.");
+        showError(error instanceof Error ? error.message : "Failed to move ticket. Please try again.");
       } finally {
         _setSavingTicketId(null);
       }

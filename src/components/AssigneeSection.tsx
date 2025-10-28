@@ -26,6 +26,7 @@ interface AssigneeSectionProps {
   onAssign: (assignee: { id: string; username: string } | null) => void;
   mode: TicketModalMode;
   ticketId?: string;
+  reporterId?: string;
 }
 
 /**
@@ -38,6 +39,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   onAssign,
   mode,
   ticketId,
+  reporterId,
 }) => {
   const [assigning, setAssigning] = useState(false);
 
@@ -63,7 +65,8 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update assignee");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update assignee");
       }
 
       const updatedTicket = await response.json();
@@ -85,7 +88,10 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   };
 
   // Check if current user can modify this assignment
-  const canModifyAssignment = !assignee || assignee.id === currentUser?.id;
+  // Non-admin users can only assign unassigned tickets if they are not the reporter
+  // (per RLS policy: tickets_assign_self_unassigned)
+  const canModifyAssignment =
+    isAdmin || ((!assignee || assignee.id === currentUser?.id) && reporterId !== currentUser?.id);
 
   const handleAdminAssign = (assigneeId: string | null) => {
     handleAssigneeUpdate(assigneeId);
@@ -95,11 +101,43 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
     return (
       <div data-testid="ticket-modal-assignee-section-view" className="space-y-2">
         <Label>Assignee</Label>
-        <div>
+        <div className="flex items-center gap-2">
           {assignee ? (
-            <Badge variant="secondary">{assignee.username}</Badge>
+            <>
+              <Badge data-testid="ticket-modal-assignee-section-view-badge" variant="secondary">
+                {assignee.username}
+              </Badge>
+              {assignee.id === currentUser?.id && canModifyAssignment && (
+                <Button
+                  data-testid="ticket-modal-assignee-section-view-unassign-button"
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAssignMe}
+                  disabled={assigning}
+                  aria-label={assigning ? "Unassigning ticket..." : "Unassign ticket from me"}
+                >
+                  {assigning ? "Updating..." : "Unassign"}
+                </Button>
+              )}
+            </>
           ) : (
-            <span className="text-sm text-muted-foreground">Unassigned</span>
+            <>
+              <span className="text-sm text-muted-foreground">Unassigned</span>
+              {canModifyAssignment && currentUser && (
+                <Button
+                  data-testid="ticket-modal-assignee-section-view-button"
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAssignMe}
+                  disabled={assigning}
+                  aria-label={assigning ? "Assigning ticket to you..." : "Assign ticket to me"}
+                >
+                  {assigning ? "Assigning..." : "Assign to me"}
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

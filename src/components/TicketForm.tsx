@@ -88,6 +88,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
           onAssign={onAssigneeUpdate || (() => undefined)}
           mode={mode}
           ticketId={ticket.id}
+          reporterId={ticket.reporter?.id}
         />
       )}
 
