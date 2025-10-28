@@ -21,4 +21,24 @@ export class KanbanBoardPOM {
     const ticket = column.getByTestId(`ticket-card-${ticketId}`);
     await expect(ticket).toBeVisible();
   }
+
+  async clickTicketCard(ticketId: string): Promise<void> {
+    const ticketCard = this.getTicketCard(ticketId);
+    await ticketCard.click();
+  }
+
+  getTicketDropdownTrigger(ticketId: string): Locator {
+    const ticketCard = this.getTicketCard(ticketId);
+    return ticketCard.getByTestId("ticket-card-dropdown-trigger");
+  }
+
+  async clickEditTicket(ticketId: string): Promise<void> {
+    // Najpierw otwórz dropdown menu
+    const dropdownTrigger = this.getTicketDropdownTrigger(ticketId);
+    await dropdownTrigger.click();
+
+    // Potem kliknij w opcję Edit
+    const editButton = this.page.getByTestId("ticket-card-edit-button");
+    await editButton.click();
+  }
 }

@@ -27,7 +27,11 @@ export function UserActionsDropdown({ user, currentUserId, onDelete }: UserActio
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => onDelete(user)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete(user);
+          }}
           disabled={!canDelete}
           className="text-destructive focus:text-destructive"
         >

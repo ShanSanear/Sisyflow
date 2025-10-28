@@ -67,7 +67,15 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
         role="menu"
         aria-label="User options"
       >
-        <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} role="menuitem">
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleProfileClick();
+          }}
+          role="menuitem"
+        >
           <User className="mr-2 h-4 w-4" />
           My profile
         </DropdownMenuItem>
@@ -76,7 +84,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
 
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={handleLogout}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleLogout();
+          }}
           role="menuitem"
         >
           <LogOut className="mr-2 h-4 w-4" />
