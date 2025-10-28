@@ -186,7 +186,9 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 #### TC-TICKET-002: Edycja przez reportera (P0, Integracyjny)
 
 **Kroki:** Click ticket → "Edit" → change title → "Save".  
-**Oczekiwany:** Update UI/DB, 200 PUT /tickets/[id].
+**Oczekiwany:** Update UI/DB, 200 PUT /tickets/[id].  
+**Status:** ✅ Zaimplementowany w `tests-e2e/edit-ticket.spec.ts`  
+**Pokrycie:** Główny scenariusz + alternatywny przez dropdown menu
 
 #### TC-TICKET-003: Edycja nieuprawniona (P0, Security)
 
