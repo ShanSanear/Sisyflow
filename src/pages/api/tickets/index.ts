@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { createTicketService } from "../../lib/services/ticket.service";
-import { createSupabaseServerInstance } from "../../db/supabase.client";
-import type { CreateTicketCommand } from "../../types";
+import { createTicketService } from "../../../lib/services/ticket.service";
+import { createSupabaseServerInstance } from "../../../db/supabase.client";
+import type { CreateTicketCommand } from "../../../types";
 import {
   isZodError,
   createZodValidationResponse,
   isDatabaseConnectionError,
   createDatabaseConnectionErrorResponse,
-} from "../../lib/utils";
+} from "../../../lib/utils";
 
 export const prerender = false;
 

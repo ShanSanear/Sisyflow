@@ -81,17 +81,17 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
     }
   };
 
-  const handleAssignMe = () => {
-    if (!currentUser || !canModifyAssignment) return;
-    const newAssigneeId = assignee ? null : currentUser.id;
-    handleAssigneeUpdate(newAssigneeId);
-  };
-
   // Check if current user can modify this assignment
   // Non-admin users can only assign unassigned tickets if they are not the reporter
   // (per RLS policy: tickets_assign_self_unassigned)
   const canModifyAssignment =
     isAdmin || ((!assignee || assignee.id === currentUser?.id) && reporterId !== currentUser?.id);
+
+  const handleAssignMe = () => {
+    if (!currentUser || !canModifyAssignment) return;
+    const newAssigneeId = assignee ? null : currentUser.id;
+    handleAssigneeUpdate(newAssigneeId);
+  };
 
   const handleAdminAssign = (assigneeId: string | null) => {
     handleAssigneeUpdate(assigneeId);
