@@ -13,6 +13,7 @@ export const createTicketSchema = z.object({
   type: z.enum(["BUG", "IMPROVEMENT", "TASK"], {
     errorMap: () => ({ message: "Type must be one of: BUG, IMPROVEMENT, TASK" }),
   }),
+  assignee_id: z.string().uuid().nullable().optional(),
 });
 
 /**
@@ -72,6 +73,13 @@ export const updateTicketSchema = z
       .enum(["BUG", "IMPROVEMENT", "TASK"], {
         errorMap: () => ({ message: "Type must be one of: BUG, IMPROVEMENT, TASK" }),
       })
+      .optional(),
+    assignee: z
+      .object({
+        id: z.string(),
+        username: z.string(),
+      })
+      .nullable()
       .optional(),
   })
   .refine(

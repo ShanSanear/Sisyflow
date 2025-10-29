@@ -35,9 +35,13 @@ export const TypeSelect: React.FC<TypeSelectProps> = ({ value, onChange, error, 
         >
           <SelectValue placeholder="Select ticket type..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent data-testid="ticket-modal-form-type-select-content">
           {typeOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              data-testid={`ticket-modal-form-type-select-item-${option.value.toLowerCase()}`}
+            >
               {option.label}
             </SelectItem>
           ))}

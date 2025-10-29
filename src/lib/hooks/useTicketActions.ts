@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { FullTicketDTO, UserDTO, TicketModalMode } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
@@ -24,14 +24,57 @@ export const useTicketActions = ({
   onFormReset,
   setOpen,
 }: UseTicketActionsProps) => {
+  const [isAssigneeModified, setIsAssigneeModified] = useState(false);
+
+  const onAssigneeChange = useCallback(() => {
+    setIsAssigneeModified(true);
+  }, []);
+
   const handleSave = useCallback(
     async (data: TicketFormData) => {
       if (!user) return;
 
       try {
         let response: Response;
-        console.log("handleSave data:", data);
-        console.log("HandleSave mode:", mode);
+
+        let requestBody: Partial<TicketFormData>;
+
+        if (mode === "create") {
+          requestBody = data;
+        } else if (mode === "edit" && ticketId && ticket) {
+          // Safety net: Restore assignee if undefined/null in data due to desync, but only if not explicitly modified
+          const originalAssignee = ticket.assignee
+            ? { id: ticket.assignee.id, username: ticket.assignee.username }
+            : null;
+          if (!isAssigneeModified && (data.assignee === null || data.assignee === undefined) && originalAssignee) {
+            data.assignee = originalAssignee;
+          }
+
+          // Compute changed fields
+          const changed: Partial<TicketFormData> = {};
+          if (data.title !== ticket.title) {
+            changed.title = data.title;
+          }
+          if (data.description !== (ticket.description || "")) {
+            changed.description = data.description;
+          }
+          if (data.type !== ticket.type) {
+            changed.type = data.type;
+          }
+          // Deep compare for assignee
+          if (JSON.stringify(data.assignee) !== JSON.stringify(originalAssignee)) {
+            changed.assignee = data.assignee;
+          }
+
+          if (Object.keys(changed).length === 0) {
+            toast.info("No changes detected");
+            return;
+          }
+
+          requestBody = changed;
+        } else {
+          throw new Error("Invalid mode or missing ticket ID");
+        }
 
         if (mode === "create") {
           response = await fetch("/api/tickets", {
@@ -39,18 +82,16 @@ export const useTicketActions = ({
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(requestBody),
           });
-        } else if (mode === "edit" && ticketId) {
+        } else {
           response = await fetch(`/api/tickets/${ticketId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(requestBody),
           });
-        } else {
-          throw new Error("Invalid mode or missing ticket ID");
         }
 
         if (!response.ok) {
@@ -71,7 +112,7 @@ export const useTicketActions = ({
         toast.error(error instanceof Error ? error.message : "Failed to save ticket");
       }
     },
-    [user, mode, ticketId, onSave, onClose]
+    [user, mode, ticketId, ticket, isAssigneeModified, onSave, onClose]
   );
 
   // Handler do przełączania w tryb edycji
@@ -82,7 +123,9 @@ export const useTicketActions = ({
         title: ticket.title,
         description: ticket.description || "",
         type: ticket.type,
+        assignee: ticket.assignee,
       };
+      setIsAssigneeModified(false);
       onFormReset(formData);
 
       // Przełącz na tryb edit
@@ -93,5 +136,6 @@ export const useTicketActions = ({
   return {
     handleSave,
     handleEditMode,
+    onAssigneeChange,
   };
 };

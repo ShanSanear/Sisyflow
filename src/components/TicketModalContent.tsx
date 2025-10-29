@@ -18,7 +18,7 @@ interface TicketModalContentProps {
   onSave: () => void;
   onEdit: () => void;
   onCancel: () => void;
-  onAssigneeUpdate: (assignee: { id: string; username: string } | null) => void;
+  onAssigneeChange?: () => void;
 }
 
 export const TicketModalContent: React.FC<TicketModalContentProps> = ({
@@ -35,7 +35,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   onSave,
   onEdit,
   onCancel,
-  onAssigneeUpdate,
+  onAssigneeChange,
 }) => {
   if (loading) {
     return (
@@ -46,9 +46,8 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   }
 
   return (
-    <>
+    <div data-testid="ticket-modal-content">
       <TicketForm
-        data-testid="ticket-modal-form"
         formData={formData}
         onChange={onFormChange}
         errors={errors}
@@ -56,7 +55,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
         user={user}
         isAdmin={isAdmin}
         ticket={ticket}
-        onAssigneeUpdate={onAssigneeUpdate}
+        onAssigneeChange={onAssigneeChange}
       />
       <ActionButtons
         data-testid="ticket-modal-action-buttons"
@@ -68,6 +67,6 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
         mode={mode}
         canEdit={canEdit}
       />
-    </>
+    </div>
   );
 };
