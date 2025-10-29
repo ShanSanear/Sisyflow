@@ -20,7 +20,7 @@ export const TicketModal: React.FC = () => {
   // Custom hooks dla separacji odpowiedzialności
   const { formData, errors, isFormValid, handleFormChange, resetForm } = useTicketModalState();
 
-  const { ticket, loading, updateAssignee } = useTicketData({
+  const { ticket, loading } = useTicketData({
     mode,
     ticketId,
     onClose,
@@ -35,7 +35,7 @@ export const TicketModal: React.FC = () => {
     setOpen,
   });
 
-  const { handleSave, handleEditMode } = useTicketActions({
+  const { handleSave, handleEditMode, onAssigneeChange } = useTicketActions({
     user,
     mode,
     ticketId,
@@ -65,7 +65,7 @@ export const TicketModal: React.FC = () => {
           onSave={() => handleSave(formData)}
           onEdit={handleEditMode}
           onCancel={onClose}
-          onAssigneeUpdate={updateAssignee}
+          onAssigneeChange={onAssigneeChange}
         />
       </DialogContent>
     </Dialog>

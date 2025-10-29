@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
@@ -17,7 +17,7 @@ interface TicketFormProps {
   user: UserDTO | null;
   isAdmin: boolean;
   ticket?: FullTicketDTO;
-  onAssigneeUpdate?: (assignee: { id: string; username: string } | null) => void;
+  onAssigneeChange?: () => void;
 }
 
 /**
@@ -32,19 +32,25 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   user,
   isAdmin,
   ticket,
-  onAssigneeUpdate,
+  onAssigneeChange,
 }) => {
   const {
     handleSubmit,
     formState: { errors: formErrors },
     setValue,
     watch,
+    reset,
   } = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: formData,
   });
 
   const watchedValues = watch();
+
+  // Sync form values with prop formData changes (e.g., after fetch/reset)
+  useEffect(() => {
+    reset(formData);
+  }, [formData, reset]);
 
   const handleFormSubmit = () => {
     // Submit jest obsługiwany przez ActionButtons
@@ -82,13 +88,17 @@ export const TicketForm: React.FC<TicketFormProps> = ({
 
       {mode !== "create" && ticket && (
         <AssigneeSection
-          assignee={ticket.assignee || undefined}
+          assignee={formData.assignee !== undefined ? formData.assignee : (ticket?.assignee ?? undefined)}
           currentUser={user}
           isAdmin={isAdmin}
-          onAssign={onAssigneeUpdate || (() => undefined)}
+          onAssign={() => undefined}
           mode={mode}
           ticketId={ticket.id}
           reporterId={ticket.reporter?.id}
+          onFormChange={(assignee) => {
+            onChange({ assignee });
+            onAssigneeChange?.();
+          }}
         />
       )}
 

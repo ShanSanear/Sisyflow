@@ -19,12 +19,19 @@ export const useTicketModal = () => {
     setLastError(null);
 
     try {
+      const requestData = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        assignee_id: data.assignee?.id || null,
+      };
+
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -53,12 +60,19 @@ export const useTicketModal = () => {
     setLastError(null);
 
     try {
+      const requestData = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        assignee_id: data.assignee?.id || null,
+      };
+
       const response = await fetch(`/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {

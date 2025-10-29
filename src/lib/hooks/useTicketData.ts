@@ -33,6 +33,9 @@ export const useTicketData = ({ mode, ticketId, onClose, onFormReset }: UseTicke
             title: ticketData.title,
             description: ticketData.description || "",
             type: ticketData.type,
+            assignee: ticketData.assignee
+              ? { id: ticketData.assignee.id, username: ticketData.assignee.username }
+              : undefined,
           };
           onFormReset(formData);
         } catch (error) {

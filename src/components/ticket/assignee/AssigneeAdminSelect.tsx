@@ -1,45 +1,74 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAdminUsers } from "@/lib/hooks/useAdminUsers";
 import type { AssigneeAdminSelectProps } from "@/types";
-import type { UserDTO } from "@/types";
-
-// Dummy data for users (to be replaced with real API)
-const DUMMY_USERS: UserDTO[] = [
-  { id: "1", username: "john.doe", email: "john@example.com", role: "USER", created_at: new Date().toISOString() },
-  { id: "2", username: "jane.smith", email: "jane@example.com", role: "USER", created_at: new Date().toISOString() },
-  {
-    id: "8ed86b00-fe7e-4339-88d1-9ec658025b8e",
-    username: "medan1993",
-    email: "medan1993@gmail.com",
-    role: "ADMIN",
-    created_at: new Date().toISOString(),
-  },
-];
 
 /**
  * Komponent select dla administratorów do przypisywania użytkowników do ticketów
  * Pozwala na wybór dowolnego użytkownika lub ustawienie "Unassigned"
  */
-export const AssigneeAdminSelect: React.FC<AssigneeAdminSelectProps> = ({ assignee, onAssign, isUpdating }) => {
-  const [selectedValue, setSelectedValue] = useState<string>(assignee?.id || " ");
+export const AssigneeAdminSelect: React.FC<AssigneeAdminSelectProps> = ({
+  assignee,
+  onAssign,
+  isUpdating,
+  mode = "immediate",
+  onFormChange,
+}) => {
+  // Stabilize selectedValue with useMemo to prevent flips
+  const selectedValue = useMemo(() => assignee?.id || "unassigned", [assignee?.id]);
+  const { users, isLoading, error } = useAdminUsers();
 
-  // Sync selected value when assignee changes
+  // Sync local state only for immediate mode; form mode uses prop directly
+  const [localValue, setLocalValue] = useState(selectedValue);
+
   useEffect(() => {
-    setSelectedValue(assignee?.id || " ");
-  }, [assignee]);
+    setLocalValue(selectedValue);
+  }, [selectedValue]);
 
   const handleValueChange = (value: string) => {
-    setSelectedValue(value);
-    const assigneeId = value === " " ? null : value;
-    onAssign(
-      assigneeId ? { id: assigneeId, username: DUMMY_USERS.find((u) => u.id === assigneeId)?.username || "" } : null
-    );
+    const assigneeId = value === "unassigned" ? null : value;
+    const newAssignee = assigneeId
+      ? { id: assigneeId, username: users.find((u) => u.id === assigneeId)?.username || "" }
+      : null;
+
+    // Always update localValue for immediate UI feedback
+    setLocalValue(value);
+
+    if (mode === "form" && onFormChange) {
+      onFormChange(newAssignee);
+    } else {
+      onAssign(newAssignee);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <Select disabled value="loading">
+        <SelectTrigger data-testid="assignee-section-admin-select-trigger" aria-label="Select ticket assignee">
+          <SelectValue placeholder="Loading users..." />
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
+  if (error) {
+    return (
+      <Select disabled value="error">
+        <SelectTrigger data-testid="assignee-section-admin-select-trigger" aria-label="Select ticket assignee">
+          <SelectValue placeholder="Error loading users" />
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
+  // Always use localValue for the Select, as it's synced with props via useEffect
+  const selectValue = localValue;
 
   return (
     <Select
+      key={selectValue}
       data-testid="assignee-section-admin-select"
-      value={selectedValue}
+      value={selectValue}
       onValueChange={handleValueChange}
       disabled={isUpdating}
     >
@@ -47,8 +76,8 @@ export const AssigneeAdminSelect: React.FC<AssigneeAdminSelectProps> = ({ assign
         <SelectValue placeholder="Select user..." />
       </SelectTrigger>
       <SelectContent data-testid="assignee-section-admin-select-content">
-        <SelectItem value=" ">Unassigned</SelectItem>
-        {DUMMY_USERS.map((user) => (
+        <SelectItem value="unassigned">Unassigned</SelectItem>
+        {users.map((user) => (
           <SelectItem data-testid="assignee-section-admin-select-item" key={user.id} value={user.id}>
             {user.username}
           </SelectItem>

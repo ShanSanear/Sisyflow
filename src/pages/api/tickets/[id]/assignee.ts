@@ -19,7 +19,7 @@ export const prerender = false;
  * Dostęp mają wyłącznie administratorzy systemu lub użytkownik dokonujący self-assignment.
  * Głównie przeznaczony dla operacji przypisywania ticketów w interfejsie zarządzania.
  *
- * Request Body: UpdateTicketAssigneeCommand { assignee_id: "uuid | null" }
+ * Request Body: UpdateTicketAssigneeCommand { assignee: { id: "uuid", username: "string" } | null }
  * Response: 200 OK - TicketDTO
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */

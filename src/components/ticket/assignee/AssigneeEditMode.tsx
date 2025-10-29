@@ -15,13 +15,21 @@ export const AssigneeEditMode: React.FC<AssigneeEditModeProps> = ({
   onAssign,
   canModifyAssignment,
   isUpdating,
+  mode,
+  onFormChange,
 }) => {
   return (
     <div data-testid="assignee-section-edit" className="space-y-2">
       <Label>Assignee</Label>
 
       {isAdmin ? (
-        <AssigneeAdminSelect assignee={assignee} onAssign={onAssign} isUpdating={isUpdating} />
+        <AssigneeAdminSelect
+          assignee={assignee}
+          onAssign={onAssign}
+          isUpdating={isUpdating}
+          mode={mode}
+          onFormChange={onFormChange}
+        />
       ) : (
         <AssigneeUserActions
           assignee={assignee}

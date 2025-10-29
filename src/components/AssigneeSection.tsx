@@ -16,8 +16,9 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
   mode,
   ticketId,
   reporterId,
+  onFormChange,
 }) => {
-  const { updateAssignee, isUpdating } = useAssigneeActions({
+  const { updateAssignee, isUpdating: actionIsUpdating } = useAssigneeActions({
     ticketId,
     onAssign,
   });
@@ -59,7 +60,7 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
         currentUser={currentUser}
         onAssign={handleAssigneeUpdate}
         canModifyAssignment={canModifyAssignment}
-        isUpdating={isUpdating}
+        isUpdating={actionIsUpdating}
       />
     );
   }
@@ -71,7 +72,9 @@ export const AssigneeSection: React.FC<AssigneeSectionProps> = ({
       isAdmin={isAdmin}
       onAssign={handleAssigneeUpdate}
       canModifyAssignment={canModifyAssignment}
-      isUpdating={isUpdating}
+      isUpdating={actionIsUpdating}
+      mode={mode === "edit" ? "form" : "immediate"}
+      onFormChange={onFormChange}
     />
   );
 };

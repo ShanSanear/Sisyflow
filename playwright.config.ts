@@ -13,6 +13,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
  */
 export default defineConfig({
   globalTeardown: "./tests-e2e/global.teardown.ts",
+  timeout: 20000,
   testDir: "./tests-e2e",
   /* Run tests in files in parallel */
   fullyParallel: true,

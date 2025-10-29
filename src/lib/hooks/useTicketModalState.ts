@@ -6,6 +6,7 @@ export const useTicketModalState = (initialData?: Partial<TicketFormData>) => {
     title: initialData?.title || "",
     description: initialData?.description || "",
     type: initialData?.type || "TASK",
+    assignee: initialData?.assignee,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,6 +44,7 @@ export const useTicketModalState = (initialData?: Partial<TicketFormData>) => {
         title: data?.title || "",
         description: data?.description || "",
         type: data?.type || "TASK",
+        assignee: data?.assignee,
       };
       setFormData(newData);
       validateForm(newData);
