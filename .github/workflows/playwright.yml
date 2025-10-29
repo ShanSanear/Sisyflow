@@ -14,6 +14,7 @@ jobs:
       E2E_NORMAL_PASSWORD: ${{ secrets.E2E_NORMAL_PASSWORD }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       NODE_ENV: test
       PLAYWRIGHT_TEST_BASE_URL: http://localhost:4321
     timeout-minutes: 60
