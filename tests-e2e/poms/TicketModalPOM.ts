@@ -7,6 +7,9 @@ export class TicketModalPOM {
   readonly descriptionEditor: Locator;
   readonly saveButton: Locator;
   readonly editButton: Locator;
+  readonly assigneeSelect: Locator;
+  readonly assigneeSelectTrigger: Locator;
+  readonly assigneeSelectContent: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,6 +18,9 @@ export class TicketModalPOM {
     this.descriptionEditor = page.getByTestId("ticket-modal-description-editor-textarea");
     this.saveButton = page.getByTestId("ticket-modal-action-buttons-save");
     this.editButton = page.getByTestId("ticket-modal-action-buttons-edit");
+    this.assigneeSelect = page.getByTestId("assignee-section-admin-select");
+    this.assigneeSelectTrigger = page.getByTestId("assignee-section-admin-select-trigger");
+    this.assigneeSelectContent = page.getByTestId("assignee-section-admin-select-content");
   }
 
   async waitForModal(): Promise<void> {
@@ -35,5 +41,23 @@ export class TicketModalPOM {
 
   async clickEdit(): Promise<void> {
     await this.editButton.click();
+  }
+
+  async selectAssignee(username: string): Promise<void> {
+    await this.assigneeSelectTrigger.click();
+    await this.assigneeSelectContent.waitFor({ state: "visible" });
+    const userOption = this.page.getByTestId("assignee-section-admin-select-item").filter({ hasText: username });
+    await userOption.click();
+  }
+
+  async selectUnassigned(): Promise<void> {
+    await this.assigneeSelectTrigger.click();
+    await this.assigneeSelectContent.waitFor({ state: "visible" });
+    const unassignedOption = this.assigneeSelectContent.getByText("Unassigned");
+    await unassignedOption.click();
+  }
+
+  async getSelectedAssignee(): Promise<string | null> {
+    return await this.assigneeSelectTrigger.textContent();
   }
 }
