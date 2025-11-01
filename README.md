@@ -28,7 +28,7 @@ Sisyflow is an MVP issue tracker focused on improving the completeness and clari
 - **Frontend**: Astro 5, React 19, TypeScript 5, Tailwind CSS 4, Shadcn/ui
 - **Backend (planned)**: Supabase (PostgreSQL, auth, SDK, self-hostable)
 - **AI (planned)**: OpenRouter.ai (access to multiple model providers, budget controls)
-- **CI/CD & Hosting (planned)**: GitHub Actions; DigitalOcean via Docker image
+- **CI/CD & Hosting (planned)**: GitHub Actions; Cloudflare Pages as Astro application
 - **Dev & quality**: ESLint (with React, Astro, TS rules), Prettier (with Astro plugin), Husky + lint-staged, Vitest & React Testing Library (unit/component tests), Playwright (E2E tests)
 
 ## Getting started locally
@@ -127,7 +127,7 @@ Out of scope for MVP:
 
 - Current version: 0.0.1
 - Development stage: Early MVP. Core architecture uses Astro + React + TypeScript + Tailwind. Supabase and OpenRouter integrations are planned per PRD/tech stack and may not yet be wired up.
-- CI/CD & hosting: Planned (GitHub Actions, DigitalOcean via Docker) per tech stack notes.
+- CI/CD & hosting: Planned (GitHub Actions, Cloudflare Pages) per tech stack notes.
 
 ## License
 
