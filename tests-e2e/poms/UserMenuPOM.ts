@@ -1,4 +1,4 @@
-import { type Page, type Locator } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 
 export class UserMenuPOM {
   readonly page: Page;
@@ -9,10 +9,10 @@ export class UserMenuPOM {
 
   constructor(page: Page) {
     this.page = page;
-    this.userMenuTrigger = page.locator('[data-test-id="user-menu-trigger"]');
-    this.userMenuContent = page.locator('[data-test-id="user-menu-content"]');
-    this.logoutButton = page.locator('[data-test-id="logout-button"]');
-    this.profileButton = page.locator('[data-test-id="profile-button"]');
+    this.userMenuTrigger = page.getByTestId("user-menu-trigger");
+    this.userMenuContent = page.getByTestId("user-menu-content");
+    this.logoutButton = page.getByTestId("logout-button");
+    this.profileButton = page.getByTestId("profile-button");
   }
 
   async openUserMenu(): Promise<void> {

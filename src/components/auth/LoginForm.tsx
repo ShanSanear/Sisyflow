@@ -62,26 +62,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
   };
 
   return (
-    <Card className="w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <Card
+      className="w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+      data-testid="login-form-container"
+    >
       <CardHeader className="space-y-1">
         <CardTitle
           className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100"
-          data-test-id="login-title"
+          data-testid="login-title"
         >
           Sign in to your account
         </CardTitle>
-        <CardDescription className="text-center text-gray-600 dark:text-gray-400" data-test-id="login-description">
+        <CardDescription className="text-center text-gray-600 dark:text-gray-400" data-testid="login-description">
           Enter your email and password to access your account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <Alert variant="destructive" data-test-id="login-error-alert">
-            <AlertDescription data-test-id="login-error-message">{error}</AlertDescription>
+          <Alert variant="destructive" data-testid="login-error-alert">
+            <AlertDescription data-testid="login-error-message">{error}</AlertDescription>
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-test-id="login-form">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Email
@@ -93,10 +96,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               className="w-full"
               {...register("email")}
               disabled={isLoading}
-              data-test-id="email-input"
+              data-testid="email-input"
             />
             {errors.email && (
-              <p className="text-sm text-red-600 dark:text-red-400" data-test-id="email-error">
+              <p className="text-sm text-red-600 dark:text-red-400" data-testid="email-error">
                 {errors.email.message}
               </p>
             )}
@@ -113,10 +116,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               className="w-full"
               {...register("password")}
               disabled={isLoading}
-              data-test-id="password-input"
+              data-testid="password-input"
             />
             {errors.password && (
-              <p className="text-sm text-red-600 dark:text-red-400" data-test-id="password-error">
+              <p className="text-sm text-red-600 dark:text-red-400" data-testid="password-error">
                 {errors.password.message}
               </p>
             )}
@@ -126,11 +129,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             disabled={isLoading}
-            data-test-id="login-button"
+            data-testid="login-button"
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" data-test-id="loading-spinner" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-spinner" />
                 Signing in...
               </>
             ) : (

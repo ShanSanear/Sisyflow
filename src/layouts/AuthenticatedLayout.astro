@@ -18,7 +18,7 @@ if (!user) {
 
 <Layout title={title}>
   <NavigationBarIsland client:load />
-  <main class="min-h-screen bg-muted/20">
+  <main class="min-h-screen bg-muted/20" data-testid="authenticated-main-content">
     <slot />
   </main>
   <Toaster position="top-right" richColors closeButton />

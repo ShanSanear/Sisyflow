@@ -81,6 +81,6 @@ authTest.describe("Autentykacja - TC-AUTH-004: Wylogowanie", () => {
 
     // 9. Weryfikacja: cookie sesji jest usunięta (opcjonalnie sprawdzić przez localStorage/sessionStorage)
     // W praktyce: sprawdzamy, że login page się załadowała prawidłowo
-    await expect(page.locator('[data-test-id="login-form"]')).toBeVisible();
+    await expect(page.getByTestId("login-form")).toBeVisible();
   });
 });

@@ -22,5 +22,5 @@ const registrationSuccess = url.searchParams.get("registration") === "success";
 ---
 
 <AuthLayout title="Login">
-  <LoginForm client:load {registrationSuccess} />
+  <LoginForm client:load {registrationSuccess} data-testid="login-page" />
 </AuthLayout>
