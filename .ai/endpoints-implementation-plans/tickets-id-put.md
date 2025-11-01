@@ -20,7 +20,11 @@ Endpoint PUT /tickets/:id umożliwia aktualizację istniejącego zgłoszenia (ti
     {
       "title": "string (opcjonalne, 1-200 znaków)",
       "description": "string (opcjonalne, max 10000 znaków)",
-      "type": "ticket_type (opcjonalne)"
+      "type": "ticket_type (opcjonalne)",
+      "assignee" {
+        "id": "UUID",
+        "username": "string",
+      } // opcjonalne
     }
     ```
 
