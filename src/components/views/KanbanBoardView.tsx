@@ -53,7 +53,7 @@ export const KanbanBoardView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6" data-testid="board-loading-state">
         <div className="max-w-full mx-auto px-6">
           <div className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -78,7 +78,7 @@ export const KanbanBoardView: React.FC = () => {
   if (error) {
     console.error(error);
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6" data-testid="board-error-state">
         <div className="max-w-full mx-auto px-6">
           <div className="flex justify-center">
             <EmptyState
@@ -97,7 +97,7 @@ export const KanbanBoardView: React.FC = () => {
 
   if (!boardState) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6" data-testid="board-empty-state">
         <div className="max-w-full mx-auto px-6">
           <div className="flex justify-center">
             <EmptyState title="No Data" description="No tickets found." />
@@ -112,7 +112,7 @@ export const KanbanBoardView: React.FC = () => {
 
   if (!hasTickets) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6" data-testid="board-no-tickets-state">
         <div className="max-w-full mx-auto px-6">
           <div className="flex justify-center">
             <EmptyState title="No Tickets" description="No tickets found. Create a new one to get started!" />
@@ -123,14 +123,16 @@ export const KanbanBoardView: React.FC = () => {
   }
 
   return (
-    <BoardContainer
-      boardState={boardState}
-      handleDragEnd={handleDragEnd}
-      savingTicketId={savingTicketId}
-      canMoveTicket={canMoveTicket}
-      handleStatusChangeViaMenu={handleStatusChangeViaMenu}
-      onTicketClick={handleTicketClick}
-      onTicketEdit={handleTicketEdit}
-    />
+    <div data-testid="kanban-board-container">
+      <BoardContainer
+        boardState={boardState}
+        handleDragEnd={handleDragEnd}
+        savingTicketId={savingTicketId}
+        canMoveTicket={canMoveTicket}
+        handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+        onTicketClick={handleTicketClick}
+        onTicketEdit={handleTicketEdit}
+      />
+    </div>
   );
 };

@@ -4,7 +4,7 @@ import { NavigationBarPOM } from "./poms/NavigationBarPOM";
 import { TicketModalPOM } from "./poms/TicketModalPOM";
 import { KanbanBoardPOM } from "./poms/KanbanBoardPOM";
 
-test.describe("Ticket Creation Flow", () => {
+test.describe("TC-TICKET-001: Tworzenie ticketa", () => {
   let navigationBar: NavigationBarPOM;
   let ticketModal: TicketModalPOM;
   let kanbanBoard: KanbanBoardPOM;

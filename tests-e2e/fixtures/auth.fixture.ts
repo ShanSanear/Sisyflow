@@ -49,10 +49,10 @@ export const test = base.extend<AuthFixture>({
   logout: async ({ page }, useFixture) => {
     const logout = async () => {
       // Click on user menu to open dropdown
-      await page.locator('[data-test-id="user-menu-trigger"]').click();
+      await page.getByTestId("user-menu-trigger").click();
 
       // Click logout button
-      await page.locator('[data-test-id="logout-button"]').click();
+      await page.getByTestId("logout-button").click();
 
       // Wait for redirect to login page
       await page.waitForURL("/login");
