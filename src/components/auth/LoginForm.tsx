@@ -64,21 +64,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
   return (
     <Card className="w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100">
+        <CardTitle
+          className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100"
+          data-test-id="login-title"
+        >
           Sign in to your account
         </CardTitle>
-        <CardDescription className="text-center text-gray-600 dark:text-gray-400">
+        <CardDescription className="text-center text-gray-600 dark:text-gray-400" data-test-id="login-description">
           Enter your email and password to access your account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" data-test-id="login-error-alert">
+            <AlertDescription data-test-id="login-error-message">{error}</AlertDescription>
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-test-id="login-form">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Email
@@ -92,7 +95,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               disabled={isLoading}
               data-test-id="email-input"
             />
-            {errors.email && <p className="text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-sm text-red-600 dark:text-red-400" data-test-id="email-error">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -108,7 +115,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
               disabled={isLoading}
               data-test-id="password-input"
             />
-            {errors.password && <p className="text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-sm text-red-600 dark:text-red-400" data-test-id="password-error">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           <Button
@@ -119,7 +130,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" data-test-id="loading-spinner" />
                 Signing in...
               </>
             ) : (
