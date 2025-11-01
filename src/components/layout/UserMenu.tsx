@@ -44,7 +44,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
   }
 
   return (
-    <DropdownMenu data-testid="user-menu">
+    <DropdownMenu data-test-id="user-menu">
       <DropdownMenuTrigger asChild>
         <Button
           data-test-id="user-menu-trigger"
@@ -61,7 +61,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        data-testid="user-menu-content"
+        data-test-id="user-menu-content"
         align="end"
         className="w-48"
         role="menu"
@@ -69,6 +69,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
       >
         <DropdownMenuItem
           className="cursor-pointer"
+          data-test-id="profile-button"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
