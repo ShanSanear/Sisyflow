@@ -74,7 +74,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
           Sign in to your account
         </CardTitle>
         <CardDescription className="text-center text-gray-600 dark:text-gray-400" data-testid="login-description">
-          Enter your email and password to access your account
+          Enter your email or username and password to access your account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -86,21 +86,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Email
+            <Label htmlFor="identifier" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Email or Username
             </Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
+              id="identifier"
+              type="text"
+              placeholder="Enter your email or username"
               className="w-full"
-              {...register("email")}
+              {...register("identifier")}
               disabled={isLoading}
-              data-testid="email-input"
+              data-testid="identifier-input"
             />
-            {errors.email && (
-              <p className="text-sm text-red-600 dark:text-red-400" data-testid="email-error">
-                {errors.email.message}
+            {errors.identifier && (
+              <p className="text-sm text-red-600 dark:text-red-400" data-testid="identifier-error">
+                {errors.identifier.message}
               </p>
             )}
           </div>
