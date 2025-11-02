@@ -5,22 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createUserSchema } from "@/lib/validation/schemas/user";
+import { addUserSchema, type AddUserFormData } from "@/lib/validation/schemas/user";
 import type { CreateUserCommand } from "@/types";
-import { z } from "zod";
-
-// Extend schema with confirm password validation
-const addUserSchema = createUserSchema
-  .omit({ role: true })
-  .extend({
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"], // This will show the error on confirmPassword field
-  });
-
-type AddUserFormData = z.infer<typeof addUserSchema>;
 
 interface AddUserDialogProps {
   isOpen: boolean;
