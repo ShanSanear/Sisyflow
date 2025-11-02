@@ -265,6 +265,44 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 **Oczekiwany:** Redirect/403, no link in Nav.  
 **Ryzyko (Plan 1):** Test API /users direct call → 403.
 
+#### TC-ADMIN-006: Wyświetlanie widoku dokumentacji projektu przez Admina (P1, E2E)
+
+**Kroki:** Admin loguje się, przechodzi do /admin.  
+**Oczekiwany:** Domyślnie aktywna jest zakładka "Zarządzanie dokumentacją". Formularz z polem tekstowym i przyciskiem "Zapisz" jest widoczny. Istniejąca dokumentacja jest załadowana do pola tekstowego.  
+**Ryzyko (Plan 1):** API zwraca błąd, widok powinien obsłużyć stan ładowania i błędu (np. wyświetlając toast "Failed to fetch project documentation").
+
+#### TC-ADMIN-007: Edycja i zapis dokumentacji projektu przez Admina (P1, E2E)
+
+**Kroki:** Admin wchodzi do /admin/documentation, modyfikuje tekst w polu, klika "Zapisz" (lub używa skrótu Ctrl+S).  
+**Oczekiwany:** Toast "Zapisano pomyślnie" się pojawia. Po odświeżeniu strony, nowa treść jest widoczna. Przycisk zapisu jest nieaktywny po zapisaniu (bo `dirty=false`).  
+**Dane:** `{"content": "Nowa treść dokumentacji."}`  
+**Ryzyko (Plan 1):** Błąd sieci podczas zapisu – powinien pojawić się toast błędu, a zmiany powinny pozostać w edytorze (`dirty=true`).
+
+#### TC-ADMIN-008: Walidacja formularza dokumentacji po stronie klienta (P1, Komponentowy)
+
+**Kroki:** Admin w `DocumentationEditorForm` próbuje zapisać: a) pustą treść, b) treść > 20000 znaków.  
+**Oczekiwany:** W obu przypadkach przycisk "Zapisz" jest nieaktywny. Licznik znaków `CharCounter` pokazuje błąd (np. czerwony kolor), gdy limit jest przekroczony. Żądanie API nie jest wysyłane.
+
+#### TC-ADMIN-009: Ostrzeżenie o niezapisanych zmianach (P1, E2E)
+
+**Kroki:** Admin modyfikuje treść dokumentacji, a następnie próbuje opuścić stronę (np. klikając na inny link lub zamykając kartę).  
+**Oczekiwany:** Przeglądarka wyświetla natywny monit "Czy na pewno opuścić stronę? Niezapisane zmiany zostaną utracone." (`useUnsavedChangesPrompt`).
+
+#### TC-ADMIN-010: Dostęp nie-administratora do widoku dokumentacji (P1, Security)
+
+**Kroki:** Użytkownik z rolą USER loguje się i próbuje wejść na `/admin/documentation` bezpośrednio przez URL.  
+**Oczekiwany:** Przekierowanie lub strona błędu 403 Forbidden. Zakładka "Zarządzanie dokumentacją" nie powinna być widoczna w nawigacji.
+
+#### TC-ADMIN-011: Test autoryzacji API GET /api/project-documentation (P1, API/Security)
+
+**Kroki:** a) Zwykły user wysyła GET request. b) Niezalogowany użytkownik wysyła GET request.  
+**Oczekiwany:** a) 403 Forbidden. b) 401 Unauthorized.
+
+#### TC-ADMIN-012: Test autoryzacji i walidacji API PUT /api/project-documentation (P1, API/Security)
+
+**Kroki:** a) Zwykły user wysyła PUT. b) Admin wysyła PUT z niepoprawnym body (pusty content, content > 20000 znaków).  
+**Oczekiwany:** a) 403 Forbidden. b) 400 Bad Request z komunikatem o błędzie walidacji.
+
 ### 4.4 UI, Integracje, Performance (P2)
 
 #### TC-UI-001: Keyboard nav Kanban (P2, Manual/E2E)
