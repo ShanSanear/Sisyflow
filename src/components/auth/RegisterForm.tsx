@@ -7,9 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import { registerSchema, type RegisterData } from "../../lib/validation/auth.validation";
-
-type RegisterFormData = RegisterData;
+import { registerFormSchema, type RegisterFormData } from "../../lib/validation/auth.validation";
 
 export const RegisterForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +19,7 @@ export const RegisterForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerFormSchema),
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -30,12 +28,14 @@ export const RegisterForm: React.FC = () => {
     setSuccessMessage(null);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, ...userData } = data;
       const response = await fetch("/api/auth/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(userData),
       });
 
       if (!response.ok) {
@@ -113,6 +113,23 @@ export const RegisterForm: React.FC = () => {
                 <li>At least one number</li>
               </ul>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Confirm Password
+            </Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              className="w-full"
+              {...register("confirmPassword")}
+              disabled={isLoading}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.confirmPassword.message}</p>
+            )}
           </div>
 
           <Button

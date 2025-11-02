@@ -35,6 +35,25 @@ export const createUserSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 /**
+ * Schema walidacji dla formularza dodawania użytkownika przez administratora
+ * Rozszerza createUserSchema o pole confirmPassword i usuwa pole role (ustawiane na USER)
+ */
+export const addUserSchema = createUserSchema
+  .omit({ role: true })
+  .extend({
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // This will show the error on confirmPassword field
+  });
+
+/**
+ * Typ wywnioskowany ze schematu addUserSchema
+ */
+export type AddUserFormData = z.infer<typeof addUserSchema>;
+
+/**
  * Schema walidacji dla parametrów query w GET /api/users
  * Implementuje walidację parametrów paginacji:
  * - limit: opcjonalny, domyślnie 50, maksymalnie 100, minimum 1

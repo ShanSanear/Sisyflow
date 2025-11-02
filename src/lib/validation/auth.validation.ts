@@ -27,5 +27,15 @@ export const registerSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
+// Extended schema with confirm password validation
+export const registerFormSchema = registerSchema
+  .extend({
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // This will show the error on confirmPassword field
+  });
+
 export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterData = z.infer<typeof registerSchema>;
+export type RegisterFormData = z.infer<typeof registerFormSchema>;
