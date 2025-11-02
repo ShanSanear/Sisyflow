@@ -186,7 +186,7 @@ Implementacja po basic tickets CRUD; użyj Supabase dla tables (ai_suggestion_se
 
 ### Project Documentation (Future for AI)
 
-- **GET** `/api/project-documentation` (Future, dla AI context)
+- **GET** `/api/project-documentation` (Future, ADMIN only, dla AI context)
 - Gets the project documentation.
 - Response:
 
@@ -208,7 +208,7 @@ Implementacja po basic tickets CRUD; użyj Supabase dla tables (ai_suggestion_se
 - Success: 200 OK
 - Errors: 403 Forbidden, 400 Bad Request
 - Validation:
-- content lenght < 20000 and > 0
+- content lenght <= 20000 and > 0
 
 ### AI Errors (Admin Only)
 
