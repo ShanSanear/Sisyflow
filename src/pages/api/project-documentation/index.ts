@@ -17,6 +17,97 @@ import {
 export const prerender = false;
 
 /**
+ * GET /api/project-documentation
+ *
+ * Pobiera dokumentację projektu używaną jako kontekst dla AI. Endpoint obsługuje tylko jeden rekord dokumentacji projektu. Dostęp jest ograniczony wyłącznie do użytkowników z rolą ADMIN.
+ *
+ * Response: 200 OK - ProjectDocumentationDTO zawierający dokumentację wraz z informacjami o użytkowniku
+ * Error Responses: 401 Unauthorized, 403 Forbidden, 500 Internal Server Error
+ */
+export const GET: APIRoute = async ({ request, locals, cookies }) => {
+  try {
+    // Sprawdź czy użytkownik jest uwierzytelniony
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
+
+    // Utwórz service i wywołaj metodę pobrania dokumentacji
+    const projectDocumentationService = createProjectDocumentationService(supabase);
+    const documentation: ProjectDocumentationDTO = await projectDocumentationService.getProjectDocumentation();
+
+    // Zwróć pomyślną odpowiedź z dokumentacją
+    return new Response(JSON.stringify(documentation), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching project documentation:", error);
+
+    // Sprawdź czy to błąd połączenia z bazą danych
+    if (isDatabaseConnectionError(error)) {
+      return createDatabaseConnectionErrorResponse("project documentation fetch");
+    }
+
+    // Obsługa błędów dostępu (403 Forbidden)
+    if (error instanceof AccessDeniedError) {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message:
+            "You don't have permission to access project documentation. Only administrators can perform this action.",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Obsługa błędów profilu użytkownika nie znaleziony (403 Forbidden)
+    if (error instanceof UserProfileNotFoundError) {
+      return new Response(
+        JSON.stringify({
+          error: "Forbidden",
+          message: "Your user profile not found - access denied",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Dla innych błędów
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
+
+/**
  * PUT /api/project-documentation
  *
  * Aktualizuje dokumentację projektu używaną jako kontekst dla AI. Endpoint obsługuje tylko jeden rekord dokumentacji projektu. Dostęp jest ograniczony wyłącznie do użytkowników z rolą ADMIN.

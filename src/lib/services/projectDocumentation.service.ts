@@ -32,10 +32,82 @@ export class UserProfileNotFoundError extends ProjectDocumentationServiceError {
 
 /**
  * Service odpowiedzialny za operacje na dokumentacji projektu
- * Implementuje logikę biznesową dla aktualizacji dokumentacji projektu
+ * Implementuje logikę biznesową dla pobierania i aktualizacji dokumentacji projektu
  */
 export class ProjectDocumentationService {
   constructor(private supabase: SupabaseClient<Database>) {}
+
+  /**
+   * Pobiera dokumentację projektu
+   * Operacja dostępna tylko dla użytkowników z rolą ADMIN
+   * Pobiera pojedynczy rekord z tabeli project_documentation wraz z informacjami o użytkowniku
+   *
+   * @returns Obiekt dokumentacji projektu wraz z informacjami o użytkowniku
+   * @throws Error jeśli użytkownik nie ma uprawnień lub wystąpi błąd bazy danych
+   */
+  async getProjectDocumentation(): Promise<ProjectDocumentationDTO> {
+    try {
+      // Sprawdź czy użytkownik wykonujący operację jest administratorem
+      const { data: isAdmin, error: adminCheckError } = await this.supabase.rpc("is_admin");
+
+      if (adminCheckError) {
+        throw extractSupabaseError(adminCheckError, "Failed to check admin status");
+      }
+
+      if (!isAdmin) {
+        throw new AccessDeniedError("Only administrators can access project documentation");
+      }
+
+      // Pobierz dokumentację projektu (zawsze jeden rekord)
+      const { data: documentation, error: fetchError } = await this.supabase
+        .from("project_documentation")
+        .select(
+          `
+          id,
+          content,
+          updated_at,
+          updated_by,
+          profiles!project_documentation_updated_by_fkey (
+            username
+          )
+        `
+        )
+        .eq("id", PROJECT_DOCUMENTATION_ID)
+        .single();
+
+      if (fetchError) {
+        throw extractSupabaseError(fetchError, "Failed to fetch project documentation");
+      }
+
+      if (!documentation) {
+        throw new ProjectDocumentationServiceError("Project documentation not found");
+      }
+
+      // Przekształć dane do oczekiwanego formatu DTO
+      const result: ProjectDocumentationDTO = {
+        id: documentation.id,
+        content: documentation.content,
+        updated_at: documentation.updated_at,
+        updated_by: documentation.profiles
+          ? {
+              username: (documentation.profiles as { username: string }).username,
+            }
+          : undefined,
+      };
+
+      return result;
+    } catch (error) {
+      // Re-throw custom errors
+      if (error instanceof ProjectDocumentationServiceError) {
+        throw error;
+      }
+
+      // Wrap other errors
+      throw new ProjectDocumentationServiceError(
+        error instanceof Error ? error.message : "Unknown error occurred while fetching project documentation"
+      );
+    }
+  }
 
   /**
    * Aktualizuje dokumentację projektu
@@ -55,18 +127,14 @@ export class ProjectDocumentationService {
     const validatedData = updateProjectDocumentationSchema.parse(command);
 
     try {
-      // Sprawdź czy użytkownik wykonujący operację ma rolę ADMIN
-      const { data: userProfile, error: profileError } = await this.supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
+      // Sprawdź czy użytkownik wykonujący operację jest administratorem
+      const { data: isAdmin, error: adminCheckError } = await this.supabase.rpc("is_admin");
 
-      if (profileError || !userProfile) {
-        throw new UserProfileNotFoundError();
+      if (adminCheckError) {
+        throw extractSupabaseError(adminCheckError, "Failed to check admin status");
       }
 
-      if (userProfile.role !== "ADMIN") {
+      if (!isAdmin) {
         throw new AccessDeniedError("Only administrators can update project documentation");
       }
 
