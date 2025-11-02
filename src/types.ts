@@ -166,8 +166,9 @@ export interface RateAISuggestionCommand {
 
 // Project Documentation DTOs
 // ProjectDocumentationDTO: Used in GET /project-documentation (response)
-export type ProjectDocumentationDTO = Omit<ProjectDocumentation, "updated_by"> & {
-  updated_by?: Pick<Profile, "username">;
+export type ProjectDocumentationDTO = Omit<ProjectDocumentation, "updated_by" | "updated_at"> & {
+  updated_at: string | null;
+  updated_by?: Pick<Profile, "username"> | null;
 };
 
 // UpdateProjectDocumentationCommand: Used in PUT /project-documentation (request)

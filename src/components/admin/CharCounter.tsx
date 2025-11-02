@@ -21,7 +21,7 @@ export default function CharCounter({ current, max, status }: CharCounterProps) 
   };
 
   return (
-    <div className={cn("text-sm font-medium", getStatusColor(status))}>
+    <div className={cn("text-sm font-medium", getStatusColor(status))} data-testid="documentation-char-counter">
       {current}/{max} characters
     </div>
   );

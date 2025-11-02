@@ -52,8 +52,14 @@ export default function SaveBar({ status, disabled, onSave }: SaveBarProps) {
   };
 
   return (
-    <div className="flex justify-end">
-      <Button onClick={onSave} disabled={disabled} variant={getButtonVariant()} size="sm">
+    <div className="flex justify-end" data-testid="documentation-save-bar">
+      <Button
+        onClick={onSave}
+        disabled={disabled}
+        variant={getButtonVariant()}
+        size="sm"
+        data-testid={`documentation-save-button-${status}`}
+      >
         {getButtonContent()}
       </Button>
     </div>

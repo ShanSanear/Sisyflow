@@ -45,10 +45,18 @@ export default function DocumentationEditorForm({
           className="min-h-[400px] resize-y font-mono text-sm"
           disabled={disabled}
           aria-label="Project documentation content"
+          data-testid="documentation-editor-textarea"
         />
         <div className="flex justify-between items-center">
-          <CharCounter current={charCount} max={maxLength} status={charCountStatus} />
-          <div className="text-xs text-muted-foreground">Use Ctrl+S (Cmd+S on Mac) or click Save to save changes</div>
+          <CharCounter
+            current={charCount}
+            max={maxLength}
+            status={charCountStatus}
+            data-testid="documentation-char-counter"
+          />
+          <div className="text-xs text-muted-foreground" data-testid="documentation-save-hint">
+            Use Ctrl+S (Cmd+S on Mac) or click Save to save changes
+          </div>
         </div>
       </div>
 

@@ -71,9 +71,9 @@ export default function DocumentationManagementView() {
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8" data-testid="documentation-error">
         <p className="text-destructive mb-4">An error occurred while loading project documentation.</p>
-        <Button onClick={refetch} variant="outline">
+        <Button onClick={refetch} variant="outline" data-testid="documentation-error-retry">
           Try again
         </Button>
       </div>
@@ -82,7 +82,7 @@ export default function DocumentationManagementView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="documentation-loading">
         <div className="space-y-2">
           <Skeleton className="h-8 w-80" />
           <Skeleton className="h-4 w-96" />
@@ -100,14 +100,14 @@ export default function DocumentationManagementView() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6" data-testid="documentation-management">
+      <div data-testid="documentation-header">
         <h2 className="text-2xl font-semibold">Project Documentation</h2>
         <p className="text-muted-foreground">
           Edit the central project documentation that provides context for AI interactions.
         </p>
         {viewModel.data?.updated_at && (
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-2" data-testid="documentation-last-updated">
             Last updated: {new Date(viewModel.data.updated_at).toLocaleString()}
             {viewModel.data.updated_by && ` by ${viewModel.data.updated_by.username}`}
           </p>
