@@ -6,13 +6,13 @@ export class LoginPagePOM {
   readonly pageContainer: Locator;
   readonly loginTitle: Locator;
   readonly loginDescription: Locator;
-  readonly emailInput: Locator;
+  readonly identifierInput: Locator;
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
   readonly errorAlert: Locator;
   readonly errorMessage: Locator;
   readonly loadingSpinner: Locator;
-  readonly emailError: Locator;
+  readonly identifierError: Locator;
   readonly passwordError: Locator;
 
   constructor(page: Page) {
@@ -21,13 +21,13 @@ export class LoginPagePOM {
     this.formContainer = page.getByTestId("login-form-container");
     this.loginTitle = page.getByTestId("login-title");
     this.loginDescription = page.getByTestId("login-description");
-    this.emailInput = page.getByTestId("email-input");
+    this.identifierInput = page.getByTestId("identifier-input");
     this.passwordInput = page.getByTestId("password-input");
     this.loginButton = page.getByTestId("login-button");
     this.errorAlert = page.getByTestId("login-error-alert");
     this.errorMessage = page.getByTestId("login-error-message");
     this.loadingSpinner = page.getByTestId("loading-spinner");
-    this.emailError = page.getByTestId("email-error");
+    this.identifierError = page.getByTestId("identifier-error");
     this.passwordError = page.getByTestId("password-error");
   }
 
@@ -61,13 +61,13 @@ export class LoginPagePOM {
   }
 
   /**
-   * Login with email and password
+   * Login with email or username and password
    */
-  async login(email: string, password?: string) {
+  async login(identifier: string, password?: string) {
     await this.loginButton.isVisible();
     await this.loginButton.isEnabled();
     await this.page.waitForTimeout(1000);
-    await this.emailInput.fill(email);
+    await this.identifierInput.fill(identifier);
     if (password) {
       await this.passwordInput.fill(password);
     }
@@ -103,10 +103,10 @@ export class LoginPagePOM {
   }
 
   /**
-   * Get email validation error
+   * Get identifier validation error
    */
-  async getEmailErrorText(): Promise<string> {
-    return (await this.emailError.textContent()) || "";
+  async getIdentifierErrorText(): Promise<string> {
+    return (await this.identifierError.textContent()) || "";
   }
 
   /**
@@ -117,10 +117,10 @@ export class LoginPagePOM {
   }
 
   /**
-   * Check if email validation error is visible
+   * Check if identifier validation error is visible
    */
-  async isEmailErrorVisible(): Promise<boolean> {
-    return await this.emailError.isVisible();
+  async isIdentifierErrorVisible(): Promise<boolean> {
+    return await this.identifierError.isVisible();
   }
 
   /**

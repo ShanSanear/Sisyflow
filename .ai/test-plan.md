@@ -151,7 +151,7 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-AUTH-002: Logowanie (P0, E2E)
 
-**Kroki:** /login, poprawne dane, "Sign in".  
+**Kroki:** /login, poprawne dane (email + hasło), "Sign in".  
 **Oczekiwany:** Redirect /board, session cookie, toast success.
 
 #### TC-AUTH-003: Błędne logowanie (P1, Integracyjny)
@@ -173,6 +173,11 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 #### TC-AUTH-006: Uprawnienia NavLinks (P1, Komponentowy)
 
 **Oczekiwany:** Non-admin: no "Admin Panel" link; attempt /admin → 403/redirect.
+
+#### TC-AUTH-007: Logowanie (P1, E2E)
+
+**Kroki:** /login, poprawne dane (username + hasło), "Sign in".  
+**Oczekiwany:** Redirect /board, session cookie, toast success.
 
 ### 4.2 Moduł Zarządzania Ticketami i Kanban (P0)
 

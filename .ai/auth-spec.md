@@ -27,9 +27,9 @@ W celu odseparowania widoków dla użytkowników zalogowanych i niezalogowanych,
 Interaktywne elementy formularzy zostaną zaimplementowane jako komponenty React.
 
 - **`src/components/auth/LoginForm.tsx`**:
-  - Odpowiedzialność: Zarządzanie stanem formularza logowania (email, hasło), walidacja po stronie klienta i komunikacja z endpointem API `/api/auth/sign-in`.
-  - Walidacja: Użyjemy biblioteki `zod` do zdefiniowania schematu (poprawny format e-mail, niepuste hasło) i `react-hook-form` do integracji z formularzem.
-  - Komunikaty o błędach: Komponent będzie wyświetlał błędy walidacji pod odpowiednimi polami oraz ogólne komunikaty o błędach (np. "Nieprawidłowy e-mail lub hasło") otrzymane z API.
+  - Odpowiedzialność: Zarządzanie stanem formularza logowania (identyfikator - email lub username, hasło), walidacja po stronie klienta i komunikacja z endpointem API `/api/auth/sign-in`.
+  - Walidacja: Użyjemy biblioteki `zod` do zdefiniowania schematu (poprawny format e-mail lub nazwa użytkownika 3-30 znaków, niepuste hasło) i `react-hook-form` do integracji z formularzem.
+  - Komunikaty o błędach: Komponent będzie wyświetlał błędy walidacji pod odpowiednimi polami oraz ogólne komunikaty o błędach (np. "Nieprawidłowy identyfikator lub hasło") otrzymane z API.
 - **`src/components/auth/RegisterForm.tsx`**:
   - Odpowiedzialność: Zarządzanie stanem formularza rejestracji, walidacja i komunikacja z endpointem `/api/auth/sign-up`.
   - Walidacja: Analogicznie do `LoginForm.tsx`, z dodatkowymi regułami dla siły hasła.
@@ -50,11 +50,15 @@ Interaktywne elementy formularzy zostaną zaimplementowane jako komponenty React
 Zgodnie z konwencją Astro, endpointy API będą zlokalizowane w `src/pages/api`. Dla lepszej organizacji, endpointy autentyfikacji są zaimplementowane jako oddzielne pliki.
 
 - **`src/pages/api/auth/sign-in.ts` (`POST`)**:
-  - Pobiera `email` i `password` z ciała żądania.
-  - Waliduje dane wejściowe za pomocą `zod`.
-  - Wywołuje `supabase.auth.signInWithPassword()`.
+  - Pobiera `identifier` (email lub username) i `password` z ciała żądania.
+  - Waliduje dane wejściowe za pomocą `zod` - identyfikator może być prawidłowym adresem email lub nazwą użytkownika (3-30 znaków, litery, cyfry, podkreślenie lub myślnik).
+  - Jeśli identyfikator zawiera `@`, traktuje go jako email i używa bezpośrednio do logowania.
+  - Jeśli identyfikator nie zawiera `@`, traktuje go jako nazwę użytkownika:
+    - Wyszukuje użytkownika w tabeli `profiles` po nazwie użytkownika.
+    - Używa admin klienta Supabase do pobrania adresu email z tabeli `auth.users`.
+  - Wywołuje `supabase.auth.signInWithPassword()` z prawidłowym adresem email.
   - W przypadku sukcesu, Supabase SSR SDK automatycznie ustawi odpowiednie ciasteczka sesji. Zwraca status 200.
-  - W przypadku błędu, zwraca status 401 z komunikatem o błędzie.
+  - W przypadku błędu (nieprawidłowy identyfikator/hasło), zwraca status 401 z komunikatem o błędzie.
 - **`src/pages/api/auth/sign-up.ts` (`POST`)**:
   - Sprawdza, czy w bazie danych istnieją jacykolwiek użytkownicy. Jeśli tak, zwraca błąd 403 (Forbidden).
   - Waliduje `email` i `password`.

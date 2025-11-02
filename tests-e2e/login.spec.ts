@@ -15,8 +15,8 @@ test.describe("Autentykacja - TC-AUTH-003: Błędne logowanie", () => {
     // Czekamy 1 sekundę na załadowanie strony
     await page.waitForTimeout(1000);
 
-    // 2. Wpisanie prawidłowego emaila i NIEPRAWIDŁOWEGO hasła
-    await loginPage.emailInput.fill("test@example.com");
+    // 2. Wpisanie prawidłowego identyfikatora i NIEPRAWIDŁOWEGO hasła
+    await loginPage.identifierInput.fill("test@example.com");
     await loginPage.passwordInput.fill("wrongpassword123");
 
     // 3. Wysłanie formularza

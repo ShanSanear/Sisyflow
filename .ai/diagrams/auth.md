@@ -63,8 +63,10 @@ sequenceDiagram
         Note over Przeglądarka, Supabase Auth: Scenariusz 2: Proces logowania użytkownika
     end
 
-    Przeglądarka->>Astro API: POST /api/auth/sign-in (email, hasło)
+    Przeglądarka->>Astro API: POST /api/auth/sign-in (identyfikator: email lub username, hasło)
     activate Astro API
+
+    note right of Astro API: Jeśli identyfikator zawiera @ -> email\nJeśli nie -> lookup username w profiles\ntabela, pobierz email z auth.users
 
     Astro API->>Supabase Auth: signInWithPassword(email, hasło)
     activate Supabase Auth
