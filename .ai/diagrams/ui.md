@@ -51,7 +51,7 @@ Na podstawie dostarczonych dokumentów (`prd.md` i `auth-spec.md`) oraz analizy 
 
 ### 4. Opis funkcjonalności komponentów
 
-- **`LoginForm.tsx`**: Renderuje pola e-mail i hasło, waliduje je po stronie klienta i obsługuje komunikację z serwerem w celu uwierzytelnienia użytkownika. Wyświetla błędy walidacji i błędy z API.
+- **`LoginForm.tsx`**: Renderuje pola identyfikatora (email lub nazwa użytkownika) i hasło, waliduje je po stronie klienta i obsługuje komunikację z serwerem w celu uwierzytelnienia użytkownika. Wyświetla błędy walidacji i błędy z API.
 - **`RegisterForm.tsx`**: Podobnie jak `LoginForm.tsx`, ale dla procesu rejestracji. Waliduje dodatkowo siłę hasła.
 - **`NavigationBar.tsx`**: Komponent UI wyświetlający nawigację, nazwę użytkownika i przycisk wylogowania. Dane pobiera asynchronicznie, aby uniezależnić się od serwerowego renderowania strony.
 - **`AuthLayout.astro`**: Zapewnia spójny, minimalistyczny wygląd dla formularzy uwierzytelniania, bez zbędnych elementów interfejsu.
