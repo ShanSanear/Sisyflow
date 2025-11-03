@@ -128,12 +128,8 @@ export class TicketService {
         throw extractSupabaseError(fetchError, "Failed to fetch created ticket");
       }
 
-      // Sprawdź czy reporter istnieje - powinien istnieć ponieważ właśnie utworzyliśmy ticket
-      if (!fullTicket.reporter) {
-        throw new Error("Failed to fetch reporter data for created ticket");
-      }
-
       // Formatuj odpowiedź zgodnie z FullTicketDTO
+      // Reporter może być null, jeśli user został usunięty
       const result: FullTicketDTO = {
         id: fullTicket.id,
         title: fullTicket.title,
@@ -145,7 +141,7 @@ export class TicketService {
         ai_enhanced: fullTicket.ai_enhanced,
         created_at: fullTicket.created_at,
         updated_at: fullTicket.updated_at,
-        reporter: { id: fullTicket.reporter.id, username: fullTicket.reporter.username },
+        reporter: fullTicket.reporter ? { id: fullTicket.reporter.id, username: fullTicket.reporter.username } : null,
         assignee: fullTicket.assignee
           ? { id: fullTicket.assignee.id, username: fullTicket.assignee.username }
           : undefined,
@@ -228,17 +224,8 @@ export class TicketService {
         throw extractSupabaseError(queryError, "Failed to fetch tickets");
       }
 
-      // Sprawdź czy wszystkie tickety mają reporter'a (powinny mieć)
-      if (tickets && tickets.some((ticket) => !ticket.reporter)) {
-        throw new Error("Some tickets are missing reporter data");
-      }
-
       // Mapuj wyniki na TicketDTO[]
       const ticketDTOs: TicketDTO[] = (tickets || []).map((ticket) => {
-        if (!ticket.reporter) {
-          throw new Error("Ticket is missing reporter data");
-        }
-
         return {
           id: ticket.id,
           title: ticket.title,
@@ -250,7 +237,7 @@ export class TicketService {
           ai_enhanced: ticket.ai_enhanced,
           created_at: ticket.created_at,
           updated_at: ticket.updated_at,
-          reporter: { username: ticket.reporter.username },
+          reporter: ticket.reporter ? { username: ticket.reporter.username } : null,
           assignee: ticket.assignee ? { username: ticket.assignee.username } : undefined,
         };
       });
@@ -316,12 +303,8 @@ export class TicketService {
         throw new Error("Ticket not found");
       }
 
-      // Sprawdź czy reporter istnieje - powinien istnieć dla wszystkich ticketów
-      if (!ticket.reporter) {
-        throw new Error("Failed to fetch reporter data for ticket");
-      }
-
       // Formatuj odpowiedź zgodnie z FullTicketDTO
+      // Reporter może być null, jeśli user został usunięty
       const result: FullTicketDTO = {
         id: ticket.id,
         title: ticket.title,
@@ -333,7 +316,7 @@ export class TicketService {
         ai_enhanced: ticket.ai_enhanced,
         created_at: ticket.created_at,
         updated_at: ticket.updated_at,
-        reporter: { id: ticket.reporter.id, username: ticket.reporter.username },
+        reporter: ticket.reporter ? { id: ticket.reporter.id, username: ticket.reporter.username } : null,
         assignee: ticket.assignee ? { id: ticket.assignee.id, username: ticket.assignee.username } : undefined,
       };
 
@@ -440,12 +423,8 @@ export class TicketService {
         throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
       }
 
-      // Sprawdź czy reporter istnieje - powinien istnieć
-      if (!updatedTicket.reporter) {
-        throw new Error("Failed to fetch reporter data for updated ticket");
-      }
-
       // Formatuj odpowiedź zgodnie z TicketDTO
+      // Reporter może być null, jeśli user został usunięty
       const result: TicketDTO = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -457,7 +436,7 @@ export class TicketService {
         ai_enhanced: updatedTicket.ai_enhanced,
         created_at: updatedTicket.created_at,
         updated_at: updatedTicket.updated_at,
-        reporter: { username: updatedTicket.reporter.username },
+        reporter: updatedTicket.reporter ? { username: updatedTicket.reporter.username } : null,
         assignee: updatedTicket.assignee ? { username: updatedTicket.assignee.username } : undefined,
       };
 
@@ -579,12 +558,8 @@ export class TicketService {
         throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
       }
 
-      // Sprawdź czy reporter istnieje - powinien istnieć
-      if (!updatedTicket.reporter) {
-        throw new Error("Failed to fetch reporter data for updated ticket");
-      }
-
       // Formatuj odpowiedź zgodnie z FullTicketDTO
+      // Reporter może być null, jeśli user został usunięty
       const result: FullTicketDTO = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -596,7 +571,9 @@ export class TicketService {
         ai_enhanced: updatedTicket.ai_enhanced,
         created_at: updatedTicket.created_at,
         updated_at: updatedTicket.updated_at,
-        reporter: { id: updatedTicket.reporter.id, username: updatedTicket.reporter.username },
+        reporter: updatedTicket.reporter
+          ? { id: updatedTicket.reporter.id, username: updatedTicket.reporter.username }
+          : null,
         assignee: updatedTicket.assignee
           ? { id: updatedTicket.assignee.id, username: updatedTicket.assignee.username }
           : undefined,
@@ -722,12 +699,8 @@ export class TicketService {
         throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
       }
 
-      // Sprawdź czy reporter istnieje - powinien istnieć
-      if (!updatedTicket.reporter) {
-        throw new Error("Failed to fetch reporter data for updated ticket");
-      }
-
       // Formatuj odpowiedź zgodnie z TicketDTO
+      // Reporter może być null, jeśli user został usunięty
       const result: TicketDTO = {
         id: updatedTicket.id,
         title: updatedTicket.title,
@@ -739,7 +712,7 @@ export class TicketService {
         ai_enhanced: updatedTicket.ai_enhanced,
         created_at: updatedTicket.created_at,
         updated_at: updatedTicket.updated_at,
-        reporter: { username: updatedTicket.reporter.username },
+        reporter: updatedTicket.reporter ? { username: updatedTicket.reporter.username } : null,
         assignee: updatedTicket.assignee ? { username: updatedTicket.assignee.username } : undefined,
       };
 
