@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { signOut } from "../../lib/api";
 
 interface LogoutHandlerProps {
   onLogout: () => void;
@@ -8,20 +9,10 @@ export const LogoutHandler = ({ onLogout }: LogoutHandlerProps) => {
   useEffect(() => {
     const performLogout = async () => {
       try {
-        const response = await fetch("/api/auth/sign-out", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          // Call the callback and redirect
-          onLogout();
-          window.location.href = "/login";
-        } else {
-          console.error("Logout failed");
-        }
+        await signOut();
+        // Call the callback and redirect
+        onLogout();
+        window.location.href = "/login";
       } catch (error) {
         console.error("Logout error:", error);
       }

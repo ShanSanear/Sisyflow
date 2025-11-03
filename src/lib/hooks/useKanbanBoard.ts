@@ -4,6 +4,13 @@ import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../../c
 import type { TicketDTO } from "../../types";
 import { useAuth } from "./useAuth";
 import { useToast } from "./useToast";
+import {
+  getTickets,
+  updateTicketStatus,
+  TicketNotFoundError,
+  TicketValidationError,
+  TicketForbiddenError,
+} from "../api";
 
 interface UseKanbanBoardResult {
   boardState: KanbanViewModel | null;
@@ -105,13 +112,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/tickets?limit=100");
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tickets: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await getTickets({ limit: 100 });
 
       // API returns { tickets: TicketDTO[], pagination: PaginationDTO }
       if (!data.tickets || !Array.isArray(data.tickets)) {
@@ -186,19 +187,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
 
       try {
         // Call API to update ticket status
-        const response = await fetch(`/api/tickets/${ticketId}/status`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: newStatus,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to update ticket status: ${response.status} ${response.statusText}`);
-        }
+        await updateTicketStatus(ticketId, { status: newStatus });
 
         // Refresh data to ensure consistency
         await fetchTickets();
@@ -217,7 +206,15 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         revertedBoardState[oldStatus].tickets.push(ticketToMove);
         setBoardState(revertedBoardState);
 
-        showError("Failed to move ticket. Please try again.");
+        if (error instanceof TicketNotFoundError) {
+          showError("Ticket not found.");
+        } else if (error instanceof TicketValidationError) {
+          showError("Invalid status update.");
+        } else if (error instanceof TicketForbiddenError) {
+          showError("You don't have permission to move this ticket.");
+        } else {
+          showError("Failed to move ticket. Please try again.");
+        }
       } finally {
         _setSavingTicketId(null);
       }
@@ -272,32 +269,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
 
       try {
         // Call API to update ticket status
-        const response = await fetch(`/api/tickets/${ticketId}/status`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: newStatus,
-          }),
-        });
-
-        if (!response.ok) {
-          // Try to get error message from response
-          let errorMessage = "Failed to move ticket. Please try again.";
-          try {
-            const errorData = await response.json();
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch {
-            // If response is not JSON, use the status text
-            if (response.status === 403) {
-              errorMessage = "You don't have permission to move this ticket.";
-            }
-          }
-          throw new Error(errorMessage);
-        }
+        await updateTicketStatus(ticketId, { status: newStatus });
 
         // Refresh data to ensure consistency
         await fetchTickets();
@@ -316,7 +288,15 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
         revertedBoardState[oldStatus].tickets.push(ticketToMove);
         setBoardState(revertedBoardState);
 
-        showError(error instanceof Error ? error.message : "Failed to move ticket. Please try again.");
+        if (error instanceof TicketNotFoundError) {
+          showError("Ticket not found.");
+        } else if (error instanceof TicketValidationError) {
+          showError("Invalid status update.");
+        } else if (error instanceof TicketForbiddenError) {
+          showError("You don't have permission to move this ticket.");
+        } else {
+          showError(error instanceof Error ? error.message : "Failed to move ticket. Please try again.");
+        }
       } finally {
         _setSavingTicketId(null);
       }

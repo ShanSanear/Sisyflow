@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { UserDTO } from "../../types";
+import { getCurrentUserProfile } from "../api";
 
 /**
  * Hook do zarządzania stanem zalogowanego użytkownika
@@ -23,28 +24,18 @@ export const useUser = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/profiles/me", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 404) {
-          // Nieprawidłowa sesja - przekierowanie na login
-          window.location.href = "/login";
-          return;
-        }
-
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const userData: UserDTO = await response.json();
+      const userData = await getCurrentUserProfile();
       setUser(userData);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error occurred");
+      const error = err as Error;
       setError(error);
+
+      if (error.status === 401 || error.status === 404) {
+        // Nieprawidłowa sesja - przekierowanie na login
+        window.location.href = "/login";
+        return;
+      }
+
       console.error("Error fetching user data:", error);
     } finally {
       setIsLoading(false);

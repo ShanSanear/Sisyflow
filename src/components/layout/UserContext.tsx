@@ -1,4 +1,4 @@
-import React, { createContext, useContext, type ReactNode } from "react";
+import React, { createContext, type ReactNode } from "react";
 import { useUser } from "../../lib/hooks/useUser";
 import type { UserDTO } from "../../types";
 
@@ -16,19 +16,7 @@ interface UserContextType {
 /**
  * Kontekst do przechowywania stanu użytkownika
  */
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-/**
- * Hook do używania kontekstu użytkownika
- * Rzuca błąd jeśli używany poza UserProvider
- */
-export const useUserContext = () => {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error("useUserContext must be used within a UserProvider");
-  }
-  return context;
-};
+export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 /**
  * Props dla UserProvider

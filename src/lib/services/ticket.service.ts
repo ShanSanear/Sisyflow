@@ -521,8 +521,8 @@ export class TicketService {
       if (validatedData.type !== undefined) {
         updateData.type = validatedData.type;
       }
-      if (validatedData.assignee !== undefined) {
-        updateData.assignee_id = validatedData.assignee ? validatedData.assignee.id : null;
+      if (validatedData.assignee_id !== undefined) {
+        updateData.assignee_id = validatedData.assignee_id;
       }
 
       // Aktualizuj ticket

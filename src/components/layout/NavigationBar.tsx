@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
-import { useUserContext } from "./UserContext";
+import { useUserContext } from "./useUserContext";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { PlusCircleIcon } from "lucide-react";
 import { toast } from "../ui/sonner";
 import { useTicketModal } from "../../lib/contexts/TicketModalContext";
+import { signOut } from "../../lib/api";
 
 const NavigationBarContent: React.FC = () => {
   const { user, isLoading, error, refetchUser } = useUserContext();
@@ -24,22 +25,16 @@ const NavigationBarContent: React.FC = () => {
   }, [refetchUser]);
 
   const handleLogout = useCallback(async () => {
-    const response = await fetch("/api/auth/sign-out", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error ?? `Sign-out failed: ${response.statusText}`);
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 150);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Failed to sign out");
     }
-
-    toast.success("Signed out successfully");
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 150);
   }, []);
 
   useEffect(() => {

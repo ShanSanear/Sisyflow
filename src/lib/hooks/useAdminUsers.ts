@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "./useUser";
 import { useToast } from "./useToast";
-import type { UserDTO, UserViewModel, CreateUserCommand, PaginatedUsersResponseDTO } from "@/types";
+import type { UserViewModel, CreateUserCommand } from "@/types";
+import {
+  getUsers,
+  createUser,
+  deleteUser as deleteUserApi,
+  UserAlreadyExistsError,
+  UserNotFoundError,
+  UserValidationError,
+  ForbiddenError,
+} from "../api";
 
 /**
  * Hook do zarządzania użytkownikami w panelu administratora
@@ -23,18 +32,7 @@ export const useAdminUsers = () => {
       setError(null);
 
       // Use high limit to get all users for MVP (no pagination UI)
-      const response = await fetch("/api/users?limit=100", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data: PaginatedUsersResponseDTO = await response.json();
+      const data = await getUsers({ limit: 100 });
       setUsers(data.users);
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error occurred");
@@ -51,28 +49,18 @@ export const useAdminUsers = () => {
   const addUser = useCallback(
     async (command: CreateUserCommand) => {
       try {
-        const response = await fetch("/api/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(command),
-        });
-
-        if (response.status === 409) {
+        const newUser = await createUser(command);
+        setUsers((prev) => [...prev, newUser]);
+        showSuccess("User added successfully.");
+      } catch (error) {
+        if (error instanceof UserAlreadyExistsError) {
           showError("User with this username or email already exists.");
           return;
         }
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (error instanceof UserValidationError) {
+          showError(error.message || "Invalid user data provided.");
+          return;
         }
-
-        const newUser: UserDTO = await response.json();
-        setUsers((prev) => [...prev, newUser]);
-        showSuccess("User added successfully.");
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Unknown error occurred");
         showError("An error occurred while adding the user.");
         throw error;
       }
@@ -83,34 +71,29 @@ export const useAdminUsers = () => {
   /**
    * Deletes a user
    */
-  const deleteUser = useCallback(
+  const deleteUserHook = useCallback(
     async (userId: string) => {
       try {
         // Set isDeleting flag
         setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, isDeleting: true } : user)));
 
-        const response = await fetch(`/api/users/${userId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.status === 404) {
-          showError("User not found.");
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        await deleteUserApi(userId);
 
         setUsers((prev) => prev.filter((user) => user.id !== userId));
         showSuccess("User deleted successfully.");
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Unknown error occurred");
+      } catch (error) {
         // Reset isDeleting flag
         setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, isDeleting: false } : user)));
+
+        if (error instanceof UserNotFoundError) {
+          showError("User not found.");
+          return;
+        }
+        if (error instanceof ForbiddenError) {
+          showError("You don't have permission to delete this user.");
+          return;
+        }
+
         showError("Failed to delete user.");
         throw error;
       }
@@ -129,7 +112,7 @@ export const useAdminUsers = () => {
     error,
     currentUser,
     addUser,
-    deleteUser,
+    deleteUser: deleteUserHook,
     refetchUsers: fetchUsers,
   };
 };

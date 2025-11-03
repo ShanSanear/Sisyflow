@@ -74,13 +74,7 @@ export const updateTicketSchema = z
         errorMap: () => ({ message: "Type must be one of: BUG, IMPROVEMENT, TASK" }),
       })
       .optional(),
-    assignee: z
-      .object({
-        id: z.string(),
-        username: z.string(),
-      })
-      .nullable()
-      .optional(),
+    assignee_id: z.string().uuid().nullable().optional(),
   })
   .refine(
     (data) => {

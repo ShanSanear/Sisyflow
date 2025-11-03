@@ -77,7 +77,12 @@ export interface CreateTicketCommand {
 }
 
 // UpdateTicketCommand: Used in PUT /tickets/:id (request)
-export type UpdateTicketCommand = Partial<CreateTicketCommand>;
+export interface UpdateTicketCommand {
+  title?: string;
+  description?: string;
+  type?: Ticket["type"];
+  assignee_id?: string | null;
+}
 
 // UpdateTicketStatusCommand: Used in PATCH /tickets/:id/status (request)
 export interface UpdateTicketStatusCommand {

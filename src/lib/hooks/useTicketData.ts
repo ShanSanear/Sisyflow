@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import type { FullTicketDTO } from "@/types";
 import type { TicketModalMode } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
+import { getTicket, TicketNotFoundError } from "../api";
 
 interface UseTicketDataProps {
   mode: TicketModalMode;
@@ -22,11 +23,7 @@ export const useTicketData = ({ mode, ticketId, onClose, onFormReset }: UseTicke
       const fetchTicket = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`/api/tickets/${ticketId}`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch ticket");
-          }
-          const ticketData: FullTicketDTO = await response.json();
+          const ticketData = await getTicket(ticketId);
           setTicket(ticketData);
 
           const formData = {
@@ -40,7 +37,11 @@ export const useTicketData = ({ mode, ticketId, onClose, onFormReset }: UseTicke
           onFormReset(formData);
         } catch (error) {
           console.error("Error fetching ticket:", error);
-          toast.error("Failed to load ticket");
+          if (error instanceof TicketNotFoundError) {
+            toast.error("Ticket not found");
+          } else {
+            toast.error("Failed to load ticket");
+          }
           onClose();
         } finally {
           setLoading(false);

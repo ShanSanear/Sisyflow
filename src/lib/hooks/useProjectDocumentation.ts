@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { getProjectDocumentation, updateProjectDocumentation } from "../api/projectDocumentation";
+import {
+  getProjectDocumentation,
+  updateProjectDocumentation,
+  ProjectDocumentationNotFoundError,
+  ProjectDocumentationValidationError,
+  ProjectDocumentationForbiddenError,
+} from "../api/projectDocumentation";
 import type { ProjectDocumentationDTO, UpdateProjectDocumentationCommand, SaveStatus } from "@/types";
 
 const MAX_CHARS = 20000;
@@ -89,20 +95,24 @@ export const useProjectDocumentation = () => {
         api: { ...prev.api, loading: false },
       }));
     } catch (error) {
-      const err = error as ApiError;
       let message = "Failed to load project documentation";
 
-      if (err.status === 401) {
-        message = "Authentication required. Please log in again.";
-        // TODO: przekierowanie na stronę logowania
-      } else if (err.status === 403) {
-        message = "Access denied. Only administrators can access project documentation.";
-      } else if (err.status === 400 && err.details) {
-        message = `Validation error: ${err.details.join(", ")}`;
-      } else if (err.status >= 500) {
-        message = "Server error. Please try again later.";
-      } else if (err.message) {
-        message = err.message;
+      if (error instanceof ProjectDocumentationNotFoundError) {
+        message = "Project documentation not found.";
+      } else if (error instanceof ProjectDocumentationForbiddenError) {
+        message = error.message;
+      } else if (error instanceof ProjectDocumentationValidationError) {
+        message = `Validation error: ${error.details?.join(", ") || error.message}`;
+      } else {
+        const err = error as ApiError;
+        if (err.status === 401) {
+          message = "Authentication required. Please log in again.";
+          // TODO: przekierowanie na stronę logowania
+        } else if (err.status >= 500) {
+          message = "Server error. Please try again later.";
+        } else if (err.message) {
+          message = err.message;
+        }
       }
 
       setViewModel((prev) => ({
@@ -166,23 +176,27 @@ export const useProjectDocumentation = () => {
 
       // Success is handled by the component
     } catch (error) {
-      const err = error as ApiError;
       let message = "Failed to update project documentation";
 
-      if (err.message === "Content cannot be empty" || err.message?.includes("Content cannot exceed")) {
-        // Validation error - use the thrown message directly
-        message = err.message;
-      } else if (err.status === 401) {
-        message = "Authentication expired. Please log in again.";
-        // TODO: przekierowanie na stronę logowania
-      } else if (err.status === 403) {
-        message = "Access denied. Only administrators can update project documentation.";
-      } else if (err.status === 400 && err.details) {
-        message = `Validation error: ${err.details.join(", ")}`;
-      } else if (err.status >= 500) {
-        message = "Server error. Please try again later.";
-      } else if (err.message) {
-        message = err.message;
+      if (error instanceof ProjectDocumentationNotFoundError) {
+        message = "Project documentation not found.";
+      } else if (error instanceof ProjectDocumentationValidationError) {
+        message = `Validation error: ${error.details?.join(", ") || error.message}`;
+      } else if (error instanceof ProjectDocumentationForbiddenError) {
+        message = error.message;
+      } else {
+        const err = error as ApiError;
+        if (err.message === "Content cannot be empty" || err.message?.includes("Content cannot exceed")) {
+          // Client-side validation error - use the thrown message directly
+          message = err.message;
+        } else if (err.status === 401) {
+          message = "Authentication expired. Please log in again.";
+          // TODO: przekierowanie na stronę logowania
+        } else if (err.status >= 500) {
+          message = "Server error. Please try again later.";
+        } else if (err.message) {
+          message = err.message;
+        }
       }
 
       setViewModel((prev) => ({
