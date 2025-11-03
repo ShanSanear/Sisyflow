@@ -271,7 +271,12 @@ describe("useKanbanBoard", () => {
       renderHook(() => useKanbanBoard());
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith("/api/tickets?limit=100");
+        expect(mockFetch).toHaveBeenCalledWith("/api/tickets?limit=100", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "GET",
+        });
       });
     });
 
@@ -709,7 +714,12 @@ describe("useKanbanBoard", () => {
 
       await waitFor(
         () => {
-          expect(mockFetch).toHaveBeenCalledWith("/api/tickets?limit=100");
+          expect(mockFetch).toHaveBeenCalledWith("/api/tickets?limit=100", {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "GET",
+          });
         },
         { timeout: 2000 }
       );

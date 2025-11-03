@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import type { FullTicketDTO, UserDTO, TicketModalMode } from "@/types";
+import type { FullTicketDTO, UserDTO, TicketModalMode, CreateTicketCommand, UpdateTicketCommand } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
+import { createTicket, updateTicket, TicketValidationError, TicketForbiddenError } from "../api";
 
 interface UseTicketActionsProps {
   user: UserDTO | null;
@@ -35,8 +36,6 @@ export const useTicketActions = ({
       if (!user) return;
 
       try {
-        let response: Response;
-
         let requestBody: Partial<TicketFormData>;
 
         if (mode === "create") {
@@ -51,7 +50,7 @@ export const useTicketActions = ({
           }
 
           // Compute changed fields
-          const changed: Partial<TicketFormData> = {};
+          const changed: Partial<UpdateTicketCommand> = {};
           if (data.title !== ticket.title) {
             changed.title = data.title;
           }
@@ -63,7 +62,7 @@ export const useTicketActions = ({
           }
           // Deep compare for assignee
           if (JSON.stringify(data.assignee) !== JSON.stringify(originalAssignee)) {
-            changed.assignee = data.assignee;
+            changed.assignee_id = data.assignee ? data.assignee.id : null;
           }
 
           if (Object.keys(changed).length === 0) {
@@ -76,30 +75,15 @@ export const useTicketActions = ({
           throw new Error("Invalid mode or missing ticket ID");
         }
 
+        let savedTicket: FullTicketDTO;
+
         if (mode === "create") {
-          response = await fetch("/api/tickets", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          });
+          savedTicket = await createTicket(requestBody as CreateTicketCommand);
+        } else if (ticketId) {
+          savedTicket = await updateTicket(ticketId, requestBody as UpdateTicketCommand);
         } else {
-          response = await fetch(`/api/tickets/${ticketId}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          });
+          throw new Error("Ticket ID is required for update mode");
         }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to save ticket");
-        }
-
-        const savedTicket: FullTicketDTO = await response.json();
         onSave(savedTicket);
 
         // Emit custom event for components to react to ticket changes
@@ -109,6 +93,16 @@ export const useTicketActions = ({
         onClose();
       } catch (error) {
         console.error("Error saving ticket:", error);
+
+        if (error instanceof TicketValidationError) {
+          toast.error(error.message || "Invalid ticket data provided.");
+          return;
+        }
+        if (error instanceof TicketForbiddenError) {
+          toast.error("You don't have permission to perform this action.");
+          return;
+        }
+
         toast.error(error instanceof Error ? error.message : "Failed to save ticket");
       }
     },

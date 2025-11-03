@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { registerFormSchema, type RegisterFormData } from "../../lib/validation/auth.validation";
+import { signUp } from "../../lib/api";
 
 export const RegisterForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,19 +31,7 @@ export const RegisterForm: React.FC = () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...userData } = data;
-      const response = await fetch("/api/auth/sign-up", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "An error occurred" }));
-        throw new Error(errorData.error || "Registration failed");
-      }
-
+      await signUp(userData);
       // Registration successful - redirect immediately to login page with success parameter
       window.location.href = "/login?registration=success";
     } catch (err) {

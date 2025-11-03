@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { loginSchema, type LoginData } from "../../lib/validation/auth.validation";
 import { toast } from "../ui/sonner";
+import { signIn } from "../../lib/api";
 
 type LoginFormData = LoginData;
 
@@ -39,19 +40,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/sign-in", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "An error occurred" }));
-        throw new Error(errorData.error || "Login failed");
-      }
-
+      await signIn(data);
       // Success - redirect will be handled by the response
       window.location.href = "/board";
     } catch (err) {
