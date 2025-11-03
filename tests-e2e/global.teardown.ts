@@ -64,6 +64,18 @@ async function globalTeardown() {
 
   console.log(`Tickets table cleaned up successfully. Deleted ${count || 0} tickets.`);
 
+  const { error: projectDocumentationError } = await supabase
+    .from("project_documentation")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+
+  if (projectDocumentationError) {
+    console.error("Error cleaning up project documentation table:", projectDocumentationError);
+    throw projectDocumentationError;
+  }
+
+  console.log(`Project documentation table cleaned up successfully.`);
+
   // Logout
   await supabase.auth.signOut();
   console.log("Logged out admin user.");

@@ -1,7 +1,6 @@
 ---
 import Layout from "./Layout.astro";
 import { NavigationBarIsland } from "../components/layout/NavigationBarIsland.tsx";
-import { Toaster } from "../components/ui/sonner";
 
 interface Props {
   title?: string;
@@ -21,5 +20,4 @@ if (!user) {
   <main class="min-h-screen bg-muted/20" data-testid="authenticated-main-content">
     <slot />
   </main>
-  <Toaster position="top-right" richColors closeButton />
 </Layout>

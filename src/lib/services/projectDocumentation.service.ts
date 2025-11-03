@@ -58,7 +58,7 @@ export class ProjectDocumentationService {
         throw new AccessDeniedError("Only administrators can access project documentation");
       }
 
-      // Pobierz dokumentację projektu (zawsze jeden rekord)
+      // Pobierz dokumentację projektu (może być 0 lub 1 rekord)
       const { data: documentation, error: fetchError } = await this.supabase
         .from("project_documentation")
         .select(
@@ -73,24 +73,34 @@ export class ProjectDocumentationService {
         `
         )
         .eq("id", PROJECT_DOCUMENTATION_ID)
-        .single();
+        .limit(1);
 
       if (fetchError) {
         throw extractSupabaseError(fetchError, "Failed to fetch project documentation");
       }
 
-      if (!documentation) {
-        throw new ProjectDocumentationServiceError("Project documentation not found");
+      if (!documentation || documentation.length === 0) {
+        // Jeśli nie ma rekordu w tabeli, zwróć pusty string jako wartość
+        const result: ProjectDocumentationDTO = {
+          id: PROJECT_DOCUMENTATION_ID,
+          content: "",
+          updated_at: null,
+          updated_by: undefined,
+        };
+        return result;
       }
+
+      // Pobierz pierwszy (i jedyny) rekord z tablicy
+      const doc = documentation[0];
 
       // Przekształć dane do oczekiwanego formatu DTO
       const result: ProjectDocumentationDTO = {
-        id: documentation.id,
-        content: documentation.content,
-        updated_at: documentation.updated_at,
-        updated_by: documentation.profiles
+        id: doc.id,
+        content: doc.content,
+        updated_at: doc.updated_at,
+        updated_by: doc.profiles
           ? {
-              username: (documentation.profiles as { username: string }).username,
+              username: (doc.profiles as { username: string }).username,
             }
           : undefined,
       };
@@ -179,9 +189,11 @@ export class ProjectDocumentationService {
         id: updatedDoc.id,
         content: updatedDoc.content,
         updated_at: updatedDoc.updated_at,
-        updated_by: {
-          username: (updatedDoc.profiles as { username: string }).username,
-        },
+        updated_by: updatedDoc.profiles
+          ? {
+              username: (updatedDoc.profiles as { username: string }).username,
+            }
+          : undefined,
       };
 
       return result;

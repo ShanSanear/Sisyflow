@@ -166,8 +166,9 @@ export interface RateAISuggestionCommand {
 
 // Project Documentation DTOs
 // ProjectDocumentationDTO: Used in GET /project-documentation (response)
-export type ProjectDocumentationDTO = Omit<ProjectDocumentation, "updated_by"> & {
-  updated_by?: Pick<Profile, "username">;
+export type ProjectDocumentationDTO = Omit<ProjectDocumentation, "updated_by" | "updated_at"> & {
+  updated_at: string | null;
+  updated_by?: Pick<Profile, "username"> | null;
 };
 
 // UpdateProjectDocumentationCommand: Used in PUT /project-documentation (request)
@@ -181,6 +182,9 @@ export type AIErrorDTO = Pick<
   AIError,
   "id" | "ticket_id" | "user_id" | "error_message" | "error_details" | "created_at"
 >;
+
+// Save Status for forms
+export type SaveStatus = "idle" | "saving" | "success" | "error";
 
 // User ViewModel for Admin Panel
 export type UserViewModel = UserDTO & {
