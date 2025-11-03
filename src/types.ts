@@ -61,7 +61,7 @@ export type TicketDTO = Pick<
   | "created_at"
   | "updated_at"
 > & {
-  reporter: Pick<Profile, "username">;
+  reporter?: Pick<Profile, "username"> | null;
   assignee?: Pick<Profile, "username">;
 };
 
@@ -203,6 +203,6 @@ export interface TicketModalState {
 
 // FullTicketDTO: Extended TicketDTO for modal operations with full reporter/assignee info
 export type FullTicketDTO = Omit<TicketDTO, "reporter" | "assignee"> & {
-  reporter: Pick<Profile, "id" | "username">;
+  reporter?: Pick<Profile, "id" | "username"> | null;
   assignee?: Pick<Profile, "id" | "username">;
 };
