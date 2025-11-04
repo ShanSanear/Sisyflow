@@ -171,7 +171,7 @@ Based on the database schema and PRD, the main resources are:
 - **POST** `/api/ai-suggestion-sessions/analyze` (Future)
 - Analyzes ticket title and description to generate AI suggestions (used during ticket creation/editing before saving, via Openrouter.ai in backend API route).
 - Request: `{ "title": "string", "description": "string?" }` + fetch project docs.
-- Response: `{ "session_id": "uuid", "suggestions": [ { "type": "INSERT|QUESTION", "content": "string", "applied": boolean } ] }`
+- Response: `{ "session_id": "uuid", "ticket_id" : "uuid", "suggestions": [ { "type": "INSERT|QUESTION", "content": "string", "applied": boolean } ] }`
 - Success: 200 OK
 - Errors: 500 (log to ai_errors via Supabase insert, user gets generic error info)
 
@@ -181,6 +181,13 @@ Based on the database schema and PRD, the main resources are:
 - Success: 200 OK
 - Errors: 400, 404
 - Validation: rating 1-5 or null; store in Supabase ai_suggestion_sessions.
+
+- **PATCH** `/api/ai-suggestion-sessions/:id/ticket-id` (Future)
+- Update suggestion session ticket id
+- Request: `{ "ticket_id": "uuid" }`
+- Success: 200 OK
+- Errors: 400, 404
+- Validation: ticket_id being uuid.
 
 Implementacja po basic tickets CRUD; użyj Supabase dla tables (ai_suggestion_sessions, ai_errors), backend call do Openrouter.ai.
 
