@@ -1,4 +1,4 @@
-import { SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { Database, Json } from "../../db/database.types";
 import { AiResponseSchema } from "../validation/ai.validation";
 import { z } from "zod";
@@ -34,7 +34,7 @@ const MODEL_NAME = "mistralai/mistral-7b-instruct";
  */
 export class OpenRouterService {
   private apiKey: string;
-  private supabase: SupabaseClient<Database>;
+  private supabase: ReturnType<typeof createSupabaseServerInstance>;
   private projectDocumentationService: ReturnType<typeof createProjectDocumentationService>;
   private readonly openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -43,7 +43,7 @@ export class OpenRouterService {
    * @param supabase Instancja klienta Supabase dla logowania błędów
    * @throws Error jeśli OPENROUTER_API_KEY nie jest skonfigurowany
    */
-  constructor(supabase: SupabaseClient<Database>) {
+  constructor(supabase: ReturnType<typeof createSupabaseServerInstance>) {
     const apiKey = import.meta.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
