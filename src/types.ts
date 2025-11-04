@@ -171,6 +171,11 @@ export interface RateAISuggestionCommand {
   rating: number | null;
 }
 
+// UpdateAISuggestionSessionTicketIdCommand: Used in PATCH /ai-suggestion-sessions/:id/ticket-id (request)
+export interface UpdateAISuggestionSessionTicketIdCommand {
+  ticket_id: string;
+}
+
 // Project Documentation DTOs
 // ProjectDocumentationDTO: Used in GET /project-documentation (response)
 export type ProjectDocumentationDTO = Omit<ProjectDocumentation, "updated_by" | "updated_at"> & {
