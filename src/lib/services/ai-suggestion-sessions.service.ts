@@ -12,7 +12,7 @@ import {
   updateAISuggestionSessionTicketIdSchema,
   type AiSuggestion,
 } from "../validation/schemas/ai";
-import { createTicketService } from "./ticket.service";
+import { createTicketService, TicketNotFoundError as TicketServiceNotFoundError } from "./ticket.service";
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { extractSupabaseError } from "../utils";
 import { z } from "zod";
@@ -286,7 +286,14 @@ export class AISuggestionSessionsService {
     try {
       // Sprawdź czy ticket istnieje używając ticket service
       const ticketService = createTicketService(this.supabase);
-      await ticketService.getTicketById(validatedCommand.ticket_id);
+      try {
+        await ticketService.getTicketById(validatedCommand.ticket_id);
+      } catch (error) {
+        if (error instanceof TicketServiceNotFoundError) {
+          throw new TicketNotFoundError("Ticket not found");
+        }
+        throw error;
+      }
 
       // Sprawdź czy sesja istnieje i pobierz jej dane (w tym właściciela)
       const { data: existingSession, error: fetchError } = await this.supabase

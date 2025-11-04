@@ -1,13 +1,19 @@
 import {
   apiPost,
   apiPut,
+  apiPatch,
   BadRequestError,
   UnauthorizedError,
   ForbiddenError,
   NotFoundError,
   type ApiError,
 } from "./base";
-import type { AnalyzeTicketCommand, AISuggestionSessionDTO, RateAISuggestionCommand } from "@/types";
+import type {
+  AnalyzeTicketCommand,
+  AISuggestionSessionDTO,
+  RateAISuggestionCommand,
+  UpdateAISuggestionSessionTicketIdCommand,
+} from "@/types";
 
 /**
  * AI Suggestion Sessions API endpoints
@@ -107,6 +113,27 @@ export async function rateAISuggestionSession(
   try {
     const response = await apiPut<AISuggestionSessionDTO>(`/api/ai-suggestion-sessions/${sessionId}/rating`, command);
     return response.data;
+  } catch (error) {
+    transformAISuggestionSessionsApiError(error as ApiError);
+  }
+}
+
+/**
+ * Updates the ticket ID of an AI suggestion session
+ * @param sessionId - ID of the AI suggestion session to update
+ * @param command - Update command containing the new ticket_id
+ * @returns Promise<void> - Resolves on successful update
+ * @throws AISuggestionSessionsValidationError if command data is invalid
+ * @throws AISuggestionSessionsNotFoundError if session or ticket doesn't exist
+ * @throws AISuggestionSessionsForbiddenError if user doesn't have permission
+ * @throws UnauthorizedError if user is not authenticated
+ */
+export async function updateAISuggestionSessionTicketId(
+  sessionId: string,
+  command: UpdateAISuggestionSessionTicketIdCommand
+): Promise<void> {
+  try {
+    await apiPatch(`/api/ai-suggestion-sessions/${sessionId}/ticket-id`, command);
   } catch (error) {
     transformAISuggestionSessionsApiError(error as ApiError);
   }
