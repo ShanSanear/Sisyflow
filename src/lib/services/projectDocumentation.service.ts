@@ -3,8 +3,16 @@ import type { Database } from "../../db/database.types";
 import type { UpdateProjectDocumentationCommand, ProjectDocumentationDTO } from "../../types";
 import { updateProjectDocumentationSchema } from "../validation/schemas/projectDocumentation";
 import { extractSupabaseError } from "../utils";
+import { createSupabaseAdminInstance } from "../../db/supabase.client";
 
 const PROJECT_DOCUMENTATION_ID = "28ea0010-8a14-40c1-ad56-e324f9d0d872";
+
+/**
+ * Options for fetching project documentation
+ */
+interface FetchProjectDocumentationOptions {
+  useAdminSupabaseInstance?: boolean;
+}
 
 /**
  * Custom error classes for project documentation service operations
@@ -38,6 +46,46 @@ export class ProjectDocumentationService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
+   * Private method to fetch project documentation from database
+   * @param options Configuration options for the fetch operation
+   * @returns Raw documentation data from database
+   */
+  private async fetchProjectDocumentation(options: FetchProjectDocumentationOptions = {}): Promise<
+    {
+      id: string;
+      content: string;
+      updated_at: string;
+      updated_by: string | null;
+      profiles: { username: string } | null;
+    }[]
+  > {
+    const { useAdminSupabaseInstance = false } = options;
+    const client = useAdminSupabaseInstance ? createSupabaseAdminInstance() : this.supabase;
+
+    const { data: documentation, error: fetchError } = await client
+      .from("project_documentation")
+      .select(
+        `
+        id,
+        content,
+        updated_at,
+        updated_by,
+        profiles!project_documentation_updated_by_fkey (
+          username
+        )
+      `
+      )
+      .eq("id", PROJECT_DOCUMENTATION_ID)
+      .limit(1);
+
+    if (fetchError) {
+      throw extractSupabaseError(fetchError, "Failed to fetch project documentation");
+    }
+
+    return documentation;
+  }
+
+  /**
    * Pobiera dokumentację projektu
    * Operacja dostępna tylko dla użytkowników z rolą ADMIN
    * Pobiera pojedynczy rekord z tabeli project_documentation wraz z informacjami o użytkowniku
@@ -58,26 +106,7 @@ export class ProjectDocumentationService {
         throw new AccessDeniedError("Only administrators can access project documentation");
       }
 
-      // Pobierz dokumentację projektu (może być 0 lub 1 rekord)
-      const { data: documentation, error: fetchError } = await this.supabase
-        .from("project_documentation")
-        .select(
-          `
-          id,
-          content,
-          updated_at,
-          updated_by,
-          profiles!project_documentation_updated_by_fkey (
-            username
-          )
-        `
-        )
-        .eq("id", PROJECT_DOCUMENTATION_ID)
-        .limit(1);
-
-      if (fetchError) {
-        throw extractSupabaseError(fetchError, "Failed to fetch project documentation");
-      }
+      const documentation = await this.fetchProjectDocumentation({ useAdminSupabaseInstance: false });
 
       if (!documentation || documentation.length === 0) {
         // Jeśli nie ma rekordu w tabeli, zwróć pusty string jako wartość
@@ -116,6 +145,27 @@ export class ProjectDocumentationService {
       throw new ProjectDocumentationServiceError(
         error instanceof Error ? error.message : "Unknown error occurred while fetching project documentation"
       );
+    }
+  }
+
+  /**
+   * Gets project documentation content for AI processing (public access)
+   * This method provides read-only access to project documentation content
+   * without requiring admin privileges, for use in AI suggestion generation.
+   * Uses admin instance to bypass RLS restrictions.
+   *
+   * @returns Project documentation content string
+   */
+  async getProjectDocumentationContent(): Promise<string> {
+    try {
+      const documentation = await this.fetchProjectDocumentation({ useAdminSupabaseInstance: true });
+
+      // Return content or empty string if no documentation exists
+      return documentation && documentation.length > 0 ? documentation[0].content : "";
+    } catch (error) {
+      // Return empty string on error to allow AI processing to continue
+      console.warn("Failed to fetch project documentation content:", error);
+      return "";
     }
   }
 

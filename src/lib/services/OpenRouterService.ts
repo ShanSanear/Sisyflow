@@ -3,6 +3,7 @@ import type { Database, Json } from "../../db/database.types";
 import { AiResponseSchema } from "../validation/ai.validation";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { createProjectDocumentationService } from "./projectDocumentation.service";
 
 // --- Typy ---
 type AiResponseType = z.infer<typeof AiResponseSchema>;
@@ -34,6 +35,7 @@ const MODEL_NAME = "mistralai/mistral-7b-instruct";
 export class OpenRouterService {
   private apiKey: string;
   private supabase: SupabaseClient<Database>;
+  private projectDocumentationService: ReturnType<typeof createProjectDocumentationService>;
   private readonly openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
 
   /**
@@ -51,6 +53,7 @@ export class OpenRouterService {
 
     this.apiKey = apiKey;
     this.supabase = supabase;
+    this.projectDocumentationService = createProjectDocumentationService(supabase);
   }
 
   /**
@@ -65,10 +68,8 @@ export class OpenRouterService {
     userId?: string;
   }): Promise<AiResponseType> {
     try {
-      // Pobierz dokumentację projektu z bazy danych
-      const { data: doc } = await this.supabase.from("project_documentation").select("content").single();
-
-      const context = doc?.content ?? "";
+      // Pobierz dokumentację projektu używając service
+      const context = await this.projectDocumentationService.getProjectDocumentationContent();
 
       // Przygotuj wiadomości dla modelu AI
       const messages = this._buildMessages(params.title, params.description, context);

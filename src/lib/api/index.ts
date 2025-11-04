@@ -16,3 +16,6 @@ export * from "./tickets";
 
 // Project documentation endpoints
 export * from "./projectDocumentation";
+
+// AI suggestion sessions endpoints
+export * from "./ai-suggestion-sessions";
