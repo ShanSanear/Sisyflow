@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { createOpenRouterService } from "../../../lib/services/OpenRouterService";
+import { createOpenRouterService } from "../../../lib/services/openRouter.service";
 import { createSupabaseServerInstance } from "../../../db/supabase.client";
 import { AnalyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
 import { z } from "zod";
