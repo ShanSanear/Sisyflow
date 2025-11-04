@@ -117,7 +117,7 @@ export class OpenRouterService {
    * @returns Tablica wiadomości dla API
    */
   private _buildMessages(title: string, description = "", context: string): Message[] {
-    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions what can be additionally included in the ticket description. Suggestions can be of two types: 'INSERT' (suggesting specific text to add) or 'QUESTION' (asking a clarifying question). Always respond only with a JSON object that conforms to the provided schema. Do not add any additional comments or text outside the JSON format. Respond in the same language as the provided ticket title and description.`;
+    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions what can be additionally included in the ticket description. Suggestions can be of two types: 'INSERT' (suggesting specific text to add) or 'QUESTION' (asking a clarifying question). Always respond only with a JSON object that conforms to the provided schema. Do not add any additional comments or text outside the JSON format. Respond in the same language as the provided ticket title and description. Respond with maximum of 6 suggestions.`;
 
     const userMessage = `Analyze the following ticket and documentation, then generate suggestions.
 

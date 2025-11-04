@@ -1,5 +1,13 @@
-import { apiPost, BadRequestError, UnauthorizedError, ForbiddenError, type ApiError } from "./base";
-import type { AnalyzeTicketCommand, AISuggestionSessionDTO } from "@/types";
+import {
+  apiPost,
+  apiPut,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  type ApiError,
+} from "./base";
+import type { AnalyzeTicketCommand, AISuggestionSessionDTO, RateAISuggestionCommand } from "@/types";
 
 /**
  * AI Suggestion Sessions API endpoints
@@ -8,12 +16,6 @@ import type { AnalyzeTicketCommand, AISuggestionSessionDTO } from "@/types";
 /**
  * AI suggestion sessions-specific error classes
  */
-export class AISuggestionSessionsNotFoundError extends Error {
-  constructor(message = "AI suggestion session not found") {
-    super(message);
-    this.name = "AISuggestionSessionsNotFoundError";
-  }
-}
 
 export class AISuggestionSessionsForbiddenError extends ForbiddenError {
   constructor(
@@ -23,6 +25,13 @@ export class AISuggestionSessionsForbiddenError extends ForbiddenError {
   ) {
     super(message, code, details);
     this.name = "AISuggestionSessionsForbiddenError";
+  }
+}
+
+export class AISuggestionSessionsNotFoundError extends NotFoundError {
+  constructor(message = "AI suggestion session not found") {
+    super(message);
+    this.name = "AISuggestionSessionsNotFoundError";
   }
 }
 
@@ -57,6 +66,10 @@ function transformAISuggestionSessionsApiError(error: ApiError): never {
     const message = error.message && error.message !== "Forbidden" ? error.message : undefined;
     throw new AISuggestionSessionsForbiddenError(message, error.code, error.details);
   }
+  if (error instanceof NotFoundError) {
+    const message = error.message && error.message !== "Not Found" ? error.message : undefined;
+    throw new AISuggestionSessionsNotFoundError(message);
+  }
   throw error;
 }
 
@@ -71,6 +84,28 @@ function transformAISuggestionSessionsApiError(error: ApiError): never {
 export async function analyzeTicket(command: AnalyzeTicketCommand): Promise<AISuggestionSessionDTO> {
   try {
     const response = await apiPost<AISuggestionSessionDTO>("/api/ai-suggestion-sessions/analyze", command);
+    return response.data;
+  } catch (error) {
+    transformAISuggestionSessionsApiError(error as ApiError);
+  }
+}
+
+/**
+ * Rates an AI suggestion session
+ * @param sessionId - ID of the AI suggestion session to rate
+ * @param command - Rating command containing the rating value (1-5)
+ * @returns Promise with updated AI suggestion session data
+ * @throws AISuggestionSessionsValidationError if command data is invalid
+ * @throws AISuggestionSessionsNotFoundError if session doesn't exist
+ * @throws AISuggestionSessionsForbiddenError if user doesn't have permission
+ * @throws UnauthorizedError if user is not authenticated
+ */
+export async function rateAISuggestionSession(
+  sessionId: string,
+  command: RateAISuggestionCommand
+): Promise<AISuggestionSessionDTO> {
+  try {
+    const response = await apiPut<AISuggestionSessionDTO>(`/api/ai-suggestion-sessions/${sessionId}/rating`, command);
     return response.data;
   } catch (error) {
     transformAISuggestionSessionsApiError(error as ApiError);

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createOpenRouterService } from "../../../lib/services/openRouter.service";
+import { createAISuggestionSessionsService } from "../../../lib/services/ai-suggestion-sessions.service";
 import { createSupabaseServerInstance } from "../../../db/supabase.client";
 import { AnalyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
 import { z } from "zod";
@@ -79,19 +80,19 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       userId,
     });
 
-    // TODO: Zaimplementować zapis sesji i sugestii do bazy danych
-    const sessionId = "generowane-uuid"; // Tymczasowe rozwiązanie
+    // Utwórz serwis AI suggestion sessions i zapisz sesję do bazy danych
+    const aiSuggestionSessionsService = createAISuggestionSessionsService(supabase);
+    const sessionResult = await aiSuggestionSessionsService.createAISuggestionSession(
+      {
+        ticket_id: requestData.ticket_id,
+        title,
+        description,
+      },
+      suggestions,
+      userId
+    );
 
-    // Przygotuj odpowiedź z sugestiami
-    const response = {
-      session_id: sessionId,
-      suggestions: suggestions.suggestions.map((suggestion) => ({
-        ...suggestion,
-        applied: false, // Domyślnie sugestie nie są zastosowane
-      })),
-    };
-
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(sessionResult), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
