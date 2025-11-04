@@ -38,9 +38,11 @@ export class AISuggestionSessionsService {
     const validatedCommand = createAiSuggestionSessionCommandSchema.parse(command);
 
     try {
-      // Sprawdź czy ticket istnieje używając ticket service
-      const ticketService = createTicketService(this.supabase);
-      await ticketService.getTicketById(validatedCommand.ticket_id);
+      // Sprawdź czy ticket istnieje używając ticket service (tylko jeśli ticket_id jest podane)
+      if (validatedCommand.ticket_id) {
+        const ticketService = createTicketService(this.supabase);
+        await ticketService.getTicketById(validatedCommand.ticket_id);
+      }
 
       // Przygotuj dane sugestii do zapisania (z flagą applied: false)
       const suggestionsWithApplied: AiSuggestion[] = suggestions.suggestions.map((suggestion) => ({
@@ -66,6 +68,7 @@ export class AISuggestionSessionsService {
       // Formatuj odpowiedź zgodnie z AISuggestionSessionDTO
       const result: AISuggestionSessionDTO = {
         session_id: session.id,
+        ticket_id: session.ticket_id,
         suggestions: suggestionsWithApplied,
       };
 
@@ -125,6 +128,7 @@ export class AISuggestionSessionsService {
       // Formatuj odpowiedź zgodnie z AISuggestionSessionDTO
       const result: AISuggestionSessionDTO = {
         session_id: session.id,
+        ticket_id: session.ticket_id,
         suggestions: session.suggestions as AISuggestionSessionDTO["suggestions"],
       };
 
@@ -188,7 +192,7 @@ export class AISuggestionSessionsService {
       // Pobierz zaktualizowane dane sesji
       const { data: updatedSession, error: refetchError } = await this.supabase
         .from("ai_suggestion_sessions")
-        .select("id, suggestions")
+        .select("id, ticket_id, suggestions")
         .eq("id", sessionId)
         .single();
 
@@ -199,6 +203,7 @@ export class AISuggestionSessionsService {
       // Formatuj odpowiedź zgodnie z AISuggestionSessionDTO
       const result: AISuggestionSessionDTO = {
         session_id: updatedSession.id,
+        ticket_id: updatedSession.ticket_id,
         suggestions: updatedSession.suggestions as AISuggestionSessionDTO["suggestions"],
       };
 

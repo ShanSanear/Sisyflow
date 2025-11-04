@@ -68,7 +68,7 @@ export interface Database {
           id: string;
           rating: number | null;
           suggestions: Json;
-          ticket_id: string;
+          ticket_id: string | null;
           user_id: string | null;
         };
         Insert: {
@@ -76,7 +76,7 @@ export interface Database {
           id?: string;
           rating?: number | null;
           suggestions: Json;
-          ticket_id: string;
+          ticket_id?: string | null;
           user_id?: string | null;
         };
         Update: {
@@ -84,7 +84,7 @@ export interface Database {
           id?: string;
           rating?: number | null;
           suggestions?: Json;
-          ticket_id?: string;
+          ticket_id?: string | null;
           user_id?: string | null;
         };
         Relationships: [

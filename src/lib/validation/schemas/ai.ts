@@ -21,7 +21,7 @@ export const aiResponseSchema = z.object({
  * Schema for analyzing AI suggestions request
  */
 export const analyzeAiSuggestionsSchema = z.object({
-  ticket_id: z.string().uuid("Invalid ticket ID format - must be a valid UUID"),
+  ticket_id: z.string().uuid("Invalid ticket ID format - must be a valid UUID").optional(),
   title: createTicketSchema.shape.title,
   description: createTicketSchema.shape.description,
 });
@@ -37,7 +37,7 @@ export const rateAiSuggestionSchema = z.object({
  * Schema for creating AI suggestion session command (internal use)
  */
 export const createAiSuggestionSessionCommandSchema = z.object({
-  ticket_id: z.string().uuid("Invalid ticket ID format"),
+  ticket_id: z.string().uuid("Invalid ticket ID format").optional(),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
 });
