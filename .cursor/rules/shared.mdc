@@ -1,9 +1,7 @@
 ---
 alwaysApply: false
 ---
-# AI Rules for {app-name}
-
-{project-description}
+# AI Rules for Sisyflow
 
 ## Tech Stack
 
@@ -50,12 +48,15 @@ When modifying the directory structure, always update this section.
 - Use feedback from linters to improve the code when making changes.
 - Prioritize error handling and edge cases.
 - Handle errors and edge cases at the beginning of functions.
+- Create proper error types, reuse / expand existing Error types if applicable
 - Use early returns for error conditions to avoid deeply nested if statements.
 - Place the happy path last in the function for improved readability.
 - Avoid unnecessary else statements; use if-return pattern instead.
 - Use guard clauses to handle preconditions and invalid states early.
 - Implement proper error logging and user-friendly error messages.
 - Consider using custom error types or error factories for consistent error handling.
+- Do not change docstrings written in Polish to ones written in English
+- Do not remove docstrings that are already there unless related function is also being deleted
 
 ### Guidelines for linter and formatting
 
