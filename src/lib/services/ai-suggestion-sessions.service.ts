@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type {
   AISuggestionSessionDTO,
   AnalyzeTicketCommand,
@@ -16,6 +15,8 @@ import { createTicketService, TicketNotFoundError as TicketServiceNotFoundError 
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { extractSupabaseError } from "../utils";
 import { z } from "zod";
+
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 
 /**
  * Custom error classes for AI suggestion sessions service operations
@@ -53,7 +54,7 @@ export class TicketNotFoundError extends AISuggestionSessionsServiceError {
  * Implementuje logikę biznesową dla tworzenia i zarządzania sesjami sugestii AI
  */
 export class AISuggestionSessionsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseType) {}
 
   /**
    * Tworzy nową sesję sugestii AI wraz z sugestiami
@@ -358,6 +359,6 @@ export class AISuggestionSessionsService {
  * @param supabase Supabase client instance
  * @returns AISuggestionSessionsService instance
  */
-export function createAISuggestionSessionsService(supabase: SupabaseClient<Database>): AISuggestionSessionsService {
+export function createAISuggestionSessionsService(supabase: SupabaseType): AISuggestionSessionsService {
   return new AISuggestionSessionsService(supabase);
 }

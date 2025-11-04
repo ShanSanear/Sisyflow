@@ -1,9 +1,9 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance, createSupabaseAdminInstance } from "../../db/supabase.client";
 import type { UpdateProjectDocumentationCommand, ProjectDocumentationDTO } from "../../types";
 import { updateProjectDocumentationSchema } from "../validation/schemas/projectDocumentation";
 import { extractSupabaseError } from "../utils";
-import { createSupabaseAdminInstance } from "../../db/supabase.client";
+
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 
 const PROJECT_DOCUMENTATION_ID = "28ea0010-8a14-40c1-ad56-e324f9d0d872";
 
@@ -43,7 +43,7 @@ export class UserProfileNotFoundError extends ProjectDocumentationServiceError {
  * Implementuje logikę biznesową dla pobierania i aktualizacji dokumentacji projektu
  */
 export class ProjectDocumentationService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseType) {}
 
   /**
    * Private method to fetch project documentation from database
@@ -266,6 +266,6 @@ export class ProjectDocumentationService {
  * @param supabase Supabase client instance
  * @returns ProjectDocumentationService instance
  */
-export function createProjectDocumentationService(supabase: SupabaseClient<Database>): ProjectDocumentationService {
+export function createProjectDocumentationService(supabase: SupabaseType): ProjectDocumentationService {
   return new ProjectDocumentationService(supabase);
 }

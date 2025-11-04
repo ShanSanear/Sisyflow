@@ -1,5 +1,5 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
-import type { Database, Json } from "../../db/database.types";
+import type { Json } from "../../db/database.types";
 import { AiResponseSchema } from "../validation/ai.validation";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -7,6 +7,7 @@ import { createProjectDocumentationService } from "./projectDocumentation.servic
 
 // --- Typy ---
 type AiResponseType = z.infer<typeof AiResponseSchema>;
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 interface Message {
   role: "system" | "user";
   content: string;
@@ -34,7 +35,7 @@ const MODEL_NAME = "mistralai/mistral-7b-instruct";
  */
 export class OpenRouterService {
   private apiKey: string;
-  private supabase: ReturnType<typeof createSupabaseServerInstance>;
+  private supabase: SupabaseType;
   private projectDocumentationService: ReturnType<typeof createProjectDocumentationService>;
   private readonly openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -43,7 +44,7 @@ export class OpenRouterService {
    * @param supabase Instancja klienta Supabase dla logowania błędów
    * @throws Error jeśli OPENROUTER_API_KEY nie jest skonfigurowany
    */
-  constructor(supabase: ReturnType<typeof createSupabaseServerInstance>) {
+  constructor(supabase: SupabaseType) {
     const apiKey = import.meta.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -223,6 +224,6 @@ ${context}`;
  * @param supabase Supabase client instance
  * @returns OpenRouterService instance
  */
-export function createOpenRouterService(supabase: SupabaseClient<Database>): OpenRouterService {
+export function createOpenRouterService(supabase: SupabaseType): OpenRouterService {
   return new OpenRouterService(supabase);
 }

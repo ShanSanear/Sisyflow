@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type {
   CreateTicketCommand,
   FullTicketDTO,
@@ -19,6 +18,8 @@ import {
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { calculatePagination } from "../utils";
 import { z } from "zod";
+
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 
 /**
  * Interface for Supabase error objects
@@ -104,7 +105,7 @@ function extractSupabaseError(error: unknown, operation: string): Error {
  * Implementuje logikę biznesową dla tworzenia i zarządzania ticketami
  */
 export class TicketService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseType) {}
 
   /**
    * Tworzy nowy ticket wraz z opcjonalnymi załącznikami
@@ -218,19 +219,19 @@ export class TicketService {
       // Budowanie zapytania bazowego z JOIN do profiles
       let query = this.supabase.from("tickets").select(
         `
-          id,
-          title,
-          description,
-          type,
-          status,
-          reporter_id,
-          assignee_id,
-          ai_enhanced,
-          created_at,
-          updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(id, username),
-          assignee:profiles!tickets_assignee_id_fkey(id, username)
-        `,
+        id,
+        title,
+        description,
+        type,
+        status,
+        reporter_id,
+        assignee_id,
+        ai_enhanced,
+        created_at,
+        updated_at,
+        reporter:profiles!tickets_reporter_id_fkey(id, username),
+        assignee:profiles!tickets_assignee_id_fkey(id, username)
+      `,
         { count: "exact" }
       );
 
@@ -419,10 +420,7 @@ export class TicketService {
       const isReporter = existingTicket.reporter_id === userId;
       const isAssignee = existingTicket.assignee_id === userId;
 
-      // Sprawdź rolę użytkownika - dla ADMIN pozwól na aktualizację
       let isAdmin = false;
-      // TODO - disable this for now - assume ADMIN is always used
-      isAdmin = true;
       if (!isReporter && !isAssignee) {
         const { data: userProfile, error: profileError } = await this.supabase
           .from("profiles")
@@ -858,6 +856,6 @@ export class TicketService {
  * @param supabase Supabase client instance
  * @returns TicketService instance
  */
-export function createTicketService(supabase: SupabaseClient<Database>): TicketService {
+export function createTicketService(supabase: SupabaseType): TicketService {
   return new TicketService(supabase);
 }
