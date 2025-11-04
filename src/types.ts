@@ -150,6 +150,7 @@ export interface AssigneeUserActionsProps {
 // AI Suggestion DTOs
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
 export interface AnalyzeTicketCommand {
+  ticket_id: string;
   title: string;
   description?: string;
 }

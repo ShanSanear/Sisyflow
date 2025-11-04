@@ -13,4 +13,8 @@ export const AiResponseSchema = z.object({
 });
 
 // Schemat walidacji ciała żądania dla analizy AI
-export const AnalyzeAiSuggestionsSchema = createTicketSchema.pick({ title: true, description: true });
+export const AnalyzeAiSuggestionsSchema = z.object({
+  ticket_id: z.string().uuid("Invalid ticket ID format - must be a valid UUID"),
+  title: createTicketSchema.shape.title,
+  description: createTicketSchema.shape.description,
+});

@@ -18,7 +18,7 @@ export const prerender = false;
  * Generuje sugestie AI dla zgłoszenia na podstawie tytułu i opisu.
  * Wymaga uwierzytelnienia użytkownika.
  *
- * Request Body: { title: string, description?: string }
+ * Request Body: { ticket_id: string, title: string, description?: string }
  * Response: 200 OK - { session_id: string, suggestions: Array<{ type: "INSERT"|"QUESTION", content: string, applied: boolean }> }
  * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
