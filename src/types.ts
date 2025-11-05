@@ -1,4 +1,4 @@
-import type { Tables } from "./db/database.types";
+import type { Tables, Json } from "./db/database.types";
 
 // Export database table types for cleaner usage
 export type Profile = Tables<"profiles">;
@@ -194,6 +194,14 @@ export type AIErrorDTO = Pick<
   AIError,
   "id" | "ticket_id" | "user_id" | "error_message" | "error_details" | "created_at"
 >;
+
+// CreateAIErrorCommand: Used in POST /ai-errors (request)
+export interface CreateAIErrorCommand {
+  error_message: string;
+  error_details?: Json;
+  ticket_id?: string;
+  user_id?: string;
+}
 
 // Save Status for forms
 export type SaveStatus = "idle" | "saving" | "success" | "error";
