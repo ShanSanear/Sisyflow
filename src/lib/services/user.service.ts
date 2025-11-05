@@ -1,11 +1,12 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance, createSupabaseAdminInstance } from "../../db/supabase.client";
 import type { CreateUserCommand, UserDTO, Profile } from "../../types";
 import { createUserSchema } from "../validation/schemas/user";
 import { extractSupabaseError } from "../utils";
 import { POSTGREST_ERROR_CODES } from "../constants";
-import { createSupabaseAdminInstance } from "../../db/supabase.client";
 import { z } from "zod";
+
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
+type AdminSupabaseType = ReturnType<typeof createSupabaseAdminInstance>;
 
 /**
  * Custom error classes for user service operations
@@ -78,9 +79,9 @@ export class UserToDeleteNotFoundError extends UserServiceError {
  * Implementuje logikę biznesową dla tworzenia i zarządzania użytkownikami
  */
 export class UserService {
-  private supabaseAdmin: SupabaseClient<Database>;
+  private supabaseAdmin: AdminSupabaseType;
 
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseType) {
     // Inicjalizuj admin client dla operacji wymagających uprawnień administratora
     this.supabaseAdmin = createSupabaseAdminInstance();
   }
@@ -341,6 +342,6 @@ export class UserService {
  * @param supabase Supabase client instance
  * @returns UserService instance
  */
-export function createUserService(supabase: SupabaseClient<Database>): UserService {
+export function createUserService(supabase: SupabaseType): UserService {
   return new UserService(supabase);
 }

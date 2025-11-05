@@ -48,7 +48,7 @@ Centralna tabela systemu przechowująca zgłoszenia (tickety).
 Tabela przechowująca sugestie AI dla ticketów.
 
 - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
-- ticket_id: UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE
+- ticket_id: UUID REFERENCES tickets(id) ON DELETE CASCADE
 - user_id: UUID REFERENCES profiles(id) ON DELETE SET NULL
 - suggestions: JSONB NOT NULL
 - rating: INTEGER CHECK (rating IS NULL OR (rating >= 1 AND rating <= 5))

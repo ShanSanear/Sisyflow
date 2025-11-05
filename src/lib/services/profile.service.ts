@@ -1,8 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { ProfileDTO, UpdateProfileCommand } from "../../types";
+import { updateProfileSchema } from "../validation/schemas/user";
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { extractSupabaseError } from "../utils";
+import { z } from "zod";
+
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 
 /**
  * Custom error classes for profile service operations
@@ -33,7 +36,7 @@ export class UsernameAlreadyTakenError extends ProfileServiceError {
  * Implementuje logikę biznesową dla zarządzania profilami
  */
 export class ProfileService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseType) {}
 
   /**
    * Pobiera profil użytkownika po ID
@@ -93,12 +96,15 @@ export class ProfileService {
    * @throws Error jeśli użytkownik nie istnieje lub nazwa użytkownika jest zajęta
    */
   async updateProfile(userId: string, command: UpdateProfileCommand): Promise<ProfileDTO> {
+    // Waliduj dane wejściowe za pomocą schematu Zod
+    const validatedCommand = updateProfileSchema.parse(command);
+
     try {
       // Najpierw sprawdź czy nowa nazwa użytkownika nie jest już zajęta przez innego użytkownika
       const { data: existingUser, error: checkError } = await this.supabase
         .from("profiles")
         .select("id")
-        .eq("username", command.username)
+        .eq("username", validatedCommand.username)
         .neq("id", userId)
         .single();
 
@@ -115,7 +121,7 @@ export class ProfileService {
       const { data: updatedProfile, error: updateError } = await this.supabase
         .from("profiles")
         .update({
-          username: command.username,
+          username: validatedCommand.username,
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId)
@@ -145,7 +151,11 @@ export class ProfileService {
 
       return result;
     } catch (error) {
-      // Przekaż błędy walidacji Zod bez zmian (choć nie ma walidacji w tej metodzie)
+      // Przekaż błędy walidacji Zod bez zmian
+      if (error instanceof z.ZodError) {
+        throw error;
+      }
+      // Przekaż custom errors
       if (error instanceof ProfileNotFoundError || error instanceof UsernameAlreadyTakenError) {
         throw error;
       }
@@ -161,6 +171,6 @@ export class ProfileService {
  * @param supabase Supabase client instance
  * @returns ProfileService instance
  */
-export function createProfileService(supabase: SupabaseClient<Database>): ProfileService {
+export function createProfileService(supabase: SupabaseType): ProfileService {
   return new ProfileService(supabase);
 }

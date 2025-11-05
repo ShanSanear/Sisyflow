@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type {
   CreateTicketCommand,
   FullTicketDTO,
@@ -20,6 +19,8 @@ import { POSTGREST_ERROR_CODES } from "../constants";
 import { calculatePagination } from "../utils";
 import { z } from "zod";
 
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
+
 /**
  * Interface for Supabase error objects
  */
@@ -28,6 +29,44 @@ interface SupabaseError {
   code?: string;
   details?: string;
   hint?: string;
+}
+
+/**
+ * Custom error classes for ticket service operations
+ */
+export class TicketServiceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TicketServiceError";
+  }
+}
+
+export class TicketNotFoundError extends TicketServiceError {
+  constructor(message = "Ticket not found") {
+    super(message);
+    this.name = "TicketNotFoundError";
+  }
+}
+
+export class UserProfileNotFoundError extends TicketServiceError {
+  constructor(message = "User profile not found") {
+    super(message);
+    this.name = "UserProfileNotFoundError";
+  }
+}
+
+export class AssigneeNotFoundError extends TicketServiceError {
+  constructor(message = "Assignee not found") {
+    super(message);
+    this.name = "AssigneeNotFoundError";
+  }
+}
+
+export class AccessDeniedError extends TicketServiceError {
+  constructor(message: string) {
+    super(message);
+    this.name = "AccessDeniedError";
+  }
 }
 
 /**
@@ -66,7 +105,7 @@ function extractSupabaseError(error: unknown, operation: string): Error {
  * Implementuje logikę biznesową dla tworzenia i zarządzania ticketami
  */
 export class TicketService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseType) {}
 
   /**
    * Tworzy nowy ticket wraz z opcjonalnymi załącznikami
@@ -154,8 +193,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to create ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to create ticket: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -173,19 +219,19 @@ export class TicketService {
       // Budowanie zapytania bazowego z JOIN do profiles
       let query = this.supabase.from("tickets").select(
         `
-          id,
-          title,
-          description,
-          type,
-          status,
-          reporter_id,
-          assignee_id,
-          ai_enhanced,
-          created_at,
-          updated_at,
-          reporter:profiles!tickets_reporter_id_fkey(id, username),
-          assignee:profiles!tickets_assignee_id_fkey(id, username)
-        `,
+        id,
+        title,
+        description,
+        type,
+        status,
+        reporter_id,
+        assignee_id,
+        ai_enhanced,
+        created_at,
+        updated_at,
+        reporter:profiles!tickets_reporter_id_fkey(id, username),
+        assignee:profiles!tickets_assignee_id_fkey(id, username)
+      `,
         { count: "exact" }
       );
 
@@ -255,8 +301,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to get tickets: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to get tickets: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -294,13 +347,13 @@ export class TicketService {
       if (error) {
         // Sprawdź czy to błąd "not found" (brak rekordu dla zapytania .single())
         if (error.code === POSTGREST_ERROR_CODES.NO_ROWS_RETURNED_FOR_SINGLE) {
-          throw new Error("Ticket not found");
+          throw new TicketNotFoundError("Ticket not found");
         }
         throw extractSupabaseError(error, "Failed to fetch ticket");
       }
 
       if (!ticket) {
-        throw new Error("Ticket not found");
+        throw new TicketNotFoundError("Ticket not found");
       }
 
       // Formatuj odpowiedź zgodnie z FullTicketDTO
@@ -327,8 +380,13 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to get ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(`Failed to get ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -355,17 +413,14 @@ export class TicketService {
         .single();
 
       if (fetchError || !existingTicket) {
-        throw new Error("Ticket not found");
+        throw new TicketNotFoundError("Ticket not found");
       }
 
       // Sprawdź uprawnienia: użytkownik musi być reporter'em, assignee'em lub mieć rolę ADMIN
       const isReporter = existingTicket.reporter_id === userId;
       const isAssignee = existingTicket.assignee_id === userId;
 
-      // Sprawdź rolę użytkownika - dla ADMIN pozwól na aktualizację
       let isAdmin = false;
-      // TODO - disable this for now - assume ADMIN is always used
-      isAdmin = true;
       if (!isReporter && !isAssignee) {
         const { data: userProfile, error: profileError } = await this.supabase
           .from("profiles")
@@ -374,14 +429,14 @@ export class TicketService {
           .single();
 
         if (profileError || !userProfile) {
-          throw new Error("User profile not found");
+          throw new UserProfileNotFoundError("User profile not found");
         }
 
         isAdmin = userProfile.role === "ADMIN";
       }
 
       if (!isReporter && !isAssignee && !isAdmin) {
-        throw new Error("Access denied: You don't have permission to update this ticket's status");
+        throw new AccessDeniedError("Access denied: You don't have permission to update this ticket's status");
       }
 
       // Aktualizuj status ticketu
@@ -420,7 +475,7 @@ export class TicketService {
         .single();
 
       if (refetchError || !updatedTicket) {
-        throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
+        throw new TicketServiceError(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
       }
 
       // Formatuj odpowiedź zgodnie z TicketDTO
@@ -447,8 +502,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to update ticket status: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to update ticket status: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -475,7 +537,7 @@ export class TicketService {
         .single();
 
       if (fetchError || !existingTicket) {
-        throw new Error("Ticket not found");
+        throw new TicketNotFoundError("Ticket not found");
       }
 
       // Sprawdź uprawnienia: użytkownik musi być reporter'em, assignee'em lub mieć rolę ADMIN
@@ -492,14 +554,14 @@ export class TicketService {
           .single();
 
         if (profileError || !userProfile) {
-          throw new Error("User profile not found");
+          throw new UserProfileNotFoundError("User profile not found");
         }
 
         isAdmin = userProfile.role === "ADMIN";
       }
 
       if (!isReporter && !isAssignee && !isAdmin) {
-        throw new Error("Access denied: You don't have permission to update this ticket");
+        throw new AccessDeniedError("Access denied: You don't have permission to update this ticket");
       }
 
       // Przygotuj dane do aktualizacji - tylko pola które zostały podane
@@ -586,8 +648,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to update ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to update ticket: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -787,6 +856,6 @@ export class TicketService {
  * @param supabase Supabase client instance
  * @returns TicketService instance
  */
-export function createTicketService(supabase: SupabaseClient<Database>): TicketService {
+export function createTicketService(supabase: SupabaseType): TicketService {
   return new TicketService(supabase);
 }

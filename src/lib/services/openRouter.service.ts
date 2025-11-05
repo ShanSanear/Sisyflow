@@ -1,11 +1,13 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "../../db/database.types";
+import { createSupabaseServerInstance } from "../../db/supabase.client";
+import type { Json } from "../../db/database.types";
 import { AiResponseSchema } from "../validation/ai.validation";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { createProjectDocumentationService } from "./projectDocumentation.service";
 
 // --- Typy ---
 type AiResponseType = z.infer<typeof AiResponseSchema>;
+type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 interface Message {
   role: "system" | "user";
   content: string;
@@ -33,7 +35,8 @@ const MODEL_NAME = "mistralai/mistral-7b-instruct";
  */
 export class OpenRouterService {
   private apiKey: string;
-  private supabase: SupabaseClient<Database>;
+  private supabase: SupabaseType;
+  private projectDocumentationService: ReturnType<typeof createProjectDocumentationService>;
   private readonly openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
 
   /**
@@ -41,7 +44,7 @@ export class OpenRouterService {
    * @param supabase Instancja klienta Supabase dla logowania błędów
    * @throws Error jeśli OPENROUTER_API_KEY nie jest skonfigurowany
    */
-  constructor(supabase: SupabaseClient<Database>) {
+  constructor(supabase: SupabaseType) {
     const apiKey = import.meta.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -51,6 +54,7 @@ export class OpenRouterService {
 
     this.apiKey = apiKey;
     this.supabase = supabase;
+    this.projectDocumentationService = createProjectDocumentationService(supabase);
   }
 
   /**
@@ -65,10 +69,8 @@ export class OpenRouterService {
     userId?: string;
   }): Promise<AiResponseType> {
     try {
-      // Pobierz dokumentację projektu z bazy danych
-      const { data: doc } = await this.supabase.from("project_documentation").select("content").single();
-
-      const context = doc?.content ?? "";
+      // Pobierz dokumentację projektu używając service
+      const context = await this.projectDocumentationService.getProjectDocumentationContent();
 
       // Przygotuj wiadomości dla modelu AI
       const messages = this._buildMessages(params.title, params.description, context);
@@ -116,7 +118,7 @@ export class OpenRouterService {
    * @returns Tablica wiadomości dla API
    */
   private _buildMessages(title: string, description = "", context: string): Message[] {
-    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions what can be additionally included in the ticket description. Suggestions can be of two types: 'INSERT' (suggesting specific text to add) or 'QUESTION' (asking a clarifying question). Always respond only with a JSON object that conforms to the provided schema. Do not add any additional comments or text outside the JSON format. Respond in the same language as the provided ticket title and description.`;
+    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions what can be additionally included in the ticket description. Suggestions can be of two types: 'INSERT' (suggesting specific text to add) or 'QUESTION' (asking a clarifying question). Always respond only with a JSON object that conforms to the provided schema. Do not add any additional comments or text outside the JSON format. Respond in the same language as the provided ticket title and description. Respond with maximum of 6 suggestions.`;
 
     const userMessage = `Analyze the following ticket and documentation, then generate suggestions.
 
@@ -222,6 +224,6 @@ ${context}`;
  * @param supabase Supabase client instance
  * @returns OpenRouterService instance
  */
-export function createOpenRouterService(supabase: SupabaseClient<Database>): OpenRouterService {
+export function createOpenRouterService(supabase: SupabaseType): OpenRouterService {
   return new OpenRouterService(supabase);
 }

@@ -1,7 +1,7 @@
 import type { AstroCookies } from "astro";
 import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
 import { getSecret } from "astro:env/server";
-import type { Database } from "../db/database.types.ts";
+import type { Database } from "./database.types";
 
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",
