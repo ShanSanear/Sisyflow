@@ -96,7 +96,7 @@ export const GET: APIRoute = async ({ request, locals, cookies, url }) => {
 
     // Pobierz błędy AI używając AIErrorsService
     const aiErrorsService = createAIErrorsService(supabase);
-    const { errors, pagination } = await aiErrorsService.getAIErrorsPaginated(
+    const { aiErrors: errors, pagination } = await aiErrorsService.getAIErrorsPaginated(
       validatedQuery.limit,
       validatedQuery.offset,
       validatedQuery.ticket_id
