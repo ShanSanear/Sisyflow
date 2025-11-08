@@ -2,8 +2,5 @@
   "name": "sisyflow",
   "compatibility_date": "2025-11-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public", "nodejs_compat_populate_process_env"],
-  "observability": {
-    "enabled": false
-  },
   "pages_build_output_dir": "dist"
 }
