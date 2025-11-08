@@ -8,15 +8,16 @@ import {
   createDatabaseConnectionErrorResponse,
   createZodValidationResponse,
 } from "../../../lib/utils";
+import { isFeatureEnabled, FeatureFlag } from "../../../features";
 
 export const prerender = false;
 
 /**
  * POST /api/ai-suggestion-sessions/analyze
  *
- * Returns dummy AI suggestions for testing purposes (OpenRouter integration commented out).
- * Previously: Generated AI suggestions for tickets based on title and description.
- * Currently: Returns static dummy data to enable testing without external API dependencies.
+ * Generates AI suggestions for tickets based on title and description.
+ * Uses feature flags to control whether to return enhanced dummy data or basic dummy data.
+ * OpenRouter integration is commented out but can be re-enabled when ready.
  * Wymaga uwierzytelnienia użytkownika.
  *
  * Request Body: { ticket_id: string, title: string, description?: string }
@@ -71,52 +72,71 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return createZodValidationResponse(validation.error);
     }
 
-    // Note: title and description not used for dummy data, but validated for API contract consistency
+    // Check if AI analysis feature is enabled
+    const aiAnalysisEnabled = isFeatureEnabled(FeatureFlag.AI_ANALYSIS);
 
-    // TODO: Re-enable when OpenRouter API integration is needed for production
-    // Currently commented out to allow easier testing without API keys and external dependencies
-    // const openRouterService = createOpenRouterService(supabase);
-    // const suggestions = await openRouterService.getSuggestions({
-    //   title,
-    //   description,
-    //   userId,
-    // });
+    let suggestions: { type: "INSERT" | "QUESTION"; content: string; applied: boolean }[];
 
-    // Return dummy AI suggestions for testing purposes
-    // This allows testing the entire flow without requiring OpenRouter API calls
-    const dummySuggestions = [
-      {
-        type: "INSERT" as const,
-        content: "Consider adding more specific error messages to help users understand what went wrong.",
-        applied: false,
-      },
-      {
-        type: "QUESTION" as const,
-        content: "Have you checked the browser console for additional error details?",
-        applied: false,
-      },
-      {
-        type: "INSERT" as const,
-        content: "Add steps to reproduce the issue in the ticket description.",
-        applied: false,
-      },
-      {
-        type: "QUESTION" as const,
-        content: "Is this issue occurring on all browsers or specific ones?",
-        applied: false,
-      },
-      {
-        type: "INSERT" as const,
-        content: "Include information about the user's environment (OS, browser version, etc.).",
-        applied: false,
-      },
-    ];
+    if (aiAnalysisEnabled) {
+      // TODO: Re-enable OpenRouter API integration when ready for production
+      // Currently using dummy data even when feature is enabled for easier testing
+      // const openRouterService = createOpenRouterService(supabase);
+      // const aiSuggestions = await openRouterService.getSuggestions({
+      //   title: requestData.title,
+      //   description: requestData.description,
+      //   userId: locals.user.id,
+      // });
+      // suggestions = aiSuggestions.map(s => ({ ...s, applied: false }));
+
+      // For now, return enhanced dummy data when feature is enabled
+      suggestions = [
+        {
+          type: "INSERT" as const,
+          content: "Consider adding more specific error messages to help users understand what went wrong.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "Have you checked the browser console for additional error details?",
+          applied: false,
+        },
+        {
+          type: "INSERT" as const,
+          content: "Add steps to reproduce the issue in the ticket description.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "Is this issue occurring on all browsers or specific ones?",
+          applied: false,
+        },
+        {
+          type: "INSERT" as const,
+          content: "Include information about the user's environment (OS, browser version, etc.).",
+          applied: false,
+        },
+      ];
+    } else {
+      // Return basic dummy data when AI analysis is disabled
+      suggestions = [
+        {
+          type: "INSERT" as const,
+          content: "This is a placeholder suggestion when AI analysis is disabled.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "AI analysis is currently disabled in this environment.",
+          applied: false,
+        },
+      ];
+    }
 
     // Utwórz obiekt sesji AI bez zapisywania do bazy danych
     const sessionResult: AISuggestionSessionDTO = {
       session_id: crypto.randomUUID(), // Generuj tymczasowe ID sesji
       ticket_id: requestData.ticket_id,
-      suggestions: dummySuggestions,
+      suggestions,
     };
 
     return new Response(JSON.stringify(sessionResult), {

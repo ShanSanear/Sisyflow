@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type {
   FullTicketDTO,
-  UserDTO,
+  ProfileDTO,
   TicketModalMode,
   CreateTicketCommand,
   UpdateTicketCommand,
@@ -13,7 +13,7 @@ import { createTicket, updateTicket, TicketValidationError, TicketForbiddenError
 import { saveAISuggestionSession } from "../api/aiSuggestionSession";
 
 interface UseTicketActionsProps {
-  user: UserDTO | null;
+  user: ProfileDTO | null;
   mode: TicketModalMode;
   ticketId?: string;
   ticket?: FullTicketDTO;

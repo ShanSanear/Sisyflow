@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { FullTicketDTO, UserDTO, TicketModalMode, AISuggestionSessionDTO } from "@/types";
+import type { FullTicketDTO, ProfileDTO, TicketModalMode, AISuggestionSessionDTO } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
@@ -13,7 +13,7 @@ interface TicketModalContentProps {
   isFormValid: boolean;
   loading: boolean;
   mode: TicketModalMode;
-  user: UserDTO | null;
+  user: ProfileDTO | null;
   isAdmin: boolean;
   ticket?: FullTicketDTO;
   canEdit: boolean;

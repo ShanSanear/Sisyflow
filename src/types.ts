@@ -105,7 +105,7 @@ export type Assignee = Pick<Profile, "id" | "username">;
 
 export interface AssigneeSectionProps {
   assignee?: Assignee | null;
-  currentUser: UserDTO | null;
+  currentUser: ProfileDTO | null;
   isAdmin: boolean;
   onAssign: (assignee: Assignee | null) => void;
   mode: TicketModalMode;
@@ -116,7 +116,7 @@ export interface AssigneeSectionProps {
 
 export interface AssigneeViewModeProps {
   assignee?: Assignee | null;
-  currentUser: UserDTO | null;
+  currentUser: ProfileDTO | null;
   onAssign: (assignee: Assignee | null) => void;
   canModifyAssignment: boolean;
   isUpdating: boolean;
@@ -124,7 +124,7 @@ export interface AssigneeViewModeProps {
 
 export interface AssigneeEditModeProps {
   assignee?: Assignee | null;
-  currentUser: UserDTO | null;
+  currentUser: ProfileDTO | null;
   isAdmin: boolean;
   onAssign: (assignee: Assignee | null) => void;
   canModifyAssignment: boolean;
@@ -143,7 +143,7 @@ export interface AssigneeAdminSelectProps {
 
 export interface AssigneeUserActionsProps {
   assignee?: Assignee | null;
-  currentUser: UserDTO | null;
+  currentUser: ProfileDTO | null;
   canModifyAssignment: boolean;
   onAssign: (assignee: Assignee | null) => void;
   isUpdating: boolean;
