@@ -27,8 +27,8 @@ export const FEATURE_FLAG_CONFIG: FeatureFlagConfig = {
  */
 export function getFeatureFlagOverride(flag: FeatureFlag): boolean | undefined {
   const envVar = `FEATURE_FLAG_${flag.toUpperCase()}`;
-  // Check both process.env and import.meta.env (for browser environments)
-  const value = process.env[envVar] ?? import.meta?.env?.[envVar];
+  // Use process.env (import.meta.env doesn't support dynamic access in all environments)
+  const value = process.env[envVar];
 
   if (value === undefined) return undefined;
   if (value === "true") return true;
