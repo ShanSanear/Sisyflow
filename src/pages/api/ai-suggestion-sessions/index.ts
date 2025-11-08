@@ -10,7 +10,7 @@ import {
 } from "../../../lib/utils";
 
 // Schema for saving AI suggestion session
-const SaveAISuggestionSessionSchema = z.object({
+const saveAiSuggestionSessionSchema = z.object({
   session_id: z.string().uuid(),
   ticket_id: z.string().uuid(),
   suggestions: z.array(
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     });
 
     // Parsuj ciało żądania
-    let requestData: z.infer<typeof SaveAISuggestionSessionSchema>;
+    let requestData: z.infer<typeof saveAiSuggestionSessionSchema>;
     try {
       requestData = await request.json();
     } catch (parseError) {
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     // Walidacja danych wejściowych
-    const validation = SaveAISuggestionSessionSchema.safeParse(requestData);
+    const validation = saveAiSuggestionSessionSchema.safeParse(requestData);
     if (!validation.success) {
       return createZodValidationResponse(validation.error);
     }
@@ -97,7 +97,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       {
         ticket_id,
       },
-      suggestions, // Przekaż sugestie bezpośrednio jako tablicę AiSuggestion
+      suggestions,
       userId
     );
 

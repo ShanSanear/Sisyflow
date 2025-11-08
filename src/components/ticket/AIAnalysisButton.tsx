@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AISuggestionSessionDTO } from "@/types";
-import { AnalyzeAiSuggestionsSchema } from "@/lib/validation/ai.validation";
+import { analyzeAiSuggestionsSchema } from "@/lib/validation/ai.validation";
 
 interface AIAnalysisButtonProps {
   title: string;
@@ -24,7 +24,7 @@ export function AIAnalysisButton({ title, description, onAnalyze, isLoading, set
 
     try {
       // Validate the request data using the schema
-      const validationResult = AnalyzeAiSuggestionsSchema.safeParse({
+      const validationResult = analyzeAiSuggestionsSchema.safeParse({
         title: title.trim(),
         description: description.trim(),
       });

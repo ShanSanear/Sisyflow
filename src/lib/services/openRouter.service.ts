@@ -1,12 +1,12 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { Json } from "../../db/database.types";
-import { AiResponseSchema } from "../validation/ai.validation";
+import { aiResponseSchema } from "../validation/ai.validation";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { createProjectDocumentationService } from "./projectDocumentation.service";
 
 // --- Typy ---
-type AiResponseType = z.infer<typeof AiResponseSchema>;
+type AiResponseType = z.infer<typeof aiResponseSchema>;
 type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 interface Message {
   role: "system" | "user";
@@ -60,7 +60,7 @@ export class OpenRouterService {
   /**
    * Główna metoda publiczna generująca sugestie AI na podstawie tytułu i opisu zgłoszenia
    * @param params Parametry zawierające tytuł, opcjonalny opis i opcjonalne ID użytkownika
-   * @returns Obiekt z sugestiami zgodny ze schematem AiResponseSchema
+   * @returns Obiekt z sugestiami zgodny ze schematem aiResponseSchema
    * @throws Error jeśli wystąpi błąd podczas komunikacji z API lub walidacji odpowiedzi
    */
   public async getSuggestions(params: {
@@ -98,7 +98,7 @@ export class OpenRouterService {
       const content = JSON.parse(jsonResponse.choices[0].message.content);
 
       // Waliduj odpowiedź zgodnie ze schematem
-      const validation = AiResponseSchema.safeParse(content);
+      const validation = aiResponseSchema.safeParse(content);
       if (!validation.success) {
         throw { type: "ValidationError", errors: validation.error, data: content };
       }
@@ -141,11 +141,11 @@ ${context}`;
    * @returns Obiekt payload zgodny z API OpenRouter
    */
   private _buildPayload(messages: Message[]) {
-    const jsonSchema = zodToJsonSchema(AiResponseSchema, "AiResponseSchema");
+    const jsonSchema = zodToJsonSchema(aiResponseSchema, "aiResponseSchema");
 
     // Sprawdź czy schema zawiera definicje
-    if (!jsonSchema.definitions || !jsonSchema.definitions.AiResponseSchema) {
-      throw new Error("Failed to generate JSON schema for AiResponseSchema");
+    if (!jsonSchema.definitions || !jsonSchema.definitions.aiResponseSchema) {
+      throw new Error("Failed to generate JSON schema for aiResponseSchema");
     }
 
     return {
@@ -154,9 +154,9 @@ ${context}`;
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "AiResponseSchema",
+          name: "aiResponseSchema",
           strict: true,
-          schema: jsonSchema.definitions.AiResponseSchema,
+          schema: jsonSchema.definitions.aiResponseSchema,
         },
       },
       temperature: 0.6,

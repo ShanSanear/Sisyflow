@@ -1,6 +1,6 @@
 import { apiPost, BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, type ApiError } from "./base";
 import type { AnalyzeTicketCommand, AISuggestionSessionDTO } from "@/types";
-import type { AiSuggestion } from "@/lib/validation/schemas/ai";
+import type { AISuggestion } from "@/lib/validation/schemas/ai";
 
 /**
  * AI Suggestion Sessions API endpoints
@@ -94,7 +94,7 @@ export async function analyzeTicket(command: AnalyzeTicketCommand): Promise<AISu
 export async function saveAISuggestionSession(sessionData: {
   session_id: string;
   ticket_id: string;
-  suggestions: AiSuggestion[];
+  suggestions: AISuggestion[];
   rating?: number;
 }): Promise<AISuggestionSessionDTO> {
   try {

@@ -35,18 +35,18 @@ export const rateAiSuggestionSchema = z.object({
 
 /**
  * Schema for creating AI suggestion session command (internal use)
- * Used when creating sessions from analysis (requires title/description) or from ticket save (only ticket_id required)
+ * Used when saving AI suggestion sessions to the database (requires ticket_id for association)
  */
 export const createAiSuggestionSessionCommandSchema = z.object({
-  ticket_id: z.string().uuid("Invalid ticket ID format").optional(),
-  title: z.string().min(1, "Title is required").optional(),
+  ticket_id: z.string().uuid("Invalid ticket ID format"),
+  title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
 });
 
 /**
  * Types inferred from schemas
  */
-export type AiSuggestion = z.infer<typeof aiSuggestionSchema>;
-export type AiResponse = z.infer<typeof aiResponseSchema>;
+export type AISuggestion = z.infer<typeof aiSuggestionSchema>;
+export type AIResponse = z.infer<typeof aiResponseSchema>;
 export type AnalyzeAiSuggestionsRequest = z.infer<typeof analyzeAiSuggestionsSchema>;
 export type CreateAiSuggestionSessionCommand = z.infer<typeof createAiSuggestionSessionCommandSchema>;

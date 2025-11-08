@@ -1,10 +1,9 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { AISuggestionSessionDTO, AnalyzeTicketCommand } from "../../types";
-import type { AiResponse } from "../validation/schemas/ai";
 import {
   createAiSuggestionSessionCommandSchema,
   rateAiSuggestionSchema,
-  type AiSuggestion,
+  type AISuggestion,
 } from "../validation/schemas/ai";
 import { createTicketService } from "./ticket.service";
 import { POSTGREST_ERROR_CODES } from "../constants";
@@ -56,38 +55,23 @@ export class AISuggestionSessionsService {
    * Wykonuje operację w transakcji aby zapewnić atomowość
    *
    * @param command Dane analizy ticketu zawierające tytuł i opcjonalny opis
-   * @param suggestions Sugestie wygenerowane przez AI (AiResponse lub bezpośrednia tablica AiSuggestion)
+   * @param suggestions Sugestie wygenerowane przez AI jako tablica AISuggestion
    * @param userId ID użytkownika tworzącego sesję
    * @returns Pełny obiekt sesji sugestii AI
    * @throws Error jeśli walidacja nie powiedzie się lub wystąpi błąd bazy danych
    */
   async createAISuggestionSession(
     command: AnalyzeTicketCommand,
-    suggestions: AiResponse | AiSuggestion[],
+    suggestions: AISuggestion[],
     userId: string
   ): Promise<AISuggestionSessionDTO> {
     // Walidacja danych wejściowych
     const validatedCommand = createAiSuggestionSessionCommandSchema.parse(command);
 
     try {
-      // Sprawdź czy ticket istnieje używając ticket service (tylko jeśli ticket_id jest podane)
-      if (validatedCommand.ticket_id) {
-        const ticketService = createTicketService(this.supabase);
-        await ticketService.getTicketById(validatedCommand.ticket_id);
-      }
-
-      // Przygotuj dane sugestii do zapisania - obsługuj zarówno AiResponse jak i bezpośrednią tablicę
-      let suggestionsArray: AiSuggestion[];
-      if (Array.isArray(suggestions)) {
-        // Bezpośrednia tablica AiSuggestion (już zawiera applied flag)
-        suggestionsArray = suggestions;
-      } else {
-        // AiResponse - dodaj flagę applied: false
-        suggestionsArray = suggestions.suggestions.map((suggestion) => ({
-          ...suggestion,
-          applied: false,
-        }));
-      }
+      // Sprawdź czy ticket istnieje używając ticket service
+      const ticketService = createTicketService(this.supabase);
+      await ticketService.getTicketById(validatedCommand.ticket_id);
 
       // Utwórz sesję sugestii AI
       const { data: session, error: sessionError } = await this.supabase
@@ -95,7 +79,7 @@ export class AISuggestionSessionsService {
         .insert({
           ticket_id: validatedCommand.ticket_id,
           user_id: userId,
-          suggestions: suggestionsArray,
+          suggestions: suggestions,
         })
         .select()
         .single();
@@ -108,7 +92,7 @@ export class AISuggestionSessionsService {
       const result: AISuggestionSessionDTO = {
         session_id: session.id,
         ticket_id: session.ticket_id,
-        suggestions: suggestionsArray,
+        suggestions: suggestions,
       };
 
       return result;

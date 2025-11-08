@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import type { AISuggestionSessionDTO } from "../../../types";
-import { AnalyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
+import { analyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
 import { z } from "zod";
 import {
   isZodError,
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // });
 
     // Parsuj ciało żądania
-    let requestData: z.infer<typeof AnalyzeAiSuggestionsSchema>;
+    let requestData: z.infer<typeof analyzeAiSuggestionsSchema>;
     try {
       requestData = await request.json();
     } catch (parseError) {
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Walidacja danych wejściowych
-    const validation = AnalyzeAiSuggestionsSchema.safeParse(requestData);
+    const validation = analyzeAiSuggestionsSchema.safeParse(requestData);
     if (!validation.success) {
       return createZodValidationResponse(validation.error);
     }
