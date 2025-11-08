@@ -18,4 +18,4 @@ export * from "./tickets";
 export * from "./projectDocumentation";
 
 // AI suggestion sessions endpoints
-export * from "./ai-suggestion-sessions";
+export * from "./aiSuggestionSession";

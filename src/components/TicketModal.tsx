@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
 import { useUser } from "@/lib/hooks/useUser";
@@ -8,6 +8,7 @@ import { useTicketModalState } from "@/lib/hooks/useTicketModalState";
 import { useTicketData } from "@/lib/hooks/useTicketData";
 import { useTicketPermissions } from "@/lib/hooks/useTicketPermissions";
 import { useTicketActions } from "@/lib/hooks/useTicketActions";
+import type { AISuggestionSessionDTO } from "@/types";
 
 /**
  * Główny komponent modalny dla zarządzania ticketami
@@ -16,6 +17,26 @@ import { useTicketActions } from "@/lib/hooks/useTicketActions";
 export const TicketModal: React.FC = () => {
   const { isOpen, mode, ticketId, onClose, onSave, setOpen } = useTicketModal();
   const { user, isAdmin } = useUser();
+
+  // AI session state - used in ticket save flow
+  const [aiSession, setAiSession] = useState<{
+    session: AISuggestionSessionDTO;
+    rating?: number | null;
+  } | null>(null);
+
+  // Reset AI session state (used when switching to edit mode)
+  const handleAISessionReset = () => {
+    setAiSession(null);
+  };
+
+  // Handle AI session changes
+  const handleAISessionChange = (session: AISuggestionSessionDTO | null, rating?: number | null) => {
+    if (session) {
+      setAiSession({ session, rating });
+    } else {
+      setAiSession(null);
+    }
+  };
 
   // Custom hooks dla separacji odpowiedzialności
   const { formData, errors, isFormValid, handleFormChange, resetForm } = useTicketModalState();
@@ -40,9 +61,11 @@ export const TicketModal: React.FC = () => {
     mode,
     ticketId,
     ticket,
+    aiSession,
     onSave,
     onClose,
     onFormReset: resetForm,
+    onAiSessionReset: handleAISessionReset,
     setOpen,
   });
 
@@ -66,6 +89,7 @@ export const TicketModal: React.FC = () => {
           onEdit={handleEditMode}
           onCancel={onClose}
           onAssigneeChange={onAssigneeChange}
+          onAISessionChange={handleAISessionChange}
         />
       </DialogContent>
     </Dialog>

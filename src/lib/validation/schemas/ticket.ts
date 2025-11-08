@@ -16,6 +16,7 @@ export const ticketSchema = z.object({
     })
     .nullable()
     .optional(),
+  ai_enhanced: z.boolean().default(false),
 });
 
 /**

@@ -131,8 +131,7 @@ export class TicketService {
           status: "OPEN",
           reporter_id: reporterId,
           assignee_id: validatedData.assignee_id || null,
-          // TODO - when implementing AI-related endpoints at one point - make sure to take this into account
-          ai_enhanced: false,
+          ai_enhanced: validatedData.ai_enhanced || false,
         })
         .select()
         .single();
@@ -570,6 +569,7 @@ export class TicketService {
         description?: string | null;
         type?: "BUG" | "IMPROVEMENT" | "TASK";
         assignee_id?: string | null;
+        ai_enhanced?: boolean;
       } = {};
 
       if (validatedData.title !== undefined) {
@@ -585,6 +585,9 @@ export class TicketService {
       }
       if (validatedData.assignee_id !== undefined) {
         updateData.assignee_id = validatedData.assignee_id;
+      }
+      if (validatedData.ai_enhanced !== undefined) {
+        updateData.ai_enhanced = validatedData.ai_enhanced;
       }
 
       // Aktualizuj ticket
