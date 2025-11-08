@@ -1,14 +1,12 @@
 import type { APIRoute } from "astro";
-import { createOpenRouterService } from "../../../lib/services/openRouter.service";
-import { createAISuggestionSessionsService } from "../../../lib/services/ai-suggestion-sessions.service";
-import { createSupabaseServerInstance } from "../../../db/supabase.client";
-import { AnalyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
+import type { AISuggestionSessionDTO } from "../../../types";
+import { analyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
 import { z } from "zod";
 import {
   isZodError,
-  createZodValidationResponse,
   isDatabaseConnectionError,
   createDatabaseConnectionErrorResponse,
+  createZodValidationResponse,
 } from "../../../lib/utils";
 
 export const prerender = false;
@@ -16,14 +14,16 @@ export const prerender = false;
 /**
  * POST /api/ai-suggestion-sessions/analyze
  *
- * Generuje sugestie AI dla zgłoszenia na podstawie tytułu i opisu.
+ * Returns dummy AI suggestions for testing purposes (OpenRouter integration commented out).
+ * Previously: Generated AI suggestions for tickets based on title and description.
+ * Currently: Returns static dummy data to enable testing without external API dependencies.
  * Wymaga uwierzytelnienia użytkownika.
  *
  * Request Body: { ticket_id: string, title: string, description?: string }
  * Response: 200 OK - { session_id: string, suggestions: Array<{ type: "INSERT"|"QUESTION", content: string, applied: boolean }> }
  * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
-export const POST: APIRoute = async ({ request, locals, cookies }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Sprawdź czy użytkownik jest uwierzytelniony
     if (!locals.user) {
@@ -39,14 +39,15 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       );
     }
 
-    const userId = locals.user.id;
-    const supabase = createSupabaseServerInstance({
-      cookies,
-      headers: request.headers,
-    });
+    // TODO: Re-enable when OpenRouter API integration is needed for production
+    // const userId = locals.user.id;
+    // const supabase = createSupabaseServerInstance({
+    //   cookies,
+    //   headers: request.headers,
+    // });
 
     // Parsuj ciało żądania
-    let requestData: z.infer<typeof AnalyzeAiSuggestionsSchema>;
+    let requestData: z.infer<typeof analyzeAiSuggestionsSchema>;
     try {
       requestData = await request.json();
     } catch (parseError) {
@@ -65,32 +66,58 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     // Walidacja danych wejściowych
-    const validation = AnalyzeAiSuggestionsSchema.safeParse(requestData);
+    const validation = analyzeAiSuggestionsSchema.safeParse(requestData);
     if (!validation.success) {
       return createZodValidationResponse(validation.error);
     }
 
-    const { title, description } = validation.data;
+    // Note: title and description not used for dummy data, but validated for API contract consistency
 
-    // Utwórz serwis OpenRouter i wywołaj metodę
-    const openRouterService = createOpenRouterService(supabase);
-    const suggestions = await openRouterService.getSuggestions({
-      title,
-      description,
-      userId,
-    });
+    // TODO: Re-enable when OpenRouter API integration is needed for production
+    // Currently commented out to allow easier testing without API keys and external dependencies
+    // const openRouterService = createOpenRouterService(supabase);
+    // const suggestions = await openRouterService.getSuggestions({
+    //   title,
+    //   description,
+    //   userId,
+    // });
 
-    // Utwórz serwis AI suggestion sessions i zapisz sesję do bazy danych
-    const aiSuggestionSessionsService = createAISuggestionSessionsService(supabase);
-    const sessionResult = await aiSuggestionSessionsService.createAISuggestionSession(
+    // Return dummy AI suggestions for testing purposes
+    // This allows testing the entire flow without requiring OpenRouter API calls
+    const dummySuggestions = [
       {
-        ticket_id: requestData.ticket_id,
-        title,
-        description,
+        type: "INSERT" as const,
+        content: "Consider adding more specific error messages to help users understand what went wrong.",
+        applied: false,
       },
-      suggestions,
-      userId
-    );
+      {
+        type: "QUESTION" as const,
+        content: "Have you checked the browser console for additional error details?",
+        applied: false,
+      },
+      {
+        type: "INSERT" as const,
+        content: "Add steps to reproduce the issue in the ticket description.",
+        applied: false,
+      },
+      {
+        type: "QUESTION" as const,
+        content: "Is this issue occurring on all browsers or specific ones?",
+        applied: false,
+      },
+      {
+        type: "INSERT" as const,
+        content: "Include information about the user's environment (OS, browser version, etc.).",
+        applied: false,
+      },
+    ];
+
+    // Utwórz obiekt sesji AI bez zapisywania do bazy danych
+    const sessionResult: AISuggestionSessionDTO = {
+      session_id: crypto.randomUUID(), // Generuj tymczasowe ID sesji
+      ticket_id: requestData.ticket_id,
+      suggestions: dummySuggestions,
+    };
 
     return new Response(JSON.stringify(sessionResult), {
       status: 200,

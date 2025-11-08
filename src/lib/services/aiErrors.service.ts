@@ -1,7 +1,7 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { AIErrorDTO, PaginationDTO, CreateAIErrorCommand } from "../../types";
 import { extractSupabaseError } from "../utils";
-import { createAIErrorSchema } from "../validation/schemas/ai-errors";
+import { createAIErrorSchema } from "../validation/schemas/aiErrors";
 
 type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 

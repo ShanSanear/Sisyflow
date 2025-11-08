@@ -14,6 +14,7 @@ export const createTicketSchema = z.object({
     errorMap: () => ({ message: "Type must be one of: BUG, IMPROVEMENT, TASK" }),
   }),
   assignee_id: z.string().uuid().nullable().optional(),
+  ai_enhanced: z.boolean().optional().default(false),
 });
 
 /**
@@ -75,6 +76,7 @@ export const updateTicketSchema = z
       })
       .optional(),
     assignee_id: z.string().uuid().nullable().optional(),
+    ai_enhanced: z.boolean().optional(),
   })
   .refine(
     (data) => {

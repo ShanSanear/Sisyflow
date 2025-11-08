@@ -1,8 +1,11 @@
-import React from "react";
-import type { FullTicketDTO, UserDTO, TicketModalMode } from "@/types";
+import React, { useState } from "react";
+import type { FullTicketDTO, UserDTO, TicketModalMode, AISuggestionSessionDTO } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
+import { AIAnalysisButton } from "@/components/ticket/AIAnalysisButton";
+import { AISuggestionsList } from "@/components/ticket/AISuggestionsList";
+import { AIRating } from "@/components/ticket/AIRating";
 
 interface TicketModalContentProps {
   formData: TicketFormData;
@@ -19,6 +22,7 @@ interface TicketModalContentProps {
   onEdit: () => void;
   onCancel: () => void;
   onAssigneeChange?: () => void;
+  onAISessionChange?: (session: AISuggestionSessionDTO | null, rating?: number | null) => void;
 }
 
 export const TicketModalContent: React.FC<TicketModalContentProps> = ({
@@ -36,7 +40,66 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   onEdit,
   onCancel,
   onAssigneeChange,
+  onAISessionChange,
 }) => {
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestionSessionDTO | null>(null);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [aiRating, setAiRating] = useState<number | null>(null);
+
+  const handleAIAnalysis = (suggestions: AISuggestionSessionDTO) => {
+    setAiSuggestions(suggestions);
+    setAiRating(null); // Reset rating when new suggestions arrive
+    onAISessionChange?.(suggestions, null);
+  };
+
+  const handleApplyInsert = (content: string, index: number) => {
+    if (!aiSuggestions) return;
+
+    // Update suggestion as applied
+    const updatedSuggestions = {
+      ...aiSuggestions,
+      suggestions: aiSuggestions.suggestions.map((suggestion, i) =>
+        i === index ? { ...suggestion, applied: true } : suggestion
+      ),
+    };
+    setAiSuggestions(updatedSuggestions);
+    onAISessionChange?.(updatedSuggestions, aiRating);
+
+    // Append content to description
+    const currentDescription = formData.description || "";
+    const separator = currentDescription ? "\n\n" : "";
+    const newDescription = currentDescription + separator + content;
+
+    onFormChange({
+      description: newDescription,
+      ai_enhanced: true, // Mark as AI enhanced
+    });
+  };
+
+  const handleApplyQuestion = (index: number) => {
+    if (!aiSuggestions) return;
+
+    // Update suggestion as applied
+    const updatedSuggestions = {
+      ...aiSuggestions,
+      suggestions: aiSuggestions.suggestions.map((suggestion, i) =>
+        i === index ? { ...suggestion, applied: true } : suggestion
+      ),
+    };
+    setAiSuggestions(updatedSuggestions);
+    onAISessionChange?.(updatedSuggestions, aiRating);
+
+    // Mark as AI enhanced
+    onFormChange({ ai_enhanced: true });
+  };
+
+  const handleAIRating = (rating: number) => {
+    setAiRating(rating);
+    onAISessionChange?.(aiSuggestions, rating);
+  };
+
+  const hasAppliedSuggestions = aiSuggestions?.suggestions.some((s) => s.applied) ?? false;
+
   if (loading) {
     return (
       <div data-testid="ticket-modal-loading" className="flex justify-center items-center py-8">
@@ -57,6 +120,30 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
         ticket={ticket}
         onAssigneeChange={onAssigneeChange}
       />
+
+      {/* AI Components - only show in create/edit modes */}
+      {(mode === "create" || mode === "edit") && (
+        <div className="space-y-4">
+          <AIAnalysisButton
+            title={formData.title}
+            description={formData.description}
+            onAnalyze={handleAIAnalysis}
+            isLoading={aiAnalysisLoading}
+            setIsLoading={setAiAnalysisLoading}
+          />
+
+          {aiSuggestions && (
+            <AISuggestionsList
+              suggestions={aiSuggestions.suggestions}
+              onApplyInsert={handleApplyInsert}
+              onApplyQuestion={handleApplyQuestion}
+            />
+          )}
+
+          {hasAppliedSuggestions && aiSuggestions && <AIRating rating={aiRating} onRate={handleAIRating} />}
+        </div>
+      )}
+
       <ActionButtons
         data-testid="ticket-modal-action-buttons"
         onCancel={onCancel}

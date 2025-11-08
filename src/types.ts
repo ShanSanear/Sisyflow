@@ -74,6 +74,7 @@ export interface CreateTicketCommand {
     id: string;
     username: string;
   } | null;
+  ai_enhanced?: boolean;
 }
 
 // UpdateTicketCommand: Used in PUT /tickets/:id (request)
@@ -82,6 +83,7 @@ export interface UpdateTicketCommand {
   description?: string;
   type?: Ticket["type"];
   assignee_id?: string | null;
+  ai_enhanced?: boolean;
 }
 
 // UpdateTicketStatusCommand: Used in PATCH /tickets/:id/status (request)
@@ -151,7 +153,7 @@ export interface AssigneeUserActionsProps {
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
 export interface AnalyzeTicketCommand {
   ticket_id?: string;
-  title: string;
+  title?: string;
   description?: string;
 }
 
@@ -164,16 +166,6 @@ export interface AISuggestionSessionDTO {
     content: string;
     applied: boolean;
   }[];
-}
-
-// RateAISuggestionCommand: Used in PUT /ai-suggestion-sessions/:id/rating (request)
-export interface RateAISuggestionCommand {
-  rating: number | null;
-}
-
-// UpdateAISuggestionSessionTicketIdCommand: Used in PATCH /ai-suggestion-sessions/:id/ticket-id (request)
-export interface UpdateAISuggestionSessionTicketIdCommand {
-  ticket_id: string;
 }
 
 // Project Documentation DTOs
