@@ -81,6 +81,21 @@ export const RegisterForm: React.FC = () => {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Username
+            </Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="Choose a username"
+              className="w-full"
+              {...register("username")}
+              disabled={isLoading}
+            />
+            {errors.username && <p className="text-sm text-red-600 dark:text-red-400">{errors.username.message}</p>}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Password
             </Label>

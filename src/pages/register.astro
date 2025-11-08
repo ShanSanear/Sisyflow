@@ -2,6 +2,7 @@
 import AuthLayout from "../layouts/AuthLayout.astro";
 import { RegisterForm } from "../components/auth/RegisterForm.tsx";
 import { createSupabaseServerInstance } from "../db/supabase.client.ts";
+import { isFeatureEnabled, FeatureFlag } from "../features";
 
 // Check if users already exist in the system using the count_profiles function
 const supabase = createSupabaseServerInstance({
@@ -15,8 +16,26 @@ const { data: userCount, error: countError } = await supabase.rpc("count_profile
 if (countError || (userCount && userCount > 0)) {
   return Astro.redirect("/login");
 }
+
+// Check feature flags for conditional content
+const aiAnalysisEnabled = isFeatureEnabled(FeatureFlag.AI_ANALYSIS);
 ---
 
 <AuthLayout title="Register">
   <RegisterForm client:load />
+
+  <!-- Feature flag demo: Show AI analysis status -->
+  <div class="mt-4 text-center text-sm text-gray-600">
+    {
+      aiAnalysisEnabled ? (
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          AI Analysis: Enabled
+        </span>
+      ) : (
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          AI Analysis: Disabled
+        </span>
+      )
+    }
+  </div>
 </AuthLayout>

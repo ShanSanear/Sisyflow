@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import type { UserDTO } from "../../types";
-import { getCurrentUserProfile } from "../api";
+import type { ProfileDTO } from "../../types";
+import { ApiError, getCurrentUserProfile } from "../api";
 
 /**
  * Hook do zarządzania stanem zalogowanego użytkownika
  * Abstrahuje logikę pobierania i cachowania danych użytkownika
  */
 export const useUser = () => {
-  const [user, setUser] = useState<UserDTO | null>(null);
+  const [user, setUser] = useState<ProfileDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -27,7 +27,7 @@ export const useUser = () => {
       const userData = await getCurrentUserProfile();
       setUser(userData);
     } catch (err) {
-      const error = err as Error;
+      const error = err as ApiError;
       setError(error);
 
       if (error.status === 401 || error.status === 404) {

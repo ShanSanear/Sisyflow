@@ -2,6 +2,7 @@
 import AuthLayout from "../layouts/AuthLayout.astro";
 import { LoginForm } from "../components/auth/LoginForm.tsx";
 import { createSupabaseServerInstance } from "../db/supabase.client.ts";
+import { isFeatureEnabled, FeatureFlag } from "../features";
 
 // Check if users exist in the system using the count_profiles function
 const supabase = createSupabaseServerInstance({
@@ -19,8 +20,26 @@ if (!countError && userCount === 0) {
 // Check if user was redirected from successful registration
 const url = new URL(Astro.request.url);
 const registrationSuccess = url.searchParams.get("registration") === "success";
+
+// Check feature flags for conditional content
+const aiAnalysisEnabled = isFeatureEnabled(FeatureFlag.AI_ANALYSIS);
 ---
 
 <AuthLayout title="Login">
   <LoginForm client:load {registrationSuccess} data-testid="login-page" />
+
+  <!-- Feature flag demo: Show AI analysis status -->
+  <div class="mt-4 text-center text-sm text-gray-600">
+    {
+      aiAnalysisEnabled ? (
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          AI Analysis: Enabled
+        </span>
+      ) : (
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          AI Analysis: Disabled
+        </span>
+      )
+    }
+  </div>
 </AuthLayout>

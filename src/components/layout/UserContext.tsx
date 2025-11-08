@@ -1,12 +1,12 @@
 import React, { createContext, type ReactNode } from "react";
 import { useUser } from "../../lib/hooks/useUser";
-import type { UserDTO } from "../../types";
+import type { ProfileDTO } from "../../types";
 
 /**
  * Interfejs kontekstu użytkownika
  */
 interface UserContextType {
-  user: UserDTO | null;
+  user: ProfileDTO | null;
   isAdmin: boolean;
   isLoading: boolean;
   error: Error | null;

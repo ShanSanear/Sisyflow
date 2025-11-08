@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
-import type { TicketModalMode, UserDTO, FullTicketDTO } from "@/types";
+import type { TicketModalMode, ProfileDTO, FullTicketDTO } from "@/types";
 import { TitleInput } from "@/components/TitleInput";
 import { DescriptionEditor } from "@/components/DescriptionEditor";
 import { TypeSelect } from "@/components/TypeSelect";
@@ -14,7 +14,7 @@ interface TicketFormProps {
   onChange: (data: Partial<TicketFormData>) => void;
   errors: Record<string, string>;
   mode: TicketModalMode;
-  user: UserDTO | null;
+  user: ProfileDTO | null;
   isAdmin: boolean;
   ticket?: FullTicketDTO;
   onAssigneeChange?: () => void;
