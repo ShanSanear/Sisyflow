@@ -9,6 +9,8 @@ import {
   createZodValidationResponse,
 } from "../../../lib/utils";
 import { isFeatureEnabled, FeatureFlag } from "../../../features";
+import { createOpenRouterService } from "@/lib/services/openRouter.service";
+import { createSupabaseServerInstance } from "@/db/supabase.client";
 
 export const prerender = false;
 
@@ -24,7 +26,7 @@ export const prerender = false;
  * Response: 200 OK - { session_id: string, suggestions: Array<{ type: "INSERT"|"QUESTION", content: string, applied: boolean }> }
  * Error Responses: 400 Bad Request, 401 Unauthorized, 500 Internal Server Error
  */
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
   try {
     // Sprawdź czy użytkownik jest uwierzytelniony
     if (!locals.user) {
@@ -39,13 +41,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
-
-    // TODO: Re-enable when OpenRouter API integration is needed for production
-    // const userId = locals.user.id;
-    // const supabase = createSupabaseServerInstance({
-    //   cookies,
-    //   headers: request.headers,
-    // });
 
     // Parsuj ciało żądania
     let requestData: z.infer<typeof analyzeAiSuggestionsSchema>;
@@ -78,46 +73,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let suggestions: { type: "INSERT" | "QUESTION"; content: string; applied: boolean }[];
 
     if (aiAnalysisEnabled) {
-      // TODO: Re-enable OpenRouter API integration when ready for production
-      // Currently using dummy data even when feature is enabled for easier testing
-      // const openRouterService = createOpenRouterService(supabase);
-      // const aiSuggestions = await openRouterService.getSuggestions({
-      //   title: requestData.title,
-      //   description: requestData.description,
-      //   userId: locals.user.id,
-      // });
-      // suggestions = aiSuggestions.map(s => ({ ...s, applied: false }));
-
-      // For now, return enhanced dummy data when feature is enabled
-      suggestions = [
-        {
-          type: "INSERT" as const,
-          content: "Consider adding more specific error messages to help users understand what went wrong.",
-          applied: false,
-        },
-        {
-          type: "QUESTION" as const,
-          content: "Have you checked the browser console for additional error details?",
-          applied: false,
-        },
-        {
-          type: "INSERT" as const,
-          content: "Add steps to reproduce the issue in the ticket description.",
-          applied: false,
-        },
-        {
-          type: "QUESTION" as const,
-          content: "Is this issue occurring on all browsers or specific ones?",
-          applied: false,
-        },
-        {
-          type: "INSERT" as const,
-          content: "Include information about the user's environment (OS, browser version, etc.).",
-          applied: false,
-        },
-      ];
+      const userId = locals.user.id;
+      const supabase = createSupabaseServerInstance({
+        cookies,
+        headers: request.headers,
+      });
+      const openRouterService = createOpenRouterService(supabase);
+      const aiSuggestions = await openRouterService.getSuggestions({
+        title: requestData.title,
+        description: requestData.description,
+        userId: userId,
+      });
+      suggestions = aiSuggestions.suggestions.map((s) => ({ ...s, applied: false }));
     } else {
-      // Return basic dummy data when AI analysis is disabled
       suggestions = [
         {
           type: "INSERT" as const,
