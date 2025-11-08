@@ -3,9 +3,9 @@ import {
   createAIErrorsService,
   AIErrorsServiceError,
   AIErrorsNotFoundError,
-} from "../../../lib/services/ai-errors.service";
+} from "../../../lib/services/aiErrors.service";
 import { createSupabaseServerInstance } from "../../../db/supabase.client";
-import { getAIErrorsQuerySchema } from "../../../lib/validation/schemas/ai-errors";
+import { getAIErrorsQuerySchema } from "../../../lib/validation/schemas/aiErrors";
 import {
   isZodError,
   createZodValidationResponse,
@@ -96,7 +96,7 @@ export const GET: APIRoute = async ({ request, locals, cookies, url }) => {
 
     // Pobierz błędy AI używając AIErrorsService
     const aiErrorsService = createAIErrorsService(supabase);
-    const { errors, pagination } = await aiErrorsService.getAIErrorsPaginated(
+    const { aiErrors: errors, pagination } = await aiErrorsService.getAIErrorsPaginated(
       validatedQuery.limit,
       validatedQuery.offset,
       validatedQuery.ticket_id
