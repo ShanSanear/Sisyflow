@@ -1,7 +1,7 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
 import type { AIErrorDTO, PaginationDTO, CreateAIErrorCommand } from "../../types";
 import { extractSupabaseError } from "../utils";
-import { createAIErrorSchema } from "../validation/schemas/ai-errors";
+import { createAIErrorSchema } from "../validation/schemas/aiErrors";
 
 type SupabaseType = ReturnType<typeof createSupabaseServerInstance>;
 
@@ -44,7 +44,7 @@ export class AIErrorsService {
     limit: number,
     offset: number,
     ticketId?: string
-  ): Promise<{ errors: AIErrorDTO[]; pagination: PaginationDTO }> {
+  ): Promise<{ aiErrors: AIErrorDTO[]; pagination: PaginationDTO }> {
     try {
       // Buduj zapytanie bazowe
       let query = this.supabase
@@ -67,7 +67,7 @@ export class AIErrorsService {
 
       if (!aiErrors) {
         return {
-          errors: [],
+          aiErrors: [],
           pagination: {
             page: Math.floor(offset / limit) + 1,
             limit,
@@ -95,7 +95,7 @@ export class AIErrorsService {
       };
 
       return {
-        errors,
+        aiErrors: errors,
         pagination,
       };
     } catch (error) {
