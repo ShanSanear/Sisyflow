@@ -3,14 +3,14 @@ import { FeatureFlag } from "./types";
 import { FEATURE_FLAG_CONFIG, getAllFeatureFlagOverrides } from "./config";
 
 /**
- * Get the current environment by mapping NODE_ENV to our environment types
+ * Get the current environment by mapping vite's MODE to our environment types
  * Maps: development → DEV, test → E2E, production → PROD
- * Defaults to 'DEV' for unknown NODE_ENV values and logs a warning
+ * Defaults to 'DEV' for unknown MODE values and logs a warning
  */
 function getCurrentEnvironment(): Environment {
-  const nodeEnv = process.env.NODE_ENV;
+  const mode = import.meta.env.MODE;
 
-  switch (nodeEnv) {
+  switch (mode) {
     case "development":
       return "DEV";
     case "test":
@@ -18,9 +18,7 @@ function getCurrentEnvironment(): Environment {
     case "production":
       return "PROD";
     default:
-      console.warn(
-        `Unknown NODE_ENV "${nodeEnv}". Defaulting to "DEV". Valid NODE_ENV values: development, test, production`
-      );
+      console.warn(`Unknown MODE "${mode}". Defaulting to "DEV". Valid MODE values: development, test, production`);
       return "DEV";
   }
 }
