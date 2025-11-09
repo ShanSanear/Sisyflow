@@ -238,7 +238,19 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 **Kroki:** Drag with mocked API fail.  
 **Oczekiwany:** Rollback to original column, toast "Failed to move", log error.
 
-### 4.3 Moduł Admin (P1)
+### 4.3 Moduł AI i Sugestii (P0)
+
+#### TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI (P0, E2E)
+
+**Warunki wstępne:** Zalogowany użytkownik, dostęp do OpenRouter.ai, modal tworzenia ticketa otwarty.  
+**Kroki:** 1. Wypełnij tytuł i opis ticketa. 2. Kliknij przycisk "Ask for AI suggestions". 3. Poczekaj na odpowiedź AI z sugestiami. 4. Użyj pierwszej sugestii typu INSERT (kliknij "Add"). 5. Zaznacz pierwszą sugestię typu QUESTION (checkbox). 6. Oceń sugestie na 4 gwiazdki. 7. Zapisz ticket.  
+**Oczekiwany:** Modal się zamyka. Ticket pojawia się w kolumnie "Open" na kanban board. Wykonywane są dwa POST requesty: pierwszy do `/api/tickets` (201) tworzący ticket, drugi do `/api/ai-suggestion-sessions` (201) zapisujący sesję AI z sugestiami, oceną i informacją o zastosowanych zmianach. Odpowiedź AI zawiera prawidłowe dane sugestii. Toast sukcesu dla obu operacji.  
+**Dane:** `{"title":"AI Assisted Ticket","description":"Test description","rating":4,"suggestions":[{"type":"INSERT","content":"test suggestion","applied":true},{"type":"QUESTION","content":"test question","applied":true}]}`  
+**Status:** ✅ Zaimplementowany w `tests-e2e/create-ai-assisted-ticket.spec.ts`  
+**Pokrycie:** Główny scenariusz AI + walidacja dwóch API requestów + asercje odpowiedzi + edge cases (puste pola, różne oceny)  
+**Ryzyko (Plan 1):** Błąd AI API → graceful degradation, toast error, możliwość zapisania ticketa bez AI. Network timeout → obsługa błędów. Walidacja spójność między frontend/backend AI session.
+
+### 4.4 Moduł Admin (P1)
 
 #### TC-ADMIN-001: Create user (P1, E2E)
 
@@ -303,7 +315,7 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 **Kroki:** a) Zwykły user wysyła PUT. b) Admin wysyła PUT z niepoprawnym body (pusty content, content > 20000 znaków).  
 **Oczekiwany:** a) 403 Forbidden. b) 400 Bad Request z komunikatem o błędzie walidacji.
 
-### 4.4 UI, Integracje, Performance (P2)
+### 4.5 UI, Integracje, Performance (P2)
 
 #### TC-UI-001: Keyboard nav Kanban (P2, Manual/E2E)
 
