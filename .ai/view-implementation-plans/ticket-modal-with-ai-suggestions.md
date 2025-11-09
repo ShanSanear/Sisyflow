@@ -25,7 +25,7 @@ Ten dokument zawiera elementy integracji AI (sugestie, analiza, rating, ai_enhan
 
 - Opis komponentu: Komponent oceny gwiazdkami 1-5 po zastosowaniu sugestii AI.
 - Główne elementy: Custom StarRating (5 Button variant="ghost" z StarIcon z lucide-react, clickable) lub Shadcn Rating.
-- Obsługiwane zdarzenia: onClick – set rating (1-5), PUT /api/ai-suggestion-sessions/:id/rating na submit. Opcjonalna (per prd.md US-012). Renderuj AIRating w modalu tylko jeśli ai_enhanced=true (tj. po zastosowaniu sugestii, przed submit ticketa). Na submit: if (rating) PUT /api/ai-suggestion-sessions/:sessionId/rating { rating }.
+- Obsługiwane zdarzenia: onClick – set rating (1-5). Opcjonalna (per prd.md US-012). Renderuj AIRating w modalu tylko jeśli ai_enhanced=true (tj. po zastosowaniu sugestii, przed submit ticketa). Rating jest zapisywany automatycznie podczas submit ticketa jako część AI suggestion session.
 - Obsługiwana walidacja: Opcjonalna, ale required jeśli suggestions applied.
 - Typy: `RateAISuggestionCommand` ({rating: number | null}).
 - Propsy: `{ rating: number | null, onRate: (rating: number) => void, sessionId: string }`. Zapisz z ticket submit.
@@ -42,8 +42,6 @@ Ten dokument zawiera elementy integracji AI (sugestie, analiza, rating, ai_enhan
 
 - **POST /api/ai-suggestion-sessions/analyze**: Analiza AI – request: `AnalyzeTicketCommand` ({title, description}), response: `AISuggestionSessionDTO` (200), z loading spinnerem (Openrouter.ai via backend, fetch project docs z GET /api/project-documentation). Backend w API route fetch docs via GET /api/project-documentation z Supabase, potem Openrouter.ai call; frontend: fetch('/api/ai-suggestion-sessions/analyze', { body: JSON.stringify({title, description}) }) z auto-auth via middleware.
 
-- **PUT /api/ai-suggestion-sessions/:id/rating**: Ocena – request: `{rating: number | null}`, brak response body (200).
-
 Calls via fetch do /api, error handling (log to ai_errors table via Supabase insert jeśli 500). Errors: W backendzie (API route): if (500) { await supabase.from('ai_errors').insert({ ... }); } Frontend: toast.error('AI error, contact admin if this error persists'); retry via button.
 
 ## 8. Interakcje użytkownika (AI Flow, Future)
@@ -58,7 +56,7 @@ Calls via fetch do /api, error handling (log to ai_errors table via Supabase ins
 0. Instalacja: `npm install lucide-react` (dla MagicWand icon w TicketCard, z ui-plan.md). Dodaj do Shadcn: `npx shadcn-ui@latest add checkbox` (dla QUESTION).
 1. Dodaj AIAnalysisButton po TicketForm (src/components/AIAnalysisButton.tsx).
 2. Implementuj AISuggestionsList i AIRating z logiką apply/rate (src/components/AISuggestionsList.tsx, src/components/AIRating.tsx).
-3. Integruj API calls (POST /api/ai-suggestion-sessions/analyze, PUT /api/ai-suggestion-sessions/:id/rating) z error handling (toast + insert to ai_errors).
+3. Integruj API calls (POST /api/ai-suggestion-sessions/analyze, POST /api/ai-suggestion-sessions) z error handling (toast + insert to ai_errors). Rating jest zapisywany automatycznie jako część AI session podczas submit ticketa.
 4. Ulepsz DescriptionEditor z Markdown preview (react-markdown).
 5. Dodaj do POST /api/tickets: { ..., ai_enhanced: true } jeśli applied.
 6. Uruchom `npm run lint:fix` i `npm run format`.
