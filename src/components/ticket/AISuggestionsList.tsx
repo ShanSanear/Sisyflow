@@ -28,6 +28,7 @@ export function AISuggestionsList({ suggestions, onApplyInsert, onApplyQuestion 
                   <div className="text-sm font-medium text-green-700 mb-2">Suggested addition to description:</div>
                   <div className="text-sm bg-gray-50 p-2 rounded whitespace-pre-wrap">{suggestion.content}</div>
                   <Button
+                    data-testid={`ai-suggestion-insert-button-${index}`}
                     size="sm"
                     onClick={() => onApplyInsert(suggestion.content, index)}
                     disabled={suggestion.applied}
@@ -42,6 +43,7 @@ export function AISuggestionsList({ suggestions, onApplyInsert, onApplyQuestion 
                   <div className="text-sm">{suggestion.content}</div>
                   <div className="flex items-center gap-2 mt-2">
                     <Checkbox
+                      data-testid={`ai-suggestion-question-checkbox-${index}`}
                       id={`question-${index}`}
                       checked={suggestion.applied}
                       onCheckedChange={() => onApplyQuestion(index)}

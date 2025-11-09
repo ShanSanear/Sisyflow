@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import type { AISuggestionSessionDTO } from "../../../types";
+import type { AISuggestionsResponse } from "../../../types";
 import { analyzeAiSuggestionsSchema } from "../../../lib/validation/ai.validation";
 import { z } from "zod";
 import {
@@ -100,14 +100,12 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       ];
     }
 
-    // Utwórz obiekt sesji AI bez zapisywania do bazy danych
-    const sessionResult: AISuggestionSessionDTO = {
-      session_id: crypto.randomUUID(), // Generuj tymczasowe ID sesji
-      ticket_id: requestData.ticket_id,
+    // Return only suggestions - session creation happens when saving
+    const suggestionsResult: AISuggestionsResponse = {
       suggestions,
     };
 
-    return new Response(JSON.stringify(sessionResult), {
+    return new Response(JSON.stringify(suggestionsResult), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

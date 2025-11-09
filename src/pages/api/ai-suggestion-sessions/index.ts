@@ -11,7 +11,6 @@ import {
 
 // Schema for saving AI suggestion session
 const saveAiSuggestionSessionSchema = z.object({
-  session_id: z.string().uuid(),
   ticket_id: z.string().uuid(),
   suggestions: z.array(
     z.object({
@@ -92,19 +91,15 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     // Utwórz serwis AI suggestion sessions
     const aiSuggestionSessionsService = createAISuggestionSessionsService(supabase);
 
-    // Zapisz sesję do bazy danych używając istniejącej metody createAISuggestionSession
-    const savedSession = await aiSuggestionSessionsService.createAISuggestionSession(
+    // Zapisz sesję do bazy danych używając nowej metody saveAISuggestionSession
+    const savedSession = await aiSuggestionSessionsService.saveAISuggestionSession(
       {
         ticket_id,
+        suggestions,
+        rating,
       },
-      suggestions,
       userId
     );
-
-    // Jeśli użytkownik ocenił sugestie, zaktualizuj ocenę
-    if (rating !== undefined) {
-      await aiSuggestionSessionsService.rateAISuggestionSession(savedSession.session_id, rating, userId);
-    }
 
     return new Response(JSON.stringify(savedSession), {
       status: 201,

@@ -3,10 +3,9 @@ export {
   aiSuggestionSchema,
   aiResponseSchema,
   analyzeAiSuggestionsSchema,
-  createAiSuggestionSessionCommandSchema,
-  rateAiSuggestionSchema,
+  saveAiSuggestionSessionSchema,
   type AISuggestion,
   type AIResponse,
   type AnalyzeAiSuggestionsRequest,
-  type CreateAiSuggestionSessionCommand,
+  type SaveAiSuggestionSessionCommand,
 } from "./schemas/ai";

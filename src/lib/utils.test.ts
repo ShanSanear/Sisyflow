@@ -78,6 +78,8 @@ describe("utils", () => {
           expect(data.message).toBe("Invalid request data");
           expect(Array.isArray(data.details)).toBe(true);
           expect(data.details.length).toBeGreaterThan(0);
+          // Check that details include field path
+          expect(data.details[0]).toContain("name:");
         }
       }
     });
@@ -91,6 +93,36 @@ describe("utils", () => {
           const response = createZodValidationResponse(zodError, "Custom validation failed");
           const data = await response.json();
           expect(data.message).toBe("Custom validation failed");
+          // Check that details include field path for top-level validation
+          expect(data.details[0]).toContain("unknown field:");
+        }
+      }
+    });
+
+    it("should format field paths correctly in error messages", async () => {
+      const schema = z.object({
+        title: z.string().min(1),
+        user: z.object({
+          name: z.string().min(1),
+          age: z.number().min(18),
+        }),
+      });
+      try {
+        schema.parse({
+          title: "", // invalid
+          user: {
+            name: "", // invalid
+            age: 16, // invalid
+          },
+        });
+      } catch (zodError) {
+        if (isZodError(zodError)) {
+          const response = createZodValidationResponse(zodError);
+          const data = await response.json();
+
+          expect(data.details).toContain("title: String must contain at least 1 character(s)");
+          expect(data.details).toContain("user.name: String must contain at least 1 character(s)");
+          expect(data.details).toContain("user.age: Number must be greater than or equal to 18");
         }
       }
     });

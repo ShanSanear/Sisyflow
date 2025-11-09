@@ -10,6 +10,12 @@ export class TicketModalPOM {
   readonly assigneeSelect: Locator;
   readonly assigneeSelectTrigger: Locator;
   readonly assigneeSelectContent: Locator;
+  readonly aiAnalysisButton: Locator;
+  readonly aiRatingStar1: Locator;
+  readonly aiRatingStar2: Locator;
+  readonly aiRatingStar3: Locator;
+  readonly aiRatingStar4: Locator;
+  readonly aiRatingStar5: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -21,6 +27,12 @@ export class TicketModalPOM {
     this.assigneeSelect = page.getByTestId("assignee-section-admin-select");
     this.assigneeSelectTrigger = page.getByTestId("assignee-section-admin-select-trigger");
     this.assigneeSelectContent = page.getByTestId("assignee-section-admin-select-content");
+    this.aiAnalysisButton = page.getByTestId("ai-analysis-button");
+    this.aiRatingStar1 = page.getByTestId("ai-rating-star-1");
+    this.aiRatingStar2 = page.getByTestId("ai-rating-star-2");
+    this.aiRatingStar3 = page.getByTestId("ai-rating-star-3");
+    this.aiRatingStar4 = page.getByTestId("ai-rating-star-4");
+    this.aiRatingStar5 = page.getByTestId("ai-rating-star-5");
   }
 
   async waitForModal(): Promise<void> {
@@ -59,5 +71,43 @@ export class TicketModalPOM {
 
   async getSelectedAssignee(): Promise<string | null> {
     return await this.assigneeSelectTrigger.textContent();
+  }
+
+  async clickAIAnalysis(): Promise<void> {
+    await this.aiAnalysisButton.click();
+  }
+
+  async rateAI(rating: 1 | 2 | 3 | 4 | 5): Promise<void> {
+    const starMap = {
+      1: this.aiRatingStar1,
+      2: this.aiRatingStar2,
+      3: this.aiRatingStar3,
+      4: this.aiRatingStar4,
+      5: this.aiRatingStar5,
+    };
+    await starMap[rating].click();
+  }
+
+  getAISuggestionInsertButton(index: number): Locator {
+    return this.page.getByTestId(`ai-suggestion-insert-button-${index}`);
+  }
+
+  async clickAISuggestionInsertButton(index: number): Promise<void> {
+    const button = this.getAISuggestionInsertButton(index);
+    await button.click();
+  }
+
+  getAISuggestionQuestionCheckbox(index: number): Locator {
+    return this.page.getByTestId(`ai-suggestion-question-checkbox-${index}`);
+  }
+
+  async clickAISuggestionQuestionCheckbox(index: number): Promise<void> {
+    const checkbox = this.getAISuggestionQuestionCheckbox(index);
+    await checkbox.click();
+  }
+
+  async waitForAIAnalysisButtonToBeEnabled(): Promise<void> {
+    await this.aiAnalysisButton.waitFor({ state: "visible" });
+    await this.aiAnalysisButton.waitFor({ timeout: 10000 });
   }
 }

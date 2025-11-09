@@ -8,6 +8,9 @@ import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
 
+// Ensure NODE_ENV is set to 'test' for E2E tests
+process.env.NODE_ENV = "test";
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
