@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { AISuggestionSessionDTO } from "@/types";
+import type { AISuggestionsResponse } from "@/types";
 import { analyzeAiSuggestionsSchema } from "@/lib/validation/ai.validation";
+import { analyzeTicket } from "@/lib/api/aiSuggestionSession";
+import { ApiError } from "@/lib/api";
 
 interface AIAnalysisButtonProps {
   title: string;
   description?: string;
-  onAnalyze: (suggestions: AISuggestionSessionDTO) => void;
+  onAnalyze: (suggestions: AISuggestionsResponse) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
@@ -35,25 +37,13 @@ export function AIAnalysisButton({ title, description, onAnalyze, isLoading, set
         return;
       }
 
-      const requestBody = validationResult.data;
-
-      const response = await fetch("/api/ai-suggestion-sessions/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const suggestions: AISuggestionSessionDTO = await response.json();
+      const suggestions = await analyzeTicket(validationResult.data);
       onAnalyze(suggestions);
     } catch (error) {
       console.error("AI analysis failed:", error);
-      toast.error("AI analysis failed. Contact admin if this error persists.");
+      const message =
+        error instanceof ApiError ? error.message : "AI analysis failed. Contact admin if this error persists.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

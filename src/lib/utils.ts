@@ -26,7 +26,11 @@ export function createZodValidationResponse(zodError: z.ZodError, message = "Inv
     JSON.stringify({
       error: "Validation Error",
       message,
-      details: zodError.issues.map((issue) => issue.message),
+      details: zodError.issues.map((issue) => {
+        // Create more informative error messages by including the field path
+        const fieldPath = issue.path.length > 0 ? issue.path.join(".") : "unknown field";
+        return `${fieldPath}: ${issue.message}`;
+      }),
     }),
     {
       status: 400,

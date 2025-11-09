@@ -21,26 +21,18 @@ export const aiResponseSchema = z.object({
  * Schema for analyzing AI suggestions request
  */
 export const analyzeAiSuggestionsSchema = z.object({
-  ticket_id: z.string().uuid("Invalid ticket ID format - must be a valid UUID").optional(),
   title: createTicketSchema.shape.title,
   description: createTicketSchema.shape.description,
 });
 
 /**
- * Schema for rating AI suggestion session
+ * Schema for saving AI suggestion session (internal use)
+ * Used when persisting existing AI suggestion sessions to the database
  */
-export const rateAiSuggestionSchema = z.object({
-  rating: z.number().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5"),
-});
-
-/**
- * Schema for creating AI suggestion session command (internal use)
- * Used when saving AI suggestion sessions to the database (requires ticket_id for association)
- */
-export const createAiSuggestionSessionCommandSchema = z.object({
+export const saveAiSuggestionSessionSchema = z.object({
   ticket_id: z.string().uuid("Invalid ticket ID format"),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  suggestions: z.array(aiSuggestionSchema).min(1, "At least one suggestion is required"),
+  rating: z.number().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5").optional(),
 });
 
 /**
@@ -49,4 +41,4 @@ export const createAiSuggestionSessionCommandSchema = z.object({
 export type AISuggestion = z.infer<typeof aiSuggestionSchema>;
 export type AIResponse = z.infer<typeof aiResponseSchema>;
 export type AnalyzeAiSuggestionsRequest = z.infer<typeof analyzeAiSuggestionsSchema>;
-export type CreateAiSuggestionSessionCommand = z.infer<typeof createAiSuggestionSessionCommandSchema>;
+export type SaveAiSuggestionSessionCommand = z.infer<typeof saveAiSuggestionSessionSchema>;

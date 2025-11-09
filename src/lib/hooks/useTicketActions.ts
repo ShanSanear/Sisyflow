@@ -6,7 +6,7 @@ import type {
   TicketModalMode,
   CreateTicketCommand,
   UpdateTicketCommand,
-  AISuggestionSessionDTO,
+  AISuggestionsResponse,
 } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
 import { createTicket, updateTicket, TicketValidationError, TicketForbiddenError } from "../api";
@@ -17,10 +17,8 @@ interface UseTicketActionsProps {
   mode: TicketModalMode;
   ticketId?: string;
   ticket?: FullTicketDTO;
-  aiSession?: {
-    session: AISuggestionSessionDTO;
-    rating?: number | null;
-  } | null;
+  aiSuggestions?: AISuggestionsResponse | null;
+  aiRating?: number | null;
   onSave: (ticket: FullTicketDTO) => void;
   onClose: () => void;
   onFormReset: (data?: Partial<TicketFormData>) => void;
@@ -33,7 +31,8 @@ export const useTicketActions = ({
   mode,
   ticketId,
   ticket,
-  aiSession,
+  aiSuggestions,
+  aiRating,
   onSave,
   onClose,
   onFormReset,
@@ -105,13 +104,12 @@ export const useTicketActions = ({
         }
 
         // Save AI suggestion session if present
-        if (aiSession?.session) {
+        if (aiSuggestions) {
           try {
             await saveAISuggestionSession({
-              session_id: aiSession.session.session_id,
               ticket_id: savedTicket.id, // Use the newly created/updated ticket ID
-              suggestions: aiSession.session.suggestions,
-              rating: aiSession.rating || undefined,
+              suggestions: aiSuggestions.suggestions,
+              rating: aiRating || undefined,
             });
           } catch (aiError) {
             // Log AI session save error but don't fail the ticket save
@@ -142,7 +140,7 @@ export const useTicketActions = ({
         toast.error(error instanceof Error ? error.message : "Failed to save ticket");
       }
     },
-    [user, mode, ticketId, ticket, aiSession, isAssigneeModified, onSave, onClose]
+    [user, mode, ticketId, ticket, aiSuggestions, aiRating, isAssigneeModified, onSave, onClose]
   );
 
   // Handler do przełączania w tryb edycji

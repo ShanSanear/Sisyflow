@@ -152,12 +152,20 @@ export interface AssigneeUserActionsProps {
 // AI Suggestion DTOs
 // AnalyzeTicketCommand: Used in POST /ai-suggestion-sessions/analyze (request)
 export interface AnalyzeTicketCommand {
-  ticket_id?: string;
   title?: string;
   description?: string;
 }
 
-// AISuggestionSessionDTO: Used in POST /ai-suggestion-sessions/analyze (response)
+// AISuggestionsResponse: Used in POST /ai-suggestion-sessions/analyze (response)
+export interface AISuggestionsResponse {
+  suggestions: {
+    type: "INSERT" | "QUESTION";
+    content: string;
+    applied: boolean;
+  }[];
+}
+
+// AISuggestionSessionDTO: Used in POST /ai-suggestion-sessions (response)
 export interface AISuggestionSessionDTO {
   session_id: string;
   ticket_id?: string | null;
@@ -166,6 +174,7 @@ export interface AISuggestionSessionDTO {
     content: string;
     applied: boolean;
   }[];
+  rating?: number | null;
 }
 
 // Project Documentation DTOs

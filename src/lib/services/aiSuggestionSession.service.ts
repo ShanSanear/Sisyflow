@@ -1,11 +1,6 @@
 import { createSupabaseServerInstance } from "../../db/supabase.client";
-import type { AISuggestionSessionDTO, AnalyzeTicketCommand } from "../../types";
-import {
-  createAiSuggestionSessionCommandSchema,
-  rateAiSuggestionSchema,
-  type AISuggestion,
-} from "../validation/schemas/ai";
-import { createTicketService } from "./ticket.service";
+import type { AISuggestionSessionDTO } from "../../types";
+import { saveAiSuggestionSessionSchema, type AISuggestion } from "../validation/schemas/ai";
 import { POSTGREST_ERROR_CODES } from "../constants";
 import { extractSupabaseError } from "../utils";
 import { z } from "zod";
@@ -49,65 +44,6 @@ export class TicketNotFoundError extends AISuggestionSessionsServiceError {
  */
 export class AISuggestionSessionsService {
   constructor(private supabase: SupabaseType) {}
-
-  /**
-   * Tworzy nową sesję sugestii AI wraz z sugestiami
-   * Wykonuje operację w transakcji aby zapewnić atomowość
-   *
-   * @param command Dane analizy ticketu zawierające tytuł i opcjonalny opis
-   * @param suggestions Sugestie wygenerowane przez AI jako tablica AISuggestion
-   * @param userId ID użytkownika tworzącego sesję
-   * @returns Pełny obiekt sesji sugestii AI
-   * @throws Error jeśli walidacja nie powiedzie się lub wystąpi błąd bazy danych
-   */
-  async createAISuggestionSession(
-    command: AnalyzeTicketCommand,
-    suggestions: AISuggestion[],
-    userId: string
-  ): Promise<AISuggestionSessionDTO> {
-    // Walidacja danych wejściowych
-    const validatedCommand = createAiSuggestionSessionCommandSchema.parse(command);
-
-    try {
-      // Sprawdź czy ticket istnieje używając ticket service
-      const ticketService = createTicketService(this.supabase);
-      await ticketService.getTicketById(validatedCommand.ticket_id);
-
-      // Utwórz sesję sugestii AI
-      const { data: session, error: sessionError } = await this.supabase
-        .from("ai_suggestion_sessions")
-        .insert({
-          ticket_id: validatedCommand.ticket_id,
-          user_id: userId,
-          suggestions: suggestions,
-        })
-        .select()
-        .single();
-
-      if (sessionError) {
-        throw extractSupabaseError(sessionError, "Failed to create AI suggestion session");
-      }
-
-      // Formatuj odpowiedź zgodnie z AISuggestionSessionDTO
-      const result: AISuggestionSessionDTO = {
-        session_id: session.id,
-        ticket_id: session.ticket_id,
-        suggestions: suggestions,
-      };
-
-      return result;
-    } catch (error) {
-      // Przekaż błędy walidacji Zod bez zmian
-      if (error instanceof z.ZodError) {
-        throw error;
-      }
-
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new AISuggestionSessionsServiceError(
-        `Failed to create AI suggestion session: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
-  }
 
   /**
    * Pobiera sesję sugestii AI wraz z danymi ticketu i użytkownika
@@ -170,85 +106,59 @@ export class AISuggestionSessionsService {
   }
 
   /**
-   * Aktualizuje ocenę sesji sugestii AI
-   * Sprawdza uprawnienia użytkownika przed aktualizacją
+   * Saves an existing AI suggestion session to the database
+   * Used when persisting sessions that were created during ticket analysis
    *
-   * @param sessionId ID sesji do aktualizacji
-   * @param rating Ocena sesji (1-5)
-   * @param userId ID użytkownika wykonującego operację
-   * @returns Zaktualizowany obiekt sesji sugestii AI
-   * @throws Error jeśli sesja nie istnieje, użytkownik nie ma uprawnień lub wystąpi błąd bazy danych
+   * @param sessionData Session data including ticket_id, suggestions, and optional rating
+   * @param userId ID użytkownika zapisującego sesję
+   * @returns Saved AI suggestion session data
+   * @throws Error jeśli wystąpi błąd bazy danych
    */
-  async rateAISuggestionSession(sessionId: string, rating: number, userId: string): Promise<AISuggestionSessionDTO> {
-    // Walidacja danych wejściowych
-    const validatedRating = rateAiSuggestionSchema.shape.rating.parse(rating);
+  async saveAISuggestionSession(
+    sessionData: {
+      ticket_id: string;
+      suggestions: AISuggestion[];
+      rating?: number;
+    },
+    userId: string
+  ): Promise<AISuggestionSessionDTO> {
+    // Validate input data
+    const validatedSessionData = saveAiSuggestionSessionSchema.parse(sessionData);
 
     try {
-      // Najpierw sprawdź czy sesja istnieje i pobierz jej dane
-      const { data: existingSession, error: fetchError } = await this.supabase
+      const { data: session, error: sessionError } = await this.supabase
         .from("ai_suggestion_sessions")
-        .select("id, user_id")
-        .eq("id", sessionId)
-        .single();
-
-      if (fetchError || !existingSession) {
-        throw new AISuggestionSessionNotFoundError("AI suggestion session not found");
-      }
-
-      // Sprawdź uprawnienia: użytkownik musi być właścicielem sesji
-      if (existingSession.user_id !== userId) {
-        throw new AISuggestionSessionAccessDeniedError(
-          "Access denied: You can only rate your own AI suggestion sessions"
-        );
-      }
-
-      // Aktualizuj ocenę sesji
-      const { error: updateError } = await this.supabase
-        .from("ai_suggestion_sessions")
-        .update({
-          rating: validatedRating,
+        .insert({
+          ticket_id: validatedSessionData.ticket_id,
+          user_id: userId,
+          suggestions: validatedSessionData.suggestions,
+          rating: validatedSessionData.rating || null,
         })
-        .eq("id", sessionId);
-
-      if (updateError) {
-        throw extractSupabaseError(updateError, "Failed to update AI suggestion session rating");
-      }
-
-      // Pobierz zaktualizowane dane sesji
-      const { data: updatedSession, error: refetchError } = await this.supabase
-        .from("ai_suggestion_sessions")
-        .select("id, ticket_id, suggestions")
-        .eq("id", sessionId)
+        .select()
         .single();
 
-      if (refetchError || !updatedSession) {
-        throw new AISuggestionSessionsServiceError(
-          `Failed to fetch updated AI suggestion session: ${refetchError?.message || "Unknown error"}`
-        );
+      if (sessionError) {
+        throw extractSupabaseError(sessionError, "Failed to save AI suggestion session");
       }
 
-      // Formatuj odpowiedź zgodnie z AISuggestionSessionDTO
+      // Format response according to AISuggestionSessionDTO
       const result: AISuggestionSessionDTO = {
-        session_id: updatedSession.id,
-        ticket_id: updatedSession.ticket_id,
-        suggestions: updatedSession.suggestions as AISuggestionSessionDTO["suggestions"],
+        session_id: session.id,
+        ticket_id: session.ticket_id,
+        suggestions: validatedSessionData.suggestions,
+        rating: session.rating,
       };
 
       return result;
     } catch (error) {
-      // Przekaż błędy walidacji Zod bez zmian
+      // Pass through Zod errors unchanged
       if (error instanceof z.ZodError) {
         throw error;
       }
 
-      // Przekaż specyficzne błędy serwisu bez zmian
-      if (error instanceof AISuggestionSessionsServiceError) {
-        throw error;
-      }
-
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
+      // Wrap other errors in service-specific error
       throw new AISuggestionSessionsServiceError(
-        `Failed to rate AI suggestion session: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to save AI suggestion session: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
   }

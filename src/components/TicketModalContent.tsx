@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { FullTicketDTO, ProfileDTO, TicketModalMode, AISuggestionSessionDTO } from "@/types";
+import type { FullTicketDTO, ProfileDTO, TicketModalMode, AISuggestionsResponse } from "@/types";
 import type { TicketFormData } from "@/lib/validation/schemas/ticket";
 import { TicketForm } from "@/components/TicketForm";
 import { ActionButtons } from "@/components/ActionButtons";
@@ -22,7 +22,7 @@ interface TicketModalContentProps {
   onEdit: () => void;
   onCancel: () => void;
   onAssigneeChange?: () => void;
-  onAISessionChange?: (session: AISuggestionSessionDTO | null, rating?: number | null) => void;
+  onAISessionChange?: (suggestions: AISuggestionsResponse | null, rating?: number | null) => void;
 }
 
 export const TicketModalContent: React.FC<TicketModalContentProps> = ({
@@ -42,28 +42,26 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   onAssigneeChange,
   onAISessionChange,
 }) => {
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestionSessionDTO | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsResponse | null>(null);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [aiRating, setAiRating] = useState<number | null>(null);
 
-  const handleAIAnalysis = (suggestions: AISuggestionSessionDTO) => {
+  const handleAIAnalysis = (suggestions: AISuggestionsResponse) => {
     setAiSuggestions(suggestions);
     setAiRating(null); // Reset rating when new suggestions arrive
-    onAISessionChange?.(suggestions, null);
+    onAISessionChange?.(suggestions, null); // Notify parent that suggestions are available
   };
 
   const handleApplyInsert = (content: string, index: number) => {
     if (!aiSuggestions) return;
 
     // Update suggestion as applied
-    const updatedSuggestions = {
-      ...aiSuggestions,
+    const updatedSuggestions: AISuggestionsResponse = {
       suggestions: aiSuggestions.suggestions.map((suggestion, i) =>
         i === index ? { ...suggestion, applied: true } : suggestion
       ),
     };
     setAiSuggestions(updatedSuggestions);
-    onAISessionChange?.(updatedSuggestions, aiRating);
 
     // Append content to description
     const currentDescription = formData.description || "";
@@ -80,14 +78,12 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
     if (!aiSuggestions) return;
 
     // Update suggestion as applied
-    const updatedSuggestions = {
-      ...aiSuggestions,
+    const updatedSuggestions: AISuggestionsResponse = {
       suggestions: aiSuggestions.suggestions.map((suggestion, i) =>
         i === index ? { ...suggestion, applied: true } : suggestion
       ),
     };
     setAiSuggestions(updatedSuggestions);
-    onAISessionChange?.(updatedSuggestions, aiRating);
 
     // Mark as AI enhanced
     onFormChange({ ai_enhanced: true });
@@ -95,7 +91,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
 
   const handleAIRating = (rating: number) => {
     setAiRating(rating);
-    onAISessionChange?.(aiSuggestions, rating);
+    onAISessionChange?.(aiSuggestions, rating); // Notify parent that rating changed
   };
 
   const hasAppliedSuggestions = aiSuggestions?.suggestions.some((s) => s.applied) ?? false;

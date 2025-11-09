@@ -1,5 +1,5 @@
 import { apiPost, BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, type ApiError } from "./base";
-import type { AnalyzeTicketCommand, AISuggestionSessionDTO } from "@/types";
+import type { AnalyzeTicketCommand, AISuggestionsResponse, AISuggestionSessionDTO } from "@/types";
 import type { AISuggestion } from "@/lib/validation/schemas/ai";
 
 /**
@@ -67,16 +67,16 @@ function transformAISuggestionSessionsApiError(error: ApiError): never {
 }
 
 /**
- * Analyzes a ticket and generates AI-powered suggestions
- * @param command - Ticket analysis command containing title and optional description
- * @returns Promise with AI suggestion session data
+ * Analyzes ticket content and generates AI-powered suggestions
+ * @param command - Analysis command containing title and optional description
+ * @returns Promise with AI suggestions
  * @throws AISuggestionSessionsValidationError if command data is invalid
  * @throws AISuggestionSessionsForbiddenError if user doesn't have permission
  * @throws UnauthorizedError if user is not authenticated
  */
-export async function analyzeTicket(command: AnalyzeTicketCommand): Promise<AISuggestionSessionDTO> {
+export async function analyzeTicket(command: AnalyzeTicketCommand): Promise<AISuggestionsResponse> {
   try {
-    const response = await apiPost<AISuggestionSessionDTO>("/api/ai-suggestion-sessions/analyze", command);
+    const response = await apiPost<AISuggestionsResponse>("/api/ai-suggestion-sessions/analyze", command);
     return response.data;
   } catch (error) {
     transformAISuggestionSessionsApiError(error as ApiError);
@@ -92,7 +92,6 @@ export async function analyzeTicket(command: AnalyzeTicketCommand): Promise<AISu
  * @throws UnauthorizedError if user is not authenticated
  */
 export async function saveAISuggestionSession(sessionData: {
-  session_id: string;
   ticket_id: string;
   suggestions: AISuggestion[];
   rating?: number;
