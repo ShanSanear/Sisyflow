@@ -60,7 +60,13 @@ export function AIAnalysisButton({ title, description, onAnalyze, isLoading, set
   };
 
   return (
-    <Button onClick={handleAnalyze} disabled={isLoading} variant="outline" className="w-full">
+    <Button
+      data-testid="ai-analysis-button"
+      onClick={handleAnalyze}
+      disabled={isLoading}
+      variant="outline"
+      className="w-full"
+    >
       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       Ask for AI suggestions
     </Button>

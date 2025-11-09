@@ -21,7 +21,14 @@ export function AIRating({ rating, onRate }: AIRatingProps) {
       <CardContent>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <Button key={star} variant="ghost" size="sm" onClick={() => handleRate(star)} className="p-1 h-auto">
+            <Button
+              key={star}
+              data-testid={`ai-rating-star-${star}`}
+              variant="ghost"
+              size="sm"
+              onClick={() => handleRate(star)}
+              className="p-1 h-auto"
+            >
               <Star
                 className={`h-5 w-5 ${rating && star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
               />
