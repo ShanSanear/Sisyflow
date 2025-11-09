@@ -98,12 +98,12 @@
   },
   "lint-staged": {
     "*.{ts,tsx,astro}": [
-      "eslint --fix"
+      "eslint --fix",
+      "npm run type-check"
     ],
     "*.{json,css,md}": [
       "prettier --write"
     ],
-    ".*": "npm run type-check",
     "*.astro": "astro check"
   }
 }

@@ -33,3 +33,5 @@ pnpm-debug.log*
 
 # Playwright authentication state
 playwright/.auth/
+
+./wrangler/tmp/*
