@@ -59,7 +59,7 @@ export function AIAnalysisButton({ title, description, onAnalyze, isLoading, set
     >
       {isLoading && <Loader2 data-testid="ai-analysis-button-loading" className="mr-2 h-4 w-4 animate-spin" />}
       <Wand2 />
-      Ask for AI suggestions
+      <span data-testid="ai-analysis-button-text">Ask for AI suggestions</span>
     </Button>
   );
 }
