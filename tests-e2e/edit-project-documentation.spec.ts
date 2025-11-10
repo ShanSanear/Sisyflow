@@ -62,13 +62,23 @@ Wersja zaktualizowana automatycznie przez test E2E.
     await documentation.waitForDocumentationToLoad();
     await documentation.clearDocumentationContent();
     await documentation.typeDocumentationContent(newDocumentationContent);
+
+    // Przechwyć odpowiedź API, która powinna być pomyślna
+    const updateResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/project-documentation") &&
+        response.status() === 200 &&
+        response.request().method() === "PUT"
+    );
+
     await documentation.clickSaveButton();
     await documentation.waitForSavingState();
 
+    // Poczekaj na odpowiedź API
+    await updateResponsePromise;
+
     // Krok 4: Upewnij się, że toast message się pojawia
-    // TODO toast container is tricky to handle, so we'll skip it for now
-    // expect(await documentation.isToastContainerVisible()).toBe(true);
-    // expect(await documentation.isSuccessToastVisible()).toBe(true);
+    await documentation.expectSuccessToastToBeVisible("Project documentation updated successfully");
 
     // Dodatkowa weryfikacja: zawartość została zaktualizowana
     const currentContent = await documentation.getDocumentationContent();

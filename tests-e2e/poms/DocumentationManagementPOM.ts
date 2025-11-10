@@ -1,4 +1,5 @@
 import type { Page, Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 export class DocumentationManagementPOM {
   readonly page: Page;
@@ -12,7 +13,7 @@ export class DocumentationManagementPOM {
   readonly documentationCharCounter: Locator;
   readonly documentationSaveHint: Locator;
   readonly documentationSaveBar: Locator;
-  // readonly toastContainer: Locator;
+  readonly toastContainer: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,6 +31,7 @@ export class DocumentationManagementPOM {
     // TODO this one is just tricky to handle, so we'll skip it for now
     // Trying to <div data-testid="toast-container"> as a wrapper also doesn't work properly
     // this.toastContainer = page.getByTestId("toast-container").first().locator(".toaster");
+    this.toastContainer = this.page.locator("[data-sonner-toast]").first();
   }
 
   /**
@@ -155,37 +157,11 @@ export class DocumentationManagementPOM {
     await errorButton.waitFor({ state: "visible" });
   }
 
-  /**
-   * Check if toast container is visible
-   */
-  // async isToastContainerVisible(): Promise<boolean> {
-  //   return await this.toastContainer.isVisible();
-  // }
-
-  /**
-   * Wait for success toast to appear
-   */
-  // async waitForSuccessToast(): Promise<void> {
-  //   await this.toastContainer.waitFor({ state: "visible" });
-  //   // Wait for toast to contain success message
-  //   await this.page.waitForTimeout(1000); // Allow time for toast content to load
-  // }
-
-  /**
-   * Get toast content text
-   */
-  // async getToastText(): Promise<string> {
-  //   return (await this.toastContainer.textContent()) || "";
-  // }
-
-  /**
-   * Check if success toast is visible with expected text
-   */
-  // async isSuccessToastVisible(expectedText = "Project documentation updated successfully"): Promise<boolean> {
-  //   if (!(await this.toastContainer.isVisible())) {
-  //     return false;
-  //   }
-  //   const toastText = await this.getToastText();
-  //   return toastText.includes(expectedText);
-  // }
+  async expectSuccessToastToBeVisible(message?: string): Promise<void> {
+    const toast = this.page.locator('[data-sonner-toast][data-type="success"]');
+    await expect(toast).toBeVisible();
+    if (message) {
+      await expect(toast).toContainText(message);
+    }
+  }
 }
