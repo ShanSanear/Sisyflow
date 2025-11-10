@@ -146,6 +146,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
             />
           </div>
           <div className="border-t bg-background p-6">
+            {hasAppliedSuggestions && <AIRating rating={aiRating} onRate={handleAIRating} />}
             <ActionButtons
               data-testid="ticket-modal-action-buttons"
               onCancel={onCancel}
@@ -191,14 +192,14 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
                 />
 
                 {aiSuggestions && (
-                  <AISuggestionsList
-                    suggestions={aiSuggestions.suggestions}
-                    onApplyInsert={handleApplyInsert}
-                    onApplyQuestion={handleApplyQuestion}
-                  />
+                  <div>
+                    <AISuggestionsList
+                      suggestions={aiSuggestions.suggestions}
+                      onApplyInsert={handleApplyInsert}
+                      onApplyQuestion={handleApplyQuestion}
+                    />
+                  </div>
                 )}
-
-                {hasAppliedSuggestions && aiSuggestions && <AIRating rating={aiRating} onRate={handleAIRating} />}
               </div>
             </div>
           </ResizablePanel>
