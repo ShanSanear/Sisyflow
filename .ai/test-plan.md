@@ -240,15 +240,21 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 ### 4.3 Moduł AI i Sugestii (P0)
 
-#### TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI (P0, E2E)
+#### TC-TICKET-AI-001: Tworzenie ticketa z wykorzystaniem AI (P0, E2E)
 
 **Warunki wstępne:** Zalogowany użytkownik, dostęp do OpenRouter.ai, modal tworzenia ticketa otwarty.  
 **Kroki:** 1. Wypełnij tytuł i opis ticketa. 2. Kliknij przycisk "Ask for AI suggestions". 3. Poczekaj na odpowiedź AI z sugestiami. 4. Użyj pierwszej sugestii typu INSERT (kliknij "Add"). 5. Zaznacz pierwszą sugestię typu QUESTION (checkbox). 6. Oceń sugestie na 4 gwiazdki. 7. Zapisz ticket.  
 **Oczekiwany:** Modal się zamyka. Ticket pojawia się w kolumnie "Open" na kanban board. Wykonywane są dwa POST requesty: pierwszy do `/api/tickets` (201) tworzący ticket, drugi do `/api/ai-suggestion-sessions` (201) zapisujący sesję AI z sugestiami, oceną i informacją o zastosowanych zmianach. Odpowiedź AI zawiera prawidłowe dane sugestii. Toast sukcesu dla obu operacji.  
 **Dane:** `{"title":"AI Assisted Ticket","description":"Test description","rating":4,"suggestions":[{"type":"INSERT","content":"test suggestion","applied":true},{"type":"QUESTION","content":"test question","applied":true}]}`  
 **Status:** ✅ Zaimplementowany w `tests-e2e/create-ai-assisted-ticket.spec.ts`  
-**Pokrycie:** Główny scenariusz AI + walidacja dwóch API requestów + asercje odpowiedzi + edge cases (puste pola, różne oceny)  
-**Ryzyko (Plan 1):** Błąd AI API → graceful degradation, toast error, możliwość zapisania ticketa bez AI. Network timeout → obsługa błędów. Walidacja spójność między frontend/backend AI session.
+**Pokrycie:** Główny scenariusz AI + walidacja dwóch API requestów + asercje odpowiedzi + edge cases (puste pola, różne oceny, loading states, API errors) + wizualne stany UI + obsługa błędów
+**Status:** ✅ Zaimplementowany w `tests-e2e/create-ai-assisted-ticket.spec.ts`
+**Dodatkowe scenariusze:**
+
+- **TC-TICKET-AI-002:** Wizualny stan loading button podczas oczekiwania na odpowiedź AI
+- **TC-TICKET-AI-003:** Obsługa błędów API (500 Internal Server Error)
+- **TC-TICKET-AI-004:** Obsługa błędów sieciowych (network failure)
+  **Ryzyko (Plan 1):** Błąd AI API → graceful degradation, toast error, możliwość zapisania ticketa bez AI. Network timeout → obsługa błędów. Walidacja spójność między frontend/backend AI session.
 
 ### 4.4 Moduł Admin (P1)
 

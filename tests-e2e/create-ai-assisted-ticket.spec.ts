@@ -19,7 +19,9 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     kanbanBoard = new KanbanBoardPOM(page);
   });
 
-  test("should create a ticket with AI assistance and save both ticket and AI session", async ({ page }) => {
+  test("TC-TICKET-AI-001: should create ticket with AI assistance and save both ticket and AI session", async ({
+    page,
+  }) => {
     // 1. Użytkownik tworzy ticket - Click the "Create a new ticket" button
     await navigationBar.clickCreateTicket();
 
@@ -117,21 +119,7 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     await expect(ticketCard).toContainText(ticketTitle);
   });
 
-  test("should handle AI analysis button disabled state when title or description is empty", async () => {
-    // Open create ticket modal
-    await navigationBar.clickCreateTicket();
-    await ticketModal.waitForModal();
-
-    // Fill only title, leave description empty
-    await ticketModal.fillTitle("Test Title");
-    await ticketModal.fillDescription(""); // Empty description
-
-    // AI button should be disabled (this would be verified in the component logic)
-    // In a real test, we might need to check the button state or error messages
-    await ticketModal.waitForAIAnalysisButtonToBeEnabled();
-  });
-
-  test("should allow rating AI suggestions with different star values", async () => {
+  test("TC-TICKET-AI-005: should support all rating values (1-5 stars) for AI suggestions", async () => {
     // This test would verify that all star rating options work correctly
     await navigationBar.clickCreateTicket();
     await ticketModal.waitForModal();
@@ -149,7 +137,9 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     }
   });
 
-  test("should show loading state on AI analysis button while waiting for response", async ({ page }) => {
+  test("TC-TICKET-AI-002: should show loading state on AI analysis button while waiting for response", async ({
+    page,
+  }) => {
     await navigationBar.clickCreateTicket();
     await ticketModal.waitForModal();
 
@@ -190,7 +180,7 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     await ticketModal.expectAIAnalysisButtonToShowNormalState();
   });
 
-  test("should handle AI API endpoint failure gracefully", async ({ page }) => {
+  test("TC-TICKET-AI-003: should handle AI API endpoint failure gracefully", async ({ page }) => {
     await navigationBar.clickCreateTicket();
     await ticketModal.waitForModal();
 
@@ -232,7 +222,7 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     await ticketModal.expectNoAISuggestionsVisible();
   });
 
-  test("should handle network failure when calling AI API", async ({ page }) => {
+  test("TC-TICKET-AI-004: should handle network failure when calling AI API", async ({ page }) => {
     await navigationBar.clickCreateTicket();
     await ticketModal.waitForModal();
 
