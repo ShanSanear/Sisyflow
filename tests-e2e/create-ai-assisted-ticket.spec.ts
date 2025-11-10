@@ -148,4 +148,124 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
       await ticketModal.rateAI(rating as 1 | 2 | 3 | 4 | 5);
     }
   });
+
+  test("should show loading state on AI analysis button while waiting for response", async ({ page }) => {
+    await navigationBar.clickCreateTicket();
+    await ticketModal.waitForModal();
+
+    await ticketModal.fillTitle("Loading Test Ticket");
+    await ticketModal.fillDescription("Testing loading state of AI button");
+
+    // Mock delayed AI response to simulate real API call
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/ai-suggestion-sessions/analyze") && response.request().method() === "POST"
+    );
+
+    await page.route("**/api/ai-suggestion-sessions/analyze", async (route) => {
+      // Delay response by 2 seconds to show loading state
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const json = {
+        suggestions: [
+          {
+            type: "INSERT",
+            content: "This is a test suggestion",
+            applied: false,
+          },
+        ],
+      };
+      return route.fulfill({ json });
+    });
+
+    // Click AI analysis button - should show loading state immediately
+    await ticketModal.clickAIAnalysis();
+
+    // Verify button shows loading state (spinner visible)
+    await ticketModal.expectAIAnalysisButtonToShowLoadingState();
+
+    // Wait for the API response to complete
+    await responsePromise;
+
+    // Verify button returns to normal state
+    await ticketModal.expectAIAnalysisButtonToShowNormalState();
+  });
+
+  test("should handle AI API endpoint failure gracefully", async ({ page }) => {
+    await navigationBar.clickCreateTicket();
+    await ticketModal.waitForModal();
+
+    await ticketModal.fillTitle("API Error Test Ticket");
+    await ticketModal.fillDescription("Testing API error handling");
+
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/ai-suggestion-sessions/analyze") && response.request().method() === "POST"
+    );
+
+    // Mock API failure with 500 error
+    await page.route("**/api/ai-suggestion-sessions/analyze", async (route) => {
+      // Add a small delay to ensure loading state is visible
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Internal server error" }),
+      });
+    });
+
+    // Click AI analysis button
+    await ticketModal.clickAIAnalysis();
+
+    // Verify loading state is shown initially
+    await ticketModal.expectAIAnalysisButtonToShowLoadingState();
+
+    // Wait for the response to ensure the component has processed the error
+    await responsePromise;
+
+    // Wait for error and verify button returns to normal state
+    await ticketModal.expectAIAnalysisButtonToShowNormalState();
+
+    // Verify error toast is shown
+    await ticketModal.expectErrorToastToBeVisible();
+
+    // Verify no AI suggestions are displayed
+    await ticketModal.expectNoAISuggestionsVisible();
+  });
+
+  test("should handle network failure when calling AI API", async ({ page }) => {
+    await navigationBar.clickCreateTicket();
+    await ticketModal.waitForModal();
+
+    await ticketModal.fillTitle("Network Error Test Ticket");
+    await ticketModal.fillDescription("Testing network error handling");
+
+    const requestFailedPromise = page.waitForEvent("requestfailed", (request) =>
+      request.url().includes("/api/ai-suggestion-sessions/analyze")
+    );
+
+    // Mock network failure
+    await page.route("**/api/ai-suggestion-sessions/analyze", async (route) => {
+      // Add a small delay to ensure loading state is visible
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return route.abort();
+    });
+
+    // Click AI analysis button
+    await ticketModal.clickAIAnalysis();
+
+    // Verify loading state is shown initially
+    await ticketModal.expectAIAnalysisButtonToShowLoadingState();
+
+    // Wait for the request to fail to ensure the component has processed the error
+    await requestFailedPromise;
+
+    // Wait for error and verify button returns to normal state
+    await ticketModal.expectAIAnalysisButtonToShowNormalState();
+
+    // Verify error toast is shown
+    await ticketModal.expectErrorToastToBeVisible();
+
+    // Verify no AI suggestions are displayed
+    await ticketModal.expectNoAISuggestionsVisible();
+  });
 });
