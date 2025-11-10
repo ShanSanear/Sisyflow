@@ -371,12 +371,10 @@ export class TicketService {
         reporter: ticket.reporter ? { id: ticket.reporter.id, username: ticket.reporter.username } : null,
         assignee: ticket.assignee ? { id: ticket.assignee.id, username: ticket.assignee.username } : undefined,
       };
-      console.log("getTicketById result: ", result);
       return result;
     } catch (error) {
       // Przekaż błędy walidacji Zod bez zmian (choć nie ma walidacji w tej metodzie)
       if (error instanceof z.ZodError) {
-        console.log("getTicketById zod error: ", error);
         throw error;
       }
 
