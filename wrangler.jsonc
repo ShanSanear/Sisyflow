@@ -1,11 +1,14 @@
 {
   "name": "sisyflow",
   "compatibility_date": "2025-11-01",
-  "compatibility_flags": ["nodejs_compat", 
-  "disable_nodejs_process_v2", // https://github.com/withastro/astro/issues/14511
-  "global_fetch_strictly_public", "nodejs_compat_populate_process_env"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "disable_nodejs_process_v2", // https://github.com/withastro/astro/issues/14511
+    "global_fetch_strictly_public",
+    "nodejs_compat_populate_process_env",
+  ],
   "vars": {
-    "FEATURE_FLAG_AI_ANALYSIS": "true"
+    "FEATURE_FLAG_AI_ANALYSIS": "true",
   },
-  "pages_build_output_dir": "dist"
+  "pages_build_output_dir": "dist",
 }
