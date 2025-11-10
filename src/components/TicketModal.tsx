@@ -70,7 +70,7 @@ export const TicketModal: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent data-testid="ticket-modal" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent data-testid="ticket-modal" className="w-full min-w-5xl max-h-[90vh] p-4 sm:p-6">
         <TicketModalHeader mode={mode} />
 
         <TicketModalContent
