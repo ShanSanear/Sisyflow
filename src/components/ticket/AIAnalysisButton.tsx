@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AISuggestionsResponse } from "@/types";
 import { analyzeAiSuggestionsSchema } from "@/lib/validation/ai.validation";
@@ -58,7 +58,8 @@ export function AIAnalysisButton({ title, description, onAnalyze, isLoading, set
       className="w-full"
     >
       {isLoading && <Loader2 data-testid="ai-analysis-button-loading" className="mr-2 h-4 w-4 animate-spin" />}
-      Ask for AI suggestions
+      <Wand2 />
+      <span data-testid="ai-analysis-button-text">Ask for AI suggestions</span>
     </Button>
   );
 }

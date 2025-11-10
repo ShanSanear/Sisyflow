@@ -11,6 +11,7 @@ export class TicketModalPOM {
   readonly assigneeSelectTrigger: Locator;
   readonly assigneeSelectContent: Locator;
   readonly aiAnalysisButton: Locator;
+  readonly aiAnalysisButtonText: Locator;
   readonly aiRatingStar1: Locator;
   readonly aiRatingStar2: Locator;
   readonly aiRatingStar3: Locator;
@@ -28,6 +29,7 @@ export class TicketModalPOM {
     this.assigneeSelectTrigger = page.getByTestId("assignee-section-admin-select-trigger");
     this.assigneeSelectContent = page.getByTestId("assignee-section-admin-select-content");
     this.aiAnalysisButton = page.getByTestId("ai-analysis-button");
+    this.aiAnalysisButtonText = page.getByTestId("ai-analysis-button-text");
     this.aiRatingStar1 = page.getByTestId("ai-rating-star-1");
     this.aiRatingStar2 = page.getByTestId("ai-rating-star-2");
     this.aiRatingStar3 = page.getByTestId("ai-rating-star-3");
@@ -113,17 +115,17 @@ export class TicketModalPOM {
   }
 
   async expectAIAnalysisButtonToShowLoadingState(): Promise<void> {
-    expect(this.aiAnalysisButton).toContainText("Ask for AI suggestions");
+    await expect(this.aiAnalysisButtonText).toBeVisible();
     // Check for loading spinner
     const spinner = this.page.getByTestId("ai-analysis-button-loading");
-    expect(spinner).toBeVisible();
+    await expect(spinner).toBeVisible();
   }
 
   async expectAIAnalysisButtonToShowNormalState(): Promise<void> {
-    expect(this.aiAnalysisButton).toContainText("Ask for AI suggestions");
+    await expect(this.aiAnalysisButtonText).toBeVisible();
     // Check that loading spinner is not visible
     const spinner = this.page.getByTestId("ai-analysis-button-loading");
-    expect(spinner).not.toBeVisible();
+    await expect(spinner).not.toBeVisible();
   }
 
   async expectErrorToastToBeVisible(message?: string): Promise<void> {

@@ -97,6 +97,46 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
           content: "AI analysis is currently disabled in this environment.",
           applied: false,
         },
+        {
+          type: "INSERT" as const,
+          content: "This is a placeholder suggestion when AI analysis is disabled.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "AI analysis is currently disabled in this environment.",
+          applied: false,
+        },
+        {
+          type: "INSERT" as const,
+          content: "This is a placeholder suggestion when AI analysis is disabled.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "AI analysis is currently disabled in this environment.",
+          applied: false,
+        },
+        {
+          type: "INSERT" as const,
+          content: "This is a placeholder suggestion when AI analysis is disabled.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "AI analysis is currently disabled in this environment.",
+          applied: false,
+        },
+        {
+          type: "INSERT" as const,
+          content: "This is a placeholder suggestion when AI analysis is disabled.",
+          applied: false,
+        },
+        {
+          type: "QUESTION" as const,
+          content: "AI analysis is currently disabled in this environment.",
+          applied: false,
+        },
       ];
     }
 
