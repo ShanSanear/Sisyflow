@@ -15,4 +15,4 @@
 - Implement test hooks for setup and teardown
 - Use expect assertions with specific matchers
 - Leverage parallel execution for faster test runs
-
+- When testing UI updates triggered by asynchronous actions like network requests, always explicitly wait for the operation to complete before making assertions. Use Playwright's page.waitForResponse(), page.waitForRequest(), or page.waitForEvent() to synchronize your test with the application's state. This practice prevents race conditions and ensures your assertions are reliably checked against the final, stable UI.

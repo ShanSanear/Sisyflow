@@ -1,5 +1,5 @@
 import type { Page, Locator } from "@playwright/test";
-
+import { expect } from "@playwright/test";
 export class TicketModalPOM {
   readonly page: Page;
   readonly modal: Locator;
@@ -108,6 +108,36 @@ export class TicketModalPOM {
 
   async waitForAIAnalysisButtonToBeEnabled(): Promise<void> {
     await this.aiAnalysisButton.waitFor({ state: "visible" });
-    await this.aiAnalysisButton.waitFor({ timeout: 10000 });
+    // Wait for the button to not be disabled (loading completed)
+    await expect(this.aiAnalysisButton).not.toBeDisabled({ timeout: 10000 });
+  }
+
+  async expectAIAnalysisButtonToShowLoadingState(): Promise<void> {
+    expect(this.aiAnalysisButton).toContainText("Ask for AI suggestions");
+    // Check for loading spinner
+    const spinner = this.page.getByTestId("ai-analysis-button-loading");
+    expect(spinner).toBeVisible();
+  }
+
+  async expectAIAnalysisButtonToShowNormalState(): Promise<void> {
+    expect(this.aiAnalysisButton).toContainText("Ask for AI suggestions");
+    // Check that loading spinner is not visible
+    const spinner = this.page.getByTestId("ai-analysis-button-loading");
+    expect(spinner).not.toBeVisible();
+  }
+
+  async expectErrorToastToBeVisible(message?: string): Promise<void> {
+    // Check for error toast - using sonner toast library
+    const toast = this.page.locator('[data-sonner-toast][data-type="error"]');
+    expect(toast).toBeVisible();
+    if (message) {
+      expect(toast).toContainText(message);
+    }
+  }
+
+  async expectNoAISuggestionsVisible(): Promise<void> {
+    // Check that AI suggestions list is not visible
+    const suggestionsList = this.page.locator('[data-testid="ai-suggestions-list"]');
+    expect(suggestionsList).not.toBeVisible();
   }
 }
