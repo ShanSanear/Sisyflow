@@ -281,7 +281,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
       )}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid="delete-ticket-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Ticket</AlertDialogTitle>
             <AlertDialogDescription>
@@ -289,8 +289,11 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="delete-ticket-cancel" disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
+              data-testid="delete-ticket-confirm"
               onClick={handleDeleteTicket}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
