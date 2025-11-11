@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useKanbanBoard } from "./useKanbanBoard";
-import { useAuth } from "./useAuth";
+import { useUser } from "./useUser";
 import { useToast } from "./useToast";
 import type { TicketDTO } from "../../types";
 import type { CurrentUser } from "../../components/views/KanbanBoardView.types";
 import type { DragEndEvent } from "@dnd-kit/core";
 
 // Mock external dependencies
-vi.mock("./useAuth");
+vi.mock("./useUser");
 vi.mock("./useToast");
 
-const mockUseAuth = vi.mocked(useAuth);
+const mockUseUser = vi.mocked(useUser);
 const mockUseToast = vi.mocked(useToast);
 
 // Mock fetch globally
@@ -48,8 +48,19 @@ describe("useKanbanBoard", () => {
     vi.clearAllMocks();
 
     // Setup default mocks
-    mockUseAuth.mockReturnValue({
+    mockUseUser.mockReturnValue({
+      user: {
+        id: mockCurrentUser.id,
+        username: "testuser",
+        role: mockCurrentUser.role,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      },
       currentUser: mockCurrentUser,
+      isAdmin: mockCurrentUser.role === "ADMIN",
+      isLoading: false,
+      error: null,
+      refetchUser: vi.fn(),
     });
 
     mockUseToast.mockReturnValue({
@@ -178,8 +189,19 @@ describe("useKanbanBoard", () => {
 
   describe("canMoveTicket", () => {
     it("should allow admin to move any ticket", () => {
-      mockUseAuth.mockReturnValue({
+      mockUseUser.mockReturnValue({
+        user: {
+          id: mockAdminUser.id,
+          username: "adminuser",
+          role: mockAdminUser.role,
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
         currentUser: mockAdminUser,
+        isAdmin: true,
+        isLoading: false,
+        error: null,
+        refetchUser: vi.fn(),
       });
 
       const { result } = renderHook(() => useKanbanBoard());
@@ -246,8 +268,13 @@ describe("useKanbanBoard", () => {
     });
 
     it("should deny moving ticket when no user is logged in", () => {
-      mockUseAuth.mockReturnValue({
+      mockUseUser.mockReturnValue({
+        user: null,
         currentUser: null,
+        isAdmin: false,
+        isLoading: false,
+        error: null,
+        refetchUser: vi.fn(),
       });
 
       const { result } = renderHook(() => useKanbanBoard());
@@ -415,11 +442,22 @@ describe("useKanbanBoard", () => {
 
     it("should deny drag when user lacks permission", async () => {
       // Setup user without permission BEFORE rendering
-      mockUseAuth.mockReturnValue({
+      mockUseUser.mockReturnValue({
+        user: {
+          id: "user-3", // Different user, no permission
+          username: "regularuser",
+          role: "USER",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
         currentUser: {
           id: "user-3", // Different user, no permission
           role: "USER",
         },
+        isAdmin: false,
+        isLoading: false,
+        error: null,
+        refetchUser: vi.fn(),
       });
 
       // Setup fresh mocks
@@ -657,11 +695,22 @@ describe("useKanbanBoard", () => {
 
     it("should deny status change when user lacks permission", async () => {
       // Setup user without permission BEFORE rendering
-      mockUseAuth.mockReturnValue({
+      mockUseUser.mockReturnValue({
+        user: {
+          id: "user-3", // Different user, no permission
+          username: "regularuser",
+          role: "USER",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
         currentUser: {
           id: "user-3", // Different user, no permission
           role: "USER",
         },
+        isAdmin: false,
+        isLoading: false,
+        error: null,
+        refetchUser: vi.fn(),
       });
 
       // Setup fresh mocks

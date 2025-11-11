@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Sparkles, MoreHorizontal, Trash2 } from "lucide-react";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useUser } from "@/lib/hooks/useUser";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface TicketCardProps {
@@ -45,15 +45,19 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
-    disabled: !canMove || isSaving,
+    disabled: isSaving,
   });
+
+  // Don't apply drag listeners when user can't move the ticket
+  const dragListeners = canMove ? listeners : {};
+  const dragAttributes = canMove ? attributes : {};
 
   const titleRef = useRef<HTMLParagraphElement>(null);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { currentUser } = useAuth();
+  const { currentUser } = useUser();
 
   useEffect(() => {
     const checkTruncation = () => {
@@ -119,7 +123,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
     ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
     ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
-    ${!canMove ? "cursor-not-allowed opacity-60" : ""}
+    ${!canMove ? "cursor-not-allowed" : ""}
     ${isSaving ? "opacity-50 animate-pulse" : ""}
     ${isDragging ? "opacity-90" : ""}
   `;
@@ -239,12 +243,12 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             <div
               ref={setNodeRef}
               style={style}
-              {...listeners}
-              {...attributes}
+              {...dragListeners}
+              {...dragAttributes}
               data-testid={`ticket-card-${ticket.id}`}
               className={cardClassName}
               role="button"
-              tabIndex={canMove && !isSaving ? 0 : -1}
+              tabIndex={!isSaving ? 0 : -1}
               aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
               aria-describedby="drag-instructions"
               onClick={handleCardClick}
@@ -261,12 +265,12 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         <div
           ref={setNodeRef}
           style={style}
-          {...listeners}
-          {...attributes}
+          {...dragListeners}
+          {...dragAttributes}
           data-testid={`ticket-card-${ticket.id}`}
           className={cardClassName}
           role="button"
-          tabIndex={canMove && !isSaving ? 0 : -1}
+          tabIndex={!isSaving ? 0 : -1}
           aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
           aria-describedby="drag-instructions"
           onClick={handleCardClick}
