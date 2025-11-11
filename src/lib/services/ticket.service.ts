@@ -689,7 +689,7 @@ export class TicketService {
         .single();
 
       if (fetchError || !existingTicket) {
-        throw new Error("Ticket not found");
+        throw new TicketNotFoundError("Ticket not found");
       }
 
       // Sprawdź czy nowy assignee istnieje (jeśli nie jest null)
@@ -701,7 +701,7 @@ export class TicketService {
           .single();
 
         if (assigneeError || !assigneeProfile) {
-          throw new Error("Assignee not found");
+          throw new AssigneeNotFoundError("Assignee not found");
         }
       }
 
@@ -719,14 +719,14 @@ export class TicketService {
           .single();
 
         if (profileError || !userProfile) {
-          throw new Error("User profile not found");
+          throw new UserProfileNotFoundError("User profile not found");
         }
 
         isAdmin = userProfile.role === "ADMIN";
       }
 
       if (!isSelfAssignment && !isSelfUnassignment && !isAdmin) {
-        throw new Error(
+        throw new AccessDeniedError(
           "Access denied: You don't have permission to assign this ticket. Only administrators can assign tickets to other users, or you can assign/unassign tickets to/from yourself."
         );
       }
@@ -767,7 +767,7 @@ export class TicketService {
         .single();
 
       if (refetchError || !updatedTicket) {
-        throw new Error(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
+        throw new TicketServiceError(`Failed to fetch updated ticket: ${refetchError?.message || "Unknown error"}`);
       }
 
       // Formatuj odpowiedź zgodnie z TicketDTO
@@ -794,8 +794,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to update ticket assignee: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to update ticket assignee: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -817,7 +824,7 @@ export class TicketService {
         .single();
 
       if (fetchError || !existingTicket) {
-        throw new Error("Ticket not found");
+        throw new TicketNotFoundError("Ticket not found");
       }
 
       // Sprawdź rolę użytkownika - tylko ADMIN może usuwać tickety
@@ -828,11 +835,11 @@ export class TicketService {
         .single();
 
       if (profileError || !userProfile) {
-        throw new Error("User profile not found");
+        throw new UserProfileNotFoundError("User profile not found");
       }
 
       if (userProfile.role !== "ADMIN") {
-        throw new Error("Access denied: Only administrators can delete tickets");
+        throw new AccessDeniedError("Access denied: Only administrators can delete tickets");
       }
 
       // Usuń ticket
@@ -847,8 +854,15 @@ export class TicketService {
         throw error;
       }
 
-      // Dla innych błędów, opakuj w bardziej przyjazny komunikat
-      throw new Error(`Failed to delete ticket: ${error instanceof Error ? error.message : "Unknown error"}`);
+      // Przekaż specyficzne błędy serwisu bez zmian
+      if (error instanceof TicketServiceError) {
+        throw error;
+      }
+
+      // Dla innych błędów, opakuj w błąd serwisu
+      throw new TicketServiceError(
+        `Failed to delete ticket: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 }
