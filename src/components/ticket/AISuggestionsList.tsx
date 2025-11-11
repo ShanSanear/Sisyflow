@@ -14,7 +14,7 @@ export function AISuggestionsList({ suggestions, onApplyInsert, onApplyQuestion 
   }
 
   return (
-    <div className="mt-4 max-h-96">
+    <div data-testid="ai-suggestions-list" className="mt-4 max-h-96">
       <div className="text-lg">AI Suggestions</div>
       <div className="overflow-y-auto">
         <div className="space-y-4">

@@ -130,10 +130,10 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="h-full w-full" data-testid="ticket-modal-content">
+    <ResizablePanelGroup direction="horizontal" className="w-full h-full" data-testid="ticket-modal-content">
       <ResizablePanel defaultSize={60} minSize={40}>
-        <div className="flex h-full flex-col">
-          <div className="grow overflow-y-auto p-6">
+        <div className="flex h-full flex-col overflow-y-auto">
+          <div className="grow p-6">
             <TicketForm
               formData={formData}
               onChange={onFormChange}
@@ -145,7 +145,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
               onAssigneeChange={onAssigneeChange}
             />
           </div>
-          <div className="border-t bg-background p-6">
+          <div className="border-t bg-background p-1">
             {hasAppliedSuggestions && <AIRating rating={aiRating} onRate={handleAIRating} />}
             <ActionButtons
               data-testid="ticket-modal-action-buttons"
