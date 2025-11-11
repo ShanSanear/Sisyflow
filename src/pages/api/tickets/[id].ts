@@ -1,10 +1,14 @@
 import type { APIRoute } from "astro";
-import { createTicketService } from "../../../lib/services/ticket.service";
+import {
+  createTicketService,
+  TicketNotFoundError,
+  UserProfileNotFoundError,
+  AccessDeniedError,
+} from "../../../lib/services/ticket.service";
 import { createSupabaseServerInstance } from "../../../db/supabase.client";
 import type { FullTicketDTO, UpdateTicketCommand } from "../../../types";
 import { ticketIdParamsSchema, updateTicketSchema } from "../../../lib/validation/ticket.validation";
 import {
-  isZodError,
   createZodValidationResponse,
   isDatabaseConnectionError,
   createDatabaseConnectionErrorResponse,
@@ -23,25 +27,28 @@ export const prerender = false;
  * Error Responses: 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Internal Server Error
  */
 export const GET: APIRoute = async ({ params, locals, cookies, request }) => {
+  // Check if user is authenticated via middleware
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({
+        error: "Unauthorized",
+        message: "Authentication required",
+      }),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  // Walidacja parametrów URL używając Zod
+  const validatedParams = ticketIdParamsSchema.safeParse(params);
+  if (!validatedParams.success) {
+    return createZodValidationResponse(validatedParams.error);
+  }
+  const ticketId = validatedParams.data.id;
+
   try {
-    // Walidacja parametrów URL używając Zod
-    const validatedParams = ticketIdParamsSchema.parse(params);
-    const ticketId = validatedParams.id;
-
-    // Check if user is authenticated via middleware
-    if (!locals.user) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-          message: "Authentication required",
-        }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
@@ -66,17 +73,12 @@ export const GET: APIRoute = async ({ params, locals, cookies, request }) => {
       return createDatabaseConnectionErrorResponse("ticket retrieval");
     }
 
-    // Obsługa błędów walidacji Zod
-    if (isZodError(error)) {
-      return createZodValidationResponse(error);
-    }
-
     // Obsługa błędów "ticket not found" (404 Not Found)
-    if (error instanceof Error && error.message === "Ticket not found") {
+    if (error instanceof TicketNotFoundError) {
       return new Response(
         JSON.stringify({
           error: "Not Found",
-          message: "Ticket not found",
+          message: error.message,
         }),
         {
           status: 404,
@@ -111,54 +113,60 @@ export const GET: APIRoute = async ({ params, locals, cookies, request }) => {
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */
 export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
+  // Check if user is authenticated via middleware
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({
+        error: "Unauthorized",
+        message: "Authentication required",
+      }),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  // Walidacja parametrów URL używając Zod
+  const validatedParams = ticketIdParamsSchema.safeParse(params);
+  if (!validatedParams.success) {
+    return createZodValidationResponse(validatedParams.error);
+  }
+  const ticketId = validatedParams.data.id;
+
+  // Parsuj i waliduj ciało żądania
+  let requestBody: UpdateTicketCommand;
   try {
-    // Walidacja parametrów URL używając Zod
-    const validatedParams = ticketIdParamsSchema.parse(params);
-    const ticketId = validatedParams.id;
+    requestBody = await request.json();
+  } catch {
+    return new Response(
+      JSON.stringify({
+        error: "Bad Request",
+        message: "Invalid JSON in request body",
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 
-    // Check if user is authenticated via middleware
-    if (!locals.user) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-          message: "Authentication required",
-        }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+  // Walidacja danych wejściowych używając Zod
+  const validatedData = updateTicketSchema.safeParse(requestBody);
+  if (!validatedData.success) {
+    return createZodValidationResponse(validatedData.error);
+  }
 
+  try {
     const userId = locals.user.id;
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
     });
 
-    // Parsuj i waliduj ciało żądania
-    let requestBody: UpdateTicketCommand;
-    try {
-      requestBody = await request.json();
-    } catch {
-      return new Response(
-        JSON.stringify({
-          error: "Bad Request",
-          message: "Invalid JSON in request body",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Walidacja danych wejściowych używając Zod
-    const validatedData = updateTicketSchema.parse(requestBody);
-
     // Utwórz ticket service i wywołaj metodę aktualizacji ticketu
     const ticketService = createTicketService(supabase);
-    const updatedTicket: FullTicketDTO = await ticketService.updateTicket(ticketId, validatedData, userId);
+    const updatedTicket: FullTicketDTO = await ticketService.updateTicket(ticketId, validatedData.data, userId);
 
     // Zwróć pomyślną odpowiedź z zaktualizowanym ticketem
     return new Response(JSON.stringify(updatedTicket), {
@@ -175,17 +183,12 @@ export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
       return createDatabaseConnectionErrorResponse("ticket update");
     }
 
-    // Obsługa błędów walidacji Zod
-    if (isZodError(error)) {
-      return createZodValidationResponse(error);
-    }
-
     // Obsługa błędów "access denied" (403 Forbidden)
-    if (error instanceof Error && error.message === "Access denied: You don't have permission to update this ticket") {
+    if (error instanceof AccessDeniedError) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",
-          message: "You don't have permission to update this ticket",
+          message: error.message,
         }),
         {
           status: 403,
@@ -195,11 +198,11 @@ export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
     }
 
     // Obsługa błędów "ticket not found" (404 Not Found)
-    if (error instanceof Error && error.message === "Ticket not found") {
+    if (error instanceof TicketNotFoundError) {
       return new Response(
         JSON.stringify({
           error: "Not Found",
-          message: "Ticket not found",
+          message: error.message,
         }),
         {
           status: 404,
@@ -209,7 +212,7 @@ export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
     }
 
     // Obsługa błędów "user profile not found" (403 Forbidden)
-    if (error instanceof Error && error.message === "User profile not found") {
+    if (error instanceof UserProfileNotFoundError) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",
@@ -248,25 +251,28 @@ export const PUT: APIRoute = async ({ params, request, locals, cookies }) => {
  * Error Responses: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
  */
 export const DELETE: APIRoute = async ({ params, locals, cookies, request }) => {
+  // Check if user is authenticated via middleware
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({
+        error: "Unauthorized",
+        message: "Authentication required",
+      }),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  // Walidacja parametrów URL używając Zod
+  const validatedParams = ticketIdParamsSchema.safeParse(params);
+  if (!validatedParams.success) {
+    return createZodValidationResponse(validatedParams.error);
+  }
+  const ticketId = validatedParams.data.id;
+
   try {
-    // Walidacja parametrów URL używając Zod
-    const validatedParams = ticketIdParamsSchema.parse(params);
-    const ticketId = validatedParams.id;
-
-    // Check if user is authenticated via middleware
-    if (!locals.user) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-          message: "Authentication required",
-        }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
     const userId = locals.user.id;
     const supabase = createSupabaseServerInstance({
       cookies,
@@ -292,13 +298,8 @@ export const DELETE: APIRoute = async ({ params, locals, cookies, request }) => 
       return createDatabaseConnectionErrorResponse("ticket deletion");
     }
 
-    // Obsługa błędów walidacji Zod
-    if (isZodError(error)) {
-      return createZodValidationResponse(error);
-    }
-
     // Obsługa błędów "access denied" (403 Forbidden)
-    if (error instanceof Error && error.message === "Access denied: Only administrators can delete tickets") {
+    if (error instanceof AccessDeniedError) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",
@@ -312,7 +313,7 @@ export const DELETE: APIRoute = async ({ params, locals, cookies, request }) => 
     }
 
     // Obsługa błędów "user profile not found" (403 Forbidden)
-    if (error instanceof Error && error.message === "User profile not found") {
+    if (error instanceof UserProfileNotFoundError) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",
@@ -326,11 +327,11 @@ export const DELETE: APIRoute = async ({ params, locals, cookies, request }) => 
     }
 
     // Obsługa błędów "ticket not found" (404 Not Found)
-    if (error instanceof Error && error.message === "Ticket not found") {
+    if (error instanceof TicketNotFoundError) {
       return new Response(
         JSON.stringify({
           error: "Not Found",
-          message: "Ticket not found",
+          message: error.message,
         }),
         {
           status: 404,

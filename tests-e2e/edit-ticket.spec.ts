@@ -102,8 +102,6 @@ test.describe("TC-TICKET-002: Edycja przez reportera", () => {
     const newTicket = await createResponse.json();
     const ticketId = newTicket.id;
 
-    console.log("Created ticket:", JSON.stringify(newTicket, null, 2));
-
     await expect(ticketModal.modal).not.toBeVisible({ timeout: 10000 });
 
     // 2. Alternatywny scenariusz: kliknij Edit w dropdown menu ticketa

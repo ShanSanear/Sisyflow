@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  handleTicketDelete: (ticketId: string) => Promise<void>;
   onTicketClick?: (ticketId: string) => void;
   onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
@@ -21,6 +22,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  handleTicketDelete,
   onTicketClick,
   onTicketEdit,
 }) => {
@@ -56,6 +58,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             canMove={canMoveTicket(ticket)}
             isSaving={savingTicketId === ticket.id}
             onStatusChange={handleStatusChangeViaMenu}
+            onDelete={handleTicketDelete}
             onClick={onTicketClick}
             onEdit={onTicketEdit}
           />

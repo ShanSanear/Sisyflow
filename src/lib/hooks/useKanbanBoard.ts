@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../../components/views/KanbanBoardView.types";
 import type { TicketDTO } from "../../types";
-import { useAuth } from "./useAuth";
+import { useUser } from "./useUser";
 import { useToast } from "./useToast";
 import {
   getTickets,
   updateTicketStatus,
+  deleteTicket,
   TicketNotFoundError,
   TicketValidationError,
   TicketForbiddenError,
@@ -19,6 +20,7 @@ interface UseKanbanBoardResult {
   savingTicketId: string | null;
   handleDragEnd: (event: DragEndEvent) => void;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  handleTicketDelete: (ticketId: string) => Promise<void>;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   refetch: () => Promise<void>;
 }
@@ -34,7 +36,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
 
   const [savingTicketId, _setSavingTicketId] = useState<string | null>(null); // Will be used for drag-and-drop saving state
 
-  const { currentUser } = useAuth();
+  const { currentUser } = useUser();
   const { showError, showSuccess } = useToast();
 
   /**
@@ -306,6 +308,72 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
   );
 
   /**
+   * Handle ticket deletion
+   */
+  const handleTicketDelete = useCallback(
+    async (ticketId: string) => {
+      console.log(`Deleting ticket ${ticketId}`);
+
+      // Find the ticket in current state to remove it optimistically
+      if (!boardState) {
+        console.error("Board state is not available");
+        return;
+      }
+
+      let ticketToDelete: TicketCardViewModel | undefined;
+      let oldStatus: keyof KanbanViewModel | undefined;
+
+      for (const [status, column] of Object.entries(boardState)) {
+        const foundTicket = column.tickets.find((ticket) => ticket.id === ticketId);
+        if (foundTicket) {
+          ticketToDelete = foundTicket;
+          oldStatus = status as keyof KanbanViewModel;
+          break;
+        }
+      }
+
+      if (!ticketToDelete || !oldStatus) {
+        console.error("Ticket not found in board state");
+        showError("Ticket not found.");
+        return;
+      }
+
+      // Optimistically update UI
+      const newBoardState: KanbanViewModel = { ...boardState };
+      newBoardState[oldStatus].tickets = newBoardState[oldStatus].tickets.filter((ticket) => ticket.id !== ticketId);
+      setBoardState(newBoardState);
+      _setSavingTicketId(ticketId);
+
+      try {
+        // Call API to delete ticket
+        await deleteTicket(ticketId);
+
+        // Success - ticket is already removed from UI
+        showSuccess("Ticket deleted successfully");
+        console.log(`Successfully deleted ticket ${ticketId}`);
+      } catch (error) {
+        console.error("Error deleting ticket:", error);
+
+        // Revert optimistic update on error
+        const revertedBoardState: KanbanViewModel = { ...boardState };
+        revertedBoardState[oldStatus].tickets.push(ticketToDelete);
+        setBoardState(revertedBoardState);
+
+        if (error instanceof TicketNotFoundError) {
+          showError("Ticket not found. It may have already been deleted.");
+        } else if (error instanceof TicketForbiddenError) {
+          showError("You don't have permission to delete this ticket.");
+        } else {
+          showError(error instanceof Error ? error.message : "Failed to delete ticket. Please try again.");
+        }
+      } finally {
+        _setSavingTicketId(null);
+      }
+    },
+    [boardState, showError, showSuccess]
+  );
+
+  /**
    * Refetch data from API
    */
   const refetch = useCallback(async () => {
@@ -324,6 +392,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
     savingTicketId,
     handleDragEnd,
     handleStatusChangeViaMenu,
+    handleTicketDelete,
     canMoveTicket,
     refetch,
   };

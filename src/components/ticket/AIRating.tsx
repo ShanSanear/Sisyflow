@@ -16,7 +16,7 @@ export function AIRating({ rating, onRate }: AIRatingProps) {
   return (
     <Card className="mt-4">
       <CardHeader>
-        <CardTitle className="text-lg">Rate AI Suggestions</CardTitle>
+        <CardTitle className="text-m">Rate AI Suggestions</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-1">

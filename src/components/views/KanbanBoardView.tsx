@@ -13,6 +13,7 @@ export const KanbanBoardView: React.FC = () => {
     savingTicketId,
     handleDragEnd,
     handleStatusChangeViaMenu,
+    handleTicketDelete,
     canMoveTicket,
     refetch,
   } = useKanbanBoard();
@@ -130,6 +131,7 @@ export const KanbanBoardView: React.FC = () => {
         savingTicketId={savingTicketId}
         canMoveTicket={canMoveTicket}
         handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+        handleTicketDelete={handleTicketDelete}
         onTicketClick={handleTicketClick}
         onTicketEdit={handleTicketEdit}
       />

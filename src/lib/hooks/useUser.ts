@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import type { ProfileDTO } from "../../types";
 import { ApiError, getCurrentUserProfile } from "../api";
 
+interface CurrentUser {
+  id: string;
+  role: "USER" | "ADMIN";
+}
+
 /**
  * Hook do zarządzania stanem zalogowanego użytkownika
  * Abstrahuje logikę pobierania i cachowania danych użytkownika
@@ -15,6 +20,16 @@ export const useUser = () => {
    * Sprawdza czy użytkownik jest administratorem
    */
   const isAdmin = user?.role === "ADMIN";
+
+  /**
+   * Simplified current user object for authorization purposes
+   */
+  const currentUser: CurrentUser | null = user
+    ? {
+        id: user.id,
+        role: user.role,
+      }
+    : null;
 
   /**
    * Pobiera dane użytkownika z API
@@ -49,6 +64,7 @@ export const useUser = () => {
 
   return {
     user,
+    currentUser,
     isAdmin,
     isLoading,
     error,

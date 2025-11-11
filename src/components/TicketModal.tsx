@@ -70,26 +70,28 @@ export const TicketModal: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent data-testid="ticket-modal" className="w-full min-w-5xl max-h-[90vh] p-4 sm:p-6">
+      <DialogContent data-testid="ticket-modal" className="w-full min-w-5xl max-h-[90vh] flex flex-col p-4 sm:p-6">
         <TicketModalHeader mode={mode} />
 
-        <TicketModalContent
-          formData={formData}
-          errors={errors}
-          isFormValid={isFormValid}
-          loading={loading}
-          mode={mode}
-          user={user}
-          isAdmin={isAdmin}
-          ticket={ticket}
-          canEdit={canEditTicket(ticket, user, isAdmin)}
-          onFormChange={handleFormChange}
-          onSave={() => handleSave(formData)}
-          onEdit={handleEditMode}
-          onCancel={onClose}
-          onAssigneeChange={onAssigneeChange}
-          onAISessionChange={handleAISessionChange}
-        />
+        <div className="flex-1 overflow-hidden">
+          <TicketModalContent
+            formData={formData}
+            errors={errors}
+            isFormValid={isFormValid}
+            loading={loading}
+            mode={mode}
+            user={user}
+            isAdmin={isAdmin}
+            ticket={ticket}
+            canEdit={canEditTicket(ticket, user, isAdmin)}
+            onFormChange={handleFormChange}
+            onSave={() => handleSave(formData)}
+            onEdit={handleEditMode}
+            onCancel={onClose}
+            onAssigneeChange={onAssigneeChange}
+            onAISessionChange={handleAISessionChange}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
