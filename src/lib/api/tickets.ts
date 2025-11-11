@@ -3,6 +3,7 @@ import {
   apiPost,
   apiPut,
   apiPatch,
+  apiDelete,
   type QueryParams,
   NotFoundError,
   ForbiddenError,
@@ -205,6 +206,20 @@ export async function updateTicketAssignee(
   try {
     const response = await apiPatch<FullTicketDTO>(`/api/tickets/${ticketId}/assignee`, assigneeData);
     return response.data;
+  } catch (error) {
+    transformTicketApiError(error as ApiError, ticketId);
+  }
+}
+
+/**
+ * Deletes an existing ticket
+ * @param ticketId - ID of the ticket to delete
+ * @throws TicketNotFoundError if ticket doesn't exist
+ * @throws TicketForbiddenError if user doesn't have permission to delete the ticket
+ */
+export async function deleteTicket(ticketId: string): Promise<void> {
+  try {
+    await apiDelete(`/api/tickets/${ticketId}`);
   } catch (error) {
     transformTicketApiError(error as ApiError, ticketId);
   }

@@ -8,7 +8,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, MoreHorizontal } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Sparkles, MoreHorizontal, Trash2 } from "lucide-react";
+import { useAuth } from "@/lib/hooks/useAuth";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface TicketCardProps {
@@ -17,6 +28,7 @@ interface TicketCardProps {
   canMove: boolean; // Flaga określająca uprawnienia do przeciągania
   isSaving: boolean; // Flaga określająca stan zapisywania
   onStatusChange?: (ticketId: string, newStatus: TicketStatus) => void; // Handler for status change via context menu
+  onDelete?: (ticketId: string) => Promise<void>; // Handler for deleting ticket
   onClick?: (ticketId: string) => void; // Handler for clicking on ticket card
   onEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
@@ -27,6 +39,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   canMove,
   isSaving,
   onStatusChange,
+  onDelete,
   onClick,
   onEdit,
 }) => {
@@ -37,6 +50,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 
   const titleRef = useRef<HTMLParagraphElement>(null);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const checkTruncation = () => {
@@ -126,6 +143,22 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     }
   };
 
+  const handleDeleteTicket = async () => {
+    if (!onDelete) return;
+
+    setIsDeleting(true);
+    setShowDeleteDialog(false);
+
+    try {
+      await onDelete(ticket.id);
+    } catch (error) {
+      // Error handling is done in the parent component (useKanbanBoard hook)
+      console.error("Error deleting ticket:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const CardContent = (
     <>
       <div className="flex items-start justify-between mb-2">
@@ -133,7 +166,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           {getTypeLabel(ticket.type)}
         </Badge>
         <div className="flex items-center gap-1">
-          {ticket.isAiEnhanced && <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0" />}
+          {ticket.isAiEnhanced && <Sparkles className="h-4 w-4 text-purple-500 shrink-0" />}
           {onStatusChange && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -172,6 +205,20 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                       {option.label}
                     </DropdownMenuItem>
                   ))}
+                {currentUser?.role === "ADMIN" && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {isDeleting ? "Deleting..." : "Delete ticket"}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -228,6 +275,27 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           {CardContent}
         </div>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ticket</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this ticket? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTicket}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };

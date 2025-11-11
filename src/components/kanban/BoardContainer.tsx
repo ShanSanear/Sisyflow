@@ -13,6 +13,7 @@ interface BoardContainerProps {
   savingTicketId: string | null;
   canMoveTicket: (ticket: TicketCardViewModel) => boolean;
   handleStatusChangeViaMenu: (ticketId: string, newStatus: TicketStatus) => void;
+  handleTicketDelete: (ticketId: string) => Promise<void>;
   onTicketClick?: (ticketId: string) => void;
   onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
 }
@@ -23,6 +24,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   savingTicketId,
   canMoveTicket,
   handleStatusChangeViaMenu,
+  handleTicketDelete,
   onTicketClick,
   onTicketEdit,
 }) => {
@@ -137,6 +139,7 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
                 savingTicketId={savingTicketId}
                 canMoveTicket={canMoveTicket}
                 handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+                handleTicketDelete={handleTicketDelete}
                 onTicketClick={onTicketClick}
                 onTicketEdit={onTicketEdit}
               />
