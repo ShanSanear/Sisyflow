@@ -7,6 +7,7 @@ import type { ProfileDTO } from "../../types";
  */
 interface UserContextType {
   user: ProfileDTO | null;
+  currentUser: { id: string; role: "USER" | "ADMIN" } | null;
   isAdmin: boolean;
   isLoading: boolean;
   error: Error | null;

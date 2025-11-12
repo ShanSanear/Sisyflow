@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
-import { useUser } from "@/lib/hooks/useUser";
+import { useUserContext } from "@/components/layout/useUserContext";
 import { TicketModalHeader } from "@/components/TicketModalHeader";
 import { TicketModalContent } from "@/components/TicketModalContent";
 import { useTicketModalState } from "@/lib/hooks/useTicketModalState";
@@ -16,7 +16,7 @@ import type { AISuggestionsResponse } from "@/types";
  */
 export const TicketModal: React.FC = () => {
   const { isOpen, mode, ticketId, onClose, onSave, setOpen } = useTicketModal();
-  const { user, isAdmin } = useUser();
+  const { user, isAdmin } = useUserContext();
 
   // AI session state - used in ticket save flow
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsResponse | null>(null);

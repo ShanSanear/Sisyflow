@@ -52,6 +52,13 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(mode === "edit");
   const rightPanelRef = useRef<PanelRef>(null);
 
+  // Reset AI suggestions when modal opens or mode changes
+  useEffect(() => {
+    setAiSuggestions(null);
+    setAiRating(null);
+    setAiAnalysisLoading(false);
+  }, [mode]);
+
   useEffect(() => {
     if (mode === "edit") {
       rightPanelRef.current?.collapse();

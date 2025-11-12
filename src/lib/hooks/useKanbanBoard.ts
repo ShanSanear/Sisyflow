@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../../components/views/KanbanBoardView.types";
 import type { TicketDTO } from "../../types";
-import { useUser } from "./useUser";
+import { useUserContext } from "../../components/layout/useUserContext";
 import { useToast } from "./useToast";
 import {
   getTickets,
@@ -36,7 +36,7 @@ export const useKanbanBoard = (): UseKanbanBoardResult => {
 
   const [savingTicketId, _setSavingTicketId] = useState<string | null>(null); // Will be used for drag-and-drop saving state
 
-  const { currentUser } = useUser();
+  const { currentUser } = useUserContext();
   const { showError, showSuccess } = useToast();
 
   /**
