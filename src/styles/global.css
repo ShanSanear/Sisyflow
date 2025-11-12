@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -116,5 +117,19 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Fix whitespace handling for indented code blocks */
+  .prose pre {
+    white-space: pre;
+  }
+
+  .prose pre code {
+    white-space: pre;
+    display: block;
+    margin: 0;
+    padding: 0;
   }
 }

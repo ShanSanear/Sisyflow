@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketSchema, type TicketFormData } from "@/lib/validation/schemas/ticket";
 import type { TicketModalMode, ProfileDTO, FullTicketDTO } from "@/types";
 import { TitleInput } from "@/components/TitleInput";
-import { DescriptionEditor } from "@/components/DescriptionEditor";
+import { DescriptionEditor } from "@/components/ticket/DescriptionEditor";
 import { TypeSelect } from "@/components/TypeSelect";
 import { AssigneeSection } from "@/components/AssigneeSection";
 import { ReporterDisplay } from "@/components/ReporterDisplay";
