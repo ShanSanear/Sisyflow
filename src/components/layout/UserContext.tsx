@@ -11,7 +11,7 @@ interface UserContextType {
   isAdmin: boolean;
   isLoading: boolean;
   error: Error | null;
-  refetchUser: () => Promise<void>;
+  retry: () => Promise<void>;
 }
 
 /**

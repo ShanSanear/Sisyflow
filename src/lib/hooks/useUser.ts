@@ -55,6 +55,7 @@ export const useUser = () => {
     // If there's already a fetch in progress, wait for it
     if (fetchPromise) {
       try {
+        await fetchPromise;
         // Update local state - sharedUser should already be set by the original fetch
         setUser(sharedUser);
         setError(null);
@@ -152,7 +153,10 @@ export const useUser = () => {
   /**
    * Force refetch user data, clearing cache
    */
-  const refetchUser = useCallback(async () => {
+  const retry = useCallback(async () => {
+    if (!sharedError) {
+      return;
+    }
     // Clear cache to force refetch
     sharedUser = null;
     sharedError = null;
@@ -167,6 +171,6 @@ export const useUser = () => {
     isAdmin,
     isLoading,
     error,
-    refetchUser, // Możliwość ponownego pobrania danych
+    retry, // Możliwość ponownego pobrania danych
   };
 };
