@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Sparkles, MoreHorizontal, Trash2 } from "lucide-react";
-import { useUser } from "@/lib/hooks/useUser";
+import { useUserContext } from "@/components/layout/useUserContext";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface TicketCardProps {
@@ -57,7 +57,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { currentUser } = useUser();
+  const { currentUser } = useUserContext();
 
   useEffect(() => {
     const checkTruncation = () => {

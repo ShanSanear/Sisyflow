@@ -10,6 +10,8 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
   let kanbanBoard: KanbanBoardPOM;
 
   test.beforeEach(async ({ page, loginAs }) => {
+    // Clean up any existing route mocks first
+    await page.unroute("**/api/ai-suggestion-sessions/analyze");
     // Login as admin for these tests
     await loginAs("admin");
     // Navigate to the homepage before each test
@@ -17,6 +19,18 @@ test.describe("TC-AI-TICKET-001: Tworzenie ticketa z wykorzystaniem AI", () => {
     navigationBar = new NavigationBarPOM(page);
     ticketModal = new TicketModalPOM(page);
     kanbanBoard = new KanbanBoardPOM(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    // Clean up route mocks to prevent interference between tests
+    await page.unroute("**/api/ai-suggestion-sessions/analyze");
+    // Close modal if it's still open
+    if (await ticketModal.modal.isVisible().catch(() => false)) {
+      await page.keyboard.press("Escape");
+      await ticketModal.modal.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {
+        /* empty catch */
+      });
+    }
   });
 
   test("TC-TICKET-AI-001: should create ticket with AI assistance and save both ticket and AI session", async ({

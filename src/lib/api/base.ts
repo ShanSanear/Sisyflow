@@ -169,13 +169,36 @@ export async function apiRequest<T = unknown>(url: string, options: RequestInit 
     "Content-Type": "application/json",
   };
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
+  } catch (error) {
+    // If it's already an ApiError, re-throw it
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    // Handle network errors (aborted requests, connection failures, etc.)
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      throw new ApiError(
+        "Network error: Failed to connect to the server. Please check your connection and try again.",
+        0,
+        "NETWORK_ERROR"
+      );
+    }
+    // Handle aborted requests (DOMException with name "AbortError")
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("Request was cancelled. Please try again.", 0, "REQUEST_ABORTED");
+    }
+    // Convert any other error to ApiError for consistent error handling
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    throw new ApiError(`Network error: ${errorMessage}`, 0, "NETWORK_ERROR");
+  }
 
   if (!response.ok) {
     throw await parseApiError(response);

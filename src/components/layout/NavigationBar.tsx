@@ -11,7 +11,7 @@ import { useTicketModal } from "../../lib/contexts/TicketModalContext";
 import { signOut } from "../../lib/api";
 
 const NavigationBarContent: React.FC = () => {
-  const { user, isLoading, error, refetchUser } = useUserContext();
+  const { user, isLoading, error, retry } = useUserContext();
   const { setOpen } = useTicketModal();
   const lastErrorMessageRef = useRef<string | null>(null);
 
@@ -21,8 +21,8 @@ const NavigationBarContent: React.FC = () => {
 
   const handleRefetch = useCallback(() => {
     toast.info("Retrying user data fetch");
-    void refetchUser();
-  }, [refetchUser]);
+    void retry();
+  }, [retry]);
 
   const handleLogout = useCallback(async () => {
     try {
