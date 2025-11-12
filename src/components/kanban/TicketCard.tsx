@@ -218,6 +218,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                     }}
                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                     disabled={isDeleting}
+                    data-testid="ticket-card-delete-button"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     {isDeleting ? "Deleting..." : "Delete ticket"}

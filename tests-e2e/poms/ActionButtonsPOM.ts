@@ -5,12 +5,13 @@ export class ActionButtonsPOM {
   readonly page: Page;
   readonly actionButtonsContainer: Locator;
   readonly closeCancelButton: Locator;
+  readonly saveButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.actionButtonsContainer = page.getByTestId("ticket-modal-action-buttons");
     this.closeCancelButton = page.getByTestId("ticket-modal-action-buttons-close-cancel");
-    // Note: editButton and saveButton are already in TicketModalPOM
+    this.saveButton = page.getByTestId("ticket-modal-action-buttons-save");
   }
 
   async clickCloseCancel(): Promise<void> {
@@ -25,7 +26,11 @@ export class ActionButtonsPOM {
     await expect(this.actionButtonsContainer).toBeVisible();
   }
 
-  // Note: clickEdit, clickSave, expectSaveButtonEnabled, expectSaveButtonDisabled,
-  // expectSaveButtonText, expectEditButtonVisible, expectEditButtonNotVisible
-  // are already available in TicketModalPOM - use that instead
+  async expectSaveButtonEnabled(): Promise<void> {
+    await expect(this.saveButton).toBeEnabled();
+  }
+
+  async expectSaveButtonDisabled(): Promise<void> {
+    await expect(this.saveButton).toBeDisabled();
+  }
 }

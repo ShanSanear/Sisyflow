@@ -156,8 +156,9 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-AUTH-003: Błędne logowanie (P1, Integracyjny)
 
-**Kroki:** Nieprawidłowe hasło.  
+**Kroki:** Nieprawidłowe hasło.
 **Oczekiwany:** Stay on /login, error "Invalid credentials", 401.
+**Status:** ✅ Zaimplementowany w `tests-e2e/login.spec.ts`
 
 #### TC-AUTH-004: Wylogowanie (P0, E2E)
 
@@ -166,8 +167,9 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-AUTH-005: Middleware ochrona (P0, Integracyjny)
 
-**Kroki:** Niezalogowany → /board.  
-**Oczekiwany:** Redirect /login, 302.  
+**Kroki:** Niezalogowany → /board.
+**Oczekiwany:** Redirect /login, 302.
+**Status:** ✅ Zaimplementowany w `tests-e2e/middleware-protection.spec.ts`
 **Ryzyko (Plan 1):** Test PUBLIC_PATHS (np. /login dostępny bez auth).
 
 #### TC-AUTH-006: Uprawnienia NavLinks (P1, Komponentowy)
@@ -183,9 +185,10 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-TICKET-001: Tworzenie ticketa (P0, E2E)
 
-**Kroki:** /board → "Create ticket", title/desc/type, "Save".  
-**Oczekiwany:** Modal close, ticket in "Open", 201 POST /tickets, reporter_id = user.id, status=OPEN.  
-**Dane:** `{"title":"Bug fix","description":"Issue","type":"BUG"}`  
+**Kroki:** /board → "Create ticket", title/desc/type, "Save".
+**Oczekiwany:** Modal close, ticket in "Open", 201 POST /tickets, reporter_id = user.id, status=OPEN.
+**Dane:** `{"title":"Bug fix","description":"Issue","type":"BUG"}`
+**Status:** ✅ Zaimplementowany w `tests-e2e/create-ticket.spec.ts`
 **Ryzyko (Plan 1):** Walidacja spójność – pusty title → client error przed API.
 
 #### TC-TICKET-002: Edycja przez reportera (P0, Integracyjny)
@@ -219,8 +222,9 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-TICKET-007: Admin assign (P1, Integracyjny)
 
-**Kroki:** Admin select user from dropdown.  
+**Kroki:** Admin select user from dropdown.
 **Oczekiwany:** Update assignee_id.
+**Status:** ✅ Zaimplementowany w `tests-e2e/admin-assign-ticket.spec.ts`
 
 #### TC-TICKET-008: Walidacja formularza (P1, Unit)
 
@@ -228,10 +232,12 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 **Oczekiwany:** Error "Title required", no submit.  
 **Ryzyko (Plan 1):** Title >255 chars → "Max length" error.
 
-#### TC-TICKET-009: Usuwanie przez admin (P1, Integracyjny)
+#### TC-TICKET-008: Ticket Lifecycle with Admin Control (P1, Integracyjny)
 
-**Kroki:** DELETE /tickets/[id].  
-**Oczekiwany:** 204, ticket gone, cascade null reporter_id.
+**Kroki:** 1. Admin tworzy ticket. 2. Ticket jest zapisany. 3. Admin może usunąć ticket. 4. Normal user nie może usunąć ticket.
+**Oczekiwany:** Admin deletion succeeds (204), normal user cannot see delete option.
+**Status:** ✅ Zaimplementowany w `tests-e2e/ticket-lifecycle-admin-control.spec.ts`
+**Pokrycie:** Admin ticket creation/deletion, normal user restrictions, delete dialog, form validation, cancel operations
 
 #### TC-TICKET-010: Sync error handling (P0, Integracyjny – z Plan 1)
 
@@ -291,9 +297,10 @@ Szczegółowe TC oparte na Planu 2, wzbogacone o ryzyka z Planu 1 (np. macierz r
 
 #### TC-ADMIN-007: Edycja i zapis dokumentacji projektu przez Admina (P1, E2E)
 
-**Kroki:** Admin wchodzi do /admin/documentation, modyfikuje tekst w polu, klika "Zapisz" (lub używa skrótu Ctrl+S).  
-**Oczekiwany:** Toast "Zapisano pomyślnie" się pojawia. Po odświeżeniu strony, nowa treść jest widoczna. Przycisk zapisu jest nieaktywny po zapisaniu (bo `dirty=false`).  
-**Dane:** `{"content": "Nowa treść dokumentacji."}`  
+**Kroki:** Admin wchodzi do /admin/documentation, modyfikuje tekst w polu, klika "Zapisz" (lub używa skrótu Ctrl+S).
+**Oczekiwany:** Toast "Zapisano pomyślnie" się pojawia. Po odświeżeniu strony, nowa treść jest widoczna. Przycisk zapisu jest nieaktywny po zapisaniu (bo `dirty=false`).
+**Dane:** `{"content": "Nowa treść dokumentacji."}`
+**Status:** ✅ Zaimplementowany w `tests-e2e/edit-project-documentation.spec.ts`
 **Ryzyko (Plan 1):** Błąd sieci podczas zapisu – powinien pojawić się toast błędu, a zmiany powinny pozostać w edytorze (`dirty=true`).
 
 #### TC-ADMIN-008: Walidacja formularza dokumentacji po stronie klienta (P1, Komponentowy)

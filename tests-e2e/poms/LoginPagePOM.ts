@@ -36,7 +36,10 @@ export class LoginPagePOM {
    * Used in middleware protection tests (TC-AUTH-005)
    */
   async navigate() {
-    await this.page.goto("/login");
+    const currentUrl = this.page.url();
+    if (!currentUrl.includes("/login")) {
+      await this.page.goto("/login");
+    }
     await this.page.waitForURL("/login");
   }
 
