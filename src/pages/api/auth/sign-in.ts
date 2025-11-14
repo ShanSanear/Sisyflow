@@ -35,15 +35,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     let emailToUse = identifier;
 
     if (!isEmail) {
-      // Identifier is a username, look up the corresponding email
-      // Use regular client for profiles query (assuming RLS allows it)
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", identifier)
-        .single();
+      // Identifier is a username, look up the corresponding email via RPC
+      const { data: userId, error: rpcError } = await supabase.rpc("get_user_id_by_username", {
+        p_username: identifier,
+      });
 
-      if (profileError || !profile) {
+      if (rpcError || !userId) {
         return new Response(JSON.stringify({ error: "Invalid username or password" }), {
           status: 401,
           headers: { "Content-Type": "application/json" },
@@ -52,7 +49,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       // Get the user's email from auth.users using the admin client
       const supabaseAdmin = createSupabaseAdminInstance();
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
 
       if (userError || !userData.user?.email) {
         return new Response(JSON.stringify({ error: "Invalid username or password" }), {
