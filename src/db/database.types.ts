@@ -218,6 +218,19 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      create_user: {
+        Args: {
+          email: string;
+          is_admin: boolean;
+          password: string;
+          username: string;
+        };
+        Returns: string;
+      };
+      get_user_id_by_username: {
+        Args: { p_username: string };
+        Returns: string;
+      };
       get_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["user_role"];
