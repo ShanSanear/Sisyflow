@@ -43,19 +43,24 @@ export class AIErrorsService {
   async getAIErrorsPaginated(
     limit: number,
     offset: number,
-    ticketId?: string
+    filters: { ticket_id?: string; search?: string }
   ): Promise<{ aiErrors: AIErrorDTO[]; pagination: PaginationDTO }> {
     try {
       // Buduj zapytanie bazowe
       let query = this.supabase
         .from("ai_errors")
-        .select("*", { count: "exact" })
+        .select("*, user:profiles(id, username)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
       // Dodaj filtrowanie po ticket_id jeśli podane
-      if (ticketId) {
-        query = query.eq("ticket_id", ticketId);
+      if (filters.ticket_id) {
+        query = query.eq("ticket_id", filters.ticket_id);
+      }
+
+      // Dodaj wyszukiwanie tekstowe jeśli podane
+      if (filters.search) {
+        query = query.ilike("error_message", `%${filters.search}%`);
       }
 
       // Wykonaj zapytanie
@@ -84,6 +89,7 @@ export class AIErrorsService {
         error_message: error.error_message,
         error_details: error.error_details,
         created_at: error.created_at,
+        user: error.user,
       }));
 
       // Oblicz metadane paginacji

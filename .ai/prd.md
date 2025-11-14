@@ -202,6 +202,16 @@ Następujące funkcjonalności nie wchodzą w zakres wersji MVP:
   4.  Zapisana treść będzie używana we wszystkich przyszłych zapytaniach do AI.
   5.  Tylko użytkownik z rolą ADMIN ma dostęp do zarządzania dokumentacją projektu. Użytkownik który nie jest zalogowany nie ma do tego dostępu.
 
+- ID: US-014
+- Tytuł: Wyświetlanie i diagnozowanie błędów AI
+- Opis: Jako Administrator, chcę mieć dostęp do szczegółowego widoku błędów generowanych przez integracje AI, aby móc monitorować stabilność systemu, diagnozować problemy i rozumieć kontekst ich występowania.
+- Kryteria akceptacji:
+  1.  W panelu Administratora dostępna jest dedykowana sekcja (zakładka "Błędy AI") prowadząca do widoku `/admin/ai-errors`.
+  2.  Widok zawiera tabelę prezentującą listę zarejestrowanych błędów AI.
+  3.  Tabela zawiera następujące kolumny: Data i Czas wystąpienia, Użytkownik (który napotkał błąd), ID powiązanego Ticketa (jeśli dotyczy), Wiadomość błędu oraz Kod statusu HTTP.
+  4.  Istnieje możliwość wyświetlenia pełnych szczegółów technicznych błędu (np. poprzez kliknięcie wiersza lub przycisk "Szczegóły"), które prezentują surowe dane z pola `error_details`.
+  5.  Dostęp do całej sekcji `/admin/ai-errors` jest ściśle ograniczony do użytkowników z rolą `ADMIN`. Użytkownicy bez tej roli oraz niezalogowani nie mogą uzyskać dostępu do tego widoku.
+
 ### 5.5. Profil użytkownika
 
 - ID: US-014

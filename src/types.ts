@@ -204,6 +204,14 @@ export interface CreateAIErrorCommand {
   user_id?: string;
 }
 
+// AIErrorDTO with user information, as specified in the implementation plan
+export interface AIErrorWithUserDTO extends Omit<AIErrorDTO, "user_id"> {
+  user: {
+    id: string;
+    username: string | null;
+  } | null;
+}
+
 // Save Status for forms
 export type SaveStatus = "idle" | "saving" | "success" | "error";
 

@@ -23,6 +23,7 @@ export const getAIErrorsQuerySchema = z.object({
       message: "Offset must be greater than or equal to 0",
     }),
   ticket_id: z.string().uuid("Invalid UUID format for ticket_id").optional(),
+  search: z.string().optional(),
 });
 
 /**

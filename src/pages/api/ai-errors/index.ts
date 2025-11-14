@@ -90,6 +90,7 @@ export const GET: APIRoute = async ({ request, locals, cookies, url }) => {
       limit: urlParams.get("limit") || undefined,
       offset: urlParams.get("offset") || undefined,
       ticket_id: urlParams.get("ticket_id") || undefined,
+      search: urlParams.get("search") || undefined,
     };
 
     const validatedQuery = getAIErrorsQuerySchema.parse(queryParams);
@@ -99,7 +100,10 @@ export const GET: APIRoute = async ({ request, locals, cookies, url }) => {
     const { aiErrors: errors, pagination } = await aiErrorsService.getAIErrorsPaginated(
       validatedQuery.limit,
       validatedQuery.offset,
-      validatedQuery.ticket_id
+      {
+        ticket_id: validatedQuery.ticket_id,
+        search: validatedQuery.search,
+      }
     );
 
     // Zwróć pomyślną odpowiedź
