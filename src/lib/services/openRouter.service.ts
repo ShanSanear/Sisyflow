@@ -67,6 +67,7 @@ export class OpenRouterService {
     title: string;
     description?: string;
     userId?: string;
+    ticketId?: string;
   }): Promise<AiResponseType> {
     try {
       // Pobierz dokumentację projektu używając service
@@ -105,7 +106,11 @@ export class OpenRouterService {
 
       return validation.data;
     } catch (error) {
-      await this._handleError(error, { userId: params.userId ?? null, title: params.title });
+      await this._handleError(error, {
+        userId: params.userId ?? null,
+        title: params.title,
+        ticketId: params.ticketId,
+      });
       throw new Error("Failed to get AI suggestions.");
     }
   }
@@ -118,7 +123,67 @@ export class OpenRouterService {
    * @returns Tablica wiadomości dla API
    */
   private _buildMessages(title: string, description = "", context: string): Message[] {
-    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions what can be additionally included in the ticket description. Suggestions can be of two types: 'INSERT' (suggesting specific text to add) or 'QUESTION' (asking a clarifying question). Always respond only with a JSON object that conforms to the provided schema. Do not add any additional comments or text outside the JSON format. Respond in the same language as the provided ticket title and description. Respond with maximum of 6 suggestions.`;
+    const systemMessage = `You are an expert software developer. Your task is to analyze the ticket title, description, and project documentation to generate helpful suggestions to improve the ticket description.
+
+You will generate suggestions of two types: 'INSERT' or 'QUESTION'.
+
+Your final response MUST be a JSON object. The 'content' field for your suggestions will be rendered as Markdown, so it is crucial that you format it correctly.
+
+**'INSERT' Type:**
+- An 'INSERT' suggestion should be a complete, multi-line template for the user to fill out.
+- It must be ready to be copied and pasted directly into a ticket description.
+- Combine related items into a single, comprehensive suggestion.
+- **Format your response exactly like the example provided below, including bolding, lists, and blank lines for spacing.**
+
+*Good 'INSERT' example:*
+
+**Steps to Reproduce:**
+1. Go to '...'
+2. Click on '....'
+3. See error
+
+**Expected Behavior:**
+
+[Describe what should happen]
+
+**Actual Behavior:**
+
+[Describe what is happening]
+
+**Device & Browser:**
+- OS: [e.g., macOS, Windows 11]
+- Browser: [e.g., Chrome, Firefox]
+- Version: [e.g., 108.0.0]
+
+
+*Bad 'INSERT' examples:*
+
+- "It would be helpful to add steps to reproduce."
+- A suggestion with only "**Expected Behavior:**"
+
+
+*Bad Formatting Example (DO NOT DO THIS):*
+<bad_formatting_example>
+"**Section 1:** Text**Section 2:** Text"
+</bad_formatting_example>
+
+**'QUESTION' Type:**
+- A direct question to clarify requirements.
+- MUST NOT contain template-like text.
+
+*Good 'QUESTION' example:*
+<good_question_example>
+"Should this feature be available for all user roles, or only for administrators?"
+</good_question_example>
+
+**General Instructions:**
+- A single suggestion must be strictly 'INSERT' or 'QUESTION', not a mix.
+- Base your suggestions ONLY on the provided ticket and documentation. Do not invent details.
+- Ensure proper markdown formatting, with correct spacing - INSERTS will be added to markdown description output
+- Provided examples are already formatted correctly, take utmost care especially when using newlines
+- Always respond only with a JSON object. No comments outside the JSON.
+- Respond in the same language as the ticket.
+- Respond with a maximum of 6 suggestions.`;
 
     const userMessage = `Analyze the following ticket and documentation, then generate suggestions.
 
@@ -178,7 +243,10 @@ ${context}`;
    * @param error Nieznany błąd do obsłużenia
    * @param error_context Dodatkowy kontekst błędu (userId, title)
    */
-  private async _handleError(error: unknown, error_context: { userId: string | null; title: string }): Promise<void> {
+  private async _handleError(
+    error: unknown,
+    error_context: { userId: string | null; title: string; ticketId?: string }
+  ): Promise<void> {
     let errorDetails: ErrorDetails;
 
     if (error instanceof Response) {
@@ -209,10 +277,12 @@ ${context}`;
       user_id?: string | null;
       error_message: string;
       error_details?: Json | null;
+      ticket_id?: string;
     } = {
       user_id: error_context.userId,
       error_message: errorDetails.message,
       error_details: errorDetails as unknown as Json,
+      ticket_id: error_context.ticketId,
     };
 
     await this.supabase.from("ai_errors").insert(errorInsert);
