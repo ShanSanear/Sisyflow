@@ -70,7 +70,10 @@ export const TicketModal: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent data-testid="ticket-modal" className="w-full min-w-5xl max-h-[90vh] flex flex-col p-4 sm:p-6">
+      <DialogContent
+        data-testid="ticket-modal"
+        className={`w-full max-h-[90vh] flex flex-col p-4 sm:p-6 ${mode === "view" ? "min-w-2xl" : "min-w-5xl"}`}
+      >
         <TicketModalHeader mode={mode} />
 
         <div className="flex-1 overflow-hidden">

@@ -91,7 +91,7 @@ export const DescriptionEditor: React.FC<DescriptionEditorProps> = ({ value, onC
       {showPreview ? (
         mode === "view" ? (
           // View mode: show only markdown preview
-          <div className="prose prose-sm max-h-96 overflow-auto p-3 border rounded-md bg-muted/30">
+          <div className="prose prose-sm max-w-none max-h-96 overflow-auto p-3 border rounded-md bg-muted/30">
             <MarkdownRenderer>{value || "*No content*"}</MarkdownRenderer>
           </div>
         ) : (

@@ -138,7 +138,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
 
   return (
     <ResizablePanelGroup direction="horizontal" className="w-full h-full" data-testid="ticket-modal-content">
-      <ResizablePanel defaultSize={60} minSize={40}>
+      <ResizablePanel defaultSize={mode === "view" ? 100 : 60} minSize={mode === "view" ? 100 : 40}>
         <div className="flex h-full flex-col overflow-y-auto">
           <div className="grow p-6">
             <TicketForm
