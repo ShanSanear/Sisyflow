@@ -96,6 +96,32 @@ Architektura interfejsu użytkownika (UI) dla aplikacji Sisyflow została zaproj
   - **Dostępność:** Tabela jest dostępna dla czytników ekranu.
   - **Bezpieczeństwo:** Administrator nie może usunąć własnego konta z poziomu interfejsu.
 
+#### Pod-widok: Błędy AI
+
+- **Nazwa widoku:** Podgląd Błędów AI (AI Error Log Viewer)
+- **Ścieżka widoku:** `/admin/ai-errors`
+- **Główny cel:** Umożliwienie Administratorowi monitorowania, przeglądania i diagnozowania błędów generowanych przez integracje AI (np. OpenRouter.ai) podczas analizy ticketów. Celem jest szybkie identyfikowanie problemów, rozumienie ich kontekstu i zbieranie danych do ich naprawy.
+- **Kluczowe informacje do wyświetlenia (zgodne ze schematem `ai_errors`):**
+  - **Tabela z logami błędów:** Kolumny:
+    - **Data i Czas (`created_at`):** Kiedy wystąpił błąd.
+    - **Użytkownik (`user_id`):** Nazwa/e-mail użytkownika, który napotkał błąd (wymaga złączenia z tabelą `profiles`).
+    - **ID Ticketa (`ticket_id`):** Opcjonalny, klikalny identyfikator ticketa.
+    - **Wiadomość Błędu (`error_message`):** Główna treść błędu.
+    - **Status Kod (z `error_details`):** Kod statusu HTTP odpowiedzi (np. 4xx, 5xx), jeśli jest dostępny w obiekcie `error_details`.
+    - **Akcje:** Przycisk do otwarcia modala ze szczegółami (`error_details`).
+  - **Widok szczegółowy (w modalu/arkuszu):**
+    - Wyświetla pełną zawartość pola `error_details` (JSONB) w sformatowany sposób, zawierającą np. pełną odpowiedź API, ślad stosu (stack trace) czy szczegóły zapytania.
+- **Kluczowe komponenty widoku:** `Table` (z paginacją), `Button` ("Szczegóły"), `Dialog` lub `Sheet` (dla widoku detali), `Input` (do filtrowania/wyszukiwania), `Badge` (dla kodów statusu), `Pagination`.
+- **UX, dostępność i względy bezpieczeństwa:**
+  - **UX:**
+    - Możliwość filtrowania błędów po użytkowniku, ID ticketa lub treści błędu.
+    - Paginacja do obsługi dużej liczby logów.
+    - Kliknięcie wiersza otwiera modal ze szczegółowymi informacjami, które można łatwo skopiować.
+    - Odświeżanie danych w czasie rzeczywistym lub przycisk do manualnego odświeżenia.
+  - **Dostępność:** Tabela powinna być semantyczna i dostępna dla czytników ekranu. Modal/arkusz powinien prawidłowo zarządzać focusem.
+  - **Bezpieczeństwo:**
+    - Administrator nie ma możliwości usuwania logów z poziomu interfejsu.
+
 ## 3. Mapa podróży użytkownika
 
 1.  **Uwierzytelnianie:**
