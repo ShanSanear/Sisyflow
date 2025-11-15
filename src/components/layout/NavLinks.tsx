@@ -10,17 +10,10 @@ interface NavLinksProps {
 }
 
 export const NavLinks: React.FC<NavLinksProps> = ({ user }) => {
-  const [pathname, setPathname] = useState<string>(() => {
-    if (typeof window === "undefined") {
-      return "/";
-    }
-    return window.location.pathname;
-  });
+  const [pathname, setPathname] = useState<string>("");
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    setPathname(window.location.pathname);
 
     const handlePopState = () => {
       setPathname(window.location.pathname);
