@@ -52,15 +52,15 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     id: ticket.id,
     disabled: isSaving,
   });
-  const { active, cancel } = useDndContext();
+  const { active } = useDndContext();
 
   // Don't apply drag listeners when user can't move the ticket
-  const dragListeners = canMove ? listeners : {};
+  const dragListeners = React.useMemo(() => (canMove ? (listeners ?? {}) : {}), [canMove, listeners]);
   const dragAttributes = canMove ? attributes : {};
 
   // Check if this ticket is the one being dragged
   const isThisTicketDragging = isDragging || (isAnyDragging && draggedTicketId === ticket.id);
-  
+
   // Disable Tab navigation when any ticket is being dragged (except the one being dragged)
   const shouldDisableTab = isAnyDragging && !isThisTicketDragging;
 
@@ -260,13 +260,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   );
 
   // Merge drag listeners with our custom onKeyDown handler
-  const mergedDragListeners = React.useMemo(() => {
-    if (!canMove) return {};
-    return {
+  const mergedDragListeners = React.useMemo(
+    () => ({
       ...dragListeners,
       onKeyDown: mergedKeyDownHandler,
-    };
-  }, [canMove, dragListeners, mergedKeyDownHandler]);
+    }),
+    [dragListeners, mergedKeyDownHandler]
+  );
 
   const handleDeleteTicket = async () => {
     if (!onDelete) return;
@@ -376,6 +376,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               aria-grabbed={isThisTicketDragging}
               aria-disabled={isSaving || !canMove}
               onClick={handleCardClick}
+              onKeyDown={mergedKeyDownHandler}
             >
               {CardContent}
             </div>
@@ -399,6 +400,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           aria-grabbed={isThisTicketDragging}
           aria-disabled={isSaving || !canMove}
           onClick={handleCardClick}
+          onKeyDown={mergedKeyDownHandler}
         >
           {CardContent}
         </div>
