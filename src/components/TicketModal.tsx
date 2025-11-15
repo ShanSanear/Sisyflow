@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTicketModal } from "@/lib/contexts/TicketModalContext";
 import { useUserContext } from "@/components/layout/useUserContext";
@@ -17,6 +17,7 @@ import type { AISuggestionsResponse } from "@/types";
 export const TicketModal: React.FC = () => {
   const { isOpen, mode, ticketId, onClose, onSave, setOpen } = useTicketModal();
   const { user, isAdmin } = useUserContext();
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // AI session state - used in ticket save flow
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsResponse | null>(null);
@@ -68,6 +69,17 @@ export const TicketModal: React.FC = () => {
     setOpen,
   });
 
+  // Focus management: When modal opens in create mode, focus the title input
+  useEffect(() => {
+    if (isOpen && mode === "create" && titleInputRef.current) {
+      // Small delay to ensure the input is rendered
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, mode]);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
@@ -93,6 +105,7 @@ export const TicketModal: React.FC = () => {
             onCancel={onClose}
             onAssigneeChange={onAssigneeChange}
             onAISessionChange={handleAISessionChange}
+            titleInputRef={titleInputRef}
           />
         </div>
       </DialogContent>

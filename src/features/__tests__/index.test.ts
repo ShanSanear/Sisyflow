@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { FeatureFlag, getFeatureFlagManager, isFeatureEnabled, resetFeatureFlagManager } from "./index";
+import { FeatureFlag, getFeatureFlagManager, isFeatureEnabled, resetFeatureFlagManager } from "../index";
 
 describe("Feature Flag System", () => {
   const originalEnv = process.env;

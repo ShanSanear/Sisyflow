@@ -185,3 +185,36 @@ export function generateUsernameFromEmail(email: string, maxLength = 12): string
 
   return baseUsername;
 }
+
+/**
+ * Creates an ARIA live region announcement for screen readers
+ * @param message - The message to announce
+ * @param options - Configuration options
+ * @param options.priority - "polite" (default) or "assertive" for urgency
+ * @param options.role - "status" (default) or "alert" for the announcement type
+ * @param options.duration - How long to keep the announcement in DOM (default: 1000ms)
+ */
+export function announceToScreenReader(
+  message: string,
+  options: {
+    priority?: "polite" | "assertive";
+    role?: "status" | "alert";
+    duration?: number;
+  } = {}
+): void {
+  const { priority = "polite", role = "status", duration = 1000 } = options;
+
+  const announcement = document.createElement("div");
+  announcement.setAttribute("role", role);
+  announcement.setAttribute("aria-live", priority);
+  announcement.setAttribute("aria-atomic", "true");
+  announcement.className = "sr-only";
+  announcement.textContent = message;
+  document.body.appendChild(announcement);
+
+  setTimeout(() => {
+    if (document.body.contains(announcement)) {
+      document.body.removeChild(announcement);
+    }
+  }, duration);
+}

@@ -18,6 +18,7 @@ interface TicketFormProps {
   isAdmin: boolean;
   ticket?: FullTicketDTO;
   onAssigneeChange?: () => void;
+  titleInputRef?: React.Ref<HTMLInputElement>;
 }
 
 /**
@@ -33,6 +34,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   isAdmin,
   ticket,
   onAssigneeChange,
+  titleInputRef,
 }) => {
   const {
     handleSubmit,
@@ -59,6 +61,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   return (
     <form data-testid="ticket-modal-form" onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <TitleInput
+        ref={titleInputRef}
         value={watchedValues.title || " "}
         onChange={(value) => {
           setValue("title", value);

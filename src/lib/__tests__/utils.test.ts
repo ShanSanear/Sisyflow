@@ -8,7 +8,7 @@ import {
   createDatabaseConnectionErrorResponse,
   extractSupabaseError,
   calculatePagination,
-} from "./utils";
+} from "../utils";
 
 // Mock console.error for extractSupabaseError tests
 const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useKanbanBoard } from "./useKanbanBoard";
-import { useUserContext } from "../../components/layout/useUserContext";
-import { useToast } from "./useToast";
-import type { TicketDTO } from "../../types";
-import type { CurrentUser } from "../../components/views/KanbanBoardView.types";
+import { useKanbanBoard } from "../useKanbanBoard";
+import { useUserContext } from "../../../components/layout/useUserContext";
+import { useToast } from "../useToast";
+import type { TicketDTO } from "../../../types";
+import type { CurrentUser } from "../../../components/views/KanbanBoardView.types";
 import type { DragEndEvent } from "@dnd-kit/core";
 
 // Mock external dependencies
-vi.mock("../../components/layout/useUserContext");
-vi.mock("./useToast");
+vi.mock("../../../components/layout/useUserContext");
+vi.mock("../useToast");
 
 const mockUseUserContext = vi.mocked(useUserContext);
 const mockUseToast = vi.mocked(useToast);
