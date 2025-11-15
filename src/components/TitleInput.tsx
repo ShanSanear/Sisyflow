@@ -13,29 +13,34 @@ interface TitleInputProps {
 /**
  * Pole wejściowe dla tytułu ticketa
  */
-export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, error, mode }) => {
-  const isDisabled = mode === "view";
+export const TitleInput = React.forwardRef<HTMLInputElement, TitleInputProps>(
+  ({ value, onChange, error, mode }, ref) => {
+    const isDisabled = mode === "view";
 
-  return (
-    <div data-testid="ticket-modal-form-title-input" className="space-y-2">
-      <Label htmlFor="title">Title *</Label>
-      <Input
-        data-testid="ticket-modal-form-title-input-input"
-        id="title"
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={isDisabled}
-        className={error ? "border-destructive" : ""}
-        placeholder="Enter ticket title..."
-        aria-describedby={error ? "title-error" : undefined}
-        aria-invalid={!!error}
-      />
-      {error && (
-        <p id="title-error" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
+    return (
+      <div data-testid="ticket-modal-form-title-input" className="space-y-2">
+        <Label htmlFor="title">Title *</Label>
+        <Input
+          ref={ref}
+          data-testid="ticket-modal-form-title-input-input"
+          id="title"
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={isDisabled}
+          className={error ? "border-destructive" : ""}
+          placeholder="Enter ticket title..."
+          aria-describedby={error ? "title-error" : undefined}
+          aria-invalid={!!error}
+        />
+        {error && (
+          <p id="title-error" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
+
+TitleInput.displayName = "TitleInput";

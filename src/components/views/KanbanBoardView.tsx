@@ -4,6 +4,33 @@ import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
 import { useKanbanBoard } from "../../lib/hooks/useKanbanBoard";
 import { useTicketModal } from "../../lib/contexts/TicketModalContext";
+import { announceToScreenReader } from "../../lib/utils";
+
+/**
+ * Checks if the user is currently typing in an input field, textarea, or contenteditable element
+ */
+const isTypingInInput = (): boolean => {
+  const activeElement = document.activeElement;
+  if (!activeElement) return false;
+
+  const tagName = activeElement.tagName.toLowerCase();
+  const isInput =
+    tagName === "input" &&
+    (activeElement as HTMLInputElement).type !== "button" &&
+    (activeElement as HTMLInputElement).type !== "submit";
+  const isTextarea = tagName === "textarea";
+  const isContentEditable = activeElement.getAttribute("contenteditable") === "true";
+
+  return isInput || isTextarea || isContentEditable;
+};
+
+/**
+ * Checks if text is currently selected
+ */
+const hasTextSelection = (): boolean => {
+  const selection = window.getSelection();
+  return selection !== null && selection.toString().length > 0;
+};
 
 export const KanbanBoardView: React.FC = () => {
   const {
@@ -17,7 +44,7 @@ export const KanbanBoardView: React.FC = () => {
     canMoveTicket,
     refetch,
   } = useKanbanBoard();
-  const { setOpen } = useTicketModal();
+  const { setOpen, isOpen } = useTicketModal();
 
   const handleTicketClick = (ticketId: string) => {
     setOpen({ mode: "view", ticketId });
@@ -51,6 +78,34 @@ export const KanbanBoardView: React.FC = () => {
     window.addEventListener("ticket:saved", handleTicketSaved);
     return () => window.removeEventListener("ticket:saved", handleTicketSaved);
   }, [refetch]);
+
+  // Handle "C" key to open ticket creation modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only trigger if:
+      // 1. Key is "c" or "C" (case-insensitive)
+      // 2. Modal is not already open
+      // 3. User is not typing in an input field
+      // 4. No text is selected
+      // 5. Not holding Ctrl/Cmd (to avoid conflicts with Ctrl+C)
+      if (
+        (event.key === "c" || event.key === "C") &&
+        !isOpen &&
+        !isTypingInInput() &&
+        !hasTextSelection() &&
+        !event.ctrlKey &&
+        !event.metaKey
+      ) {
+        event.preventDefault();
+        setOpen({ mode: "create" });
+
+        announceToScreenReader("Ticket creation modal opened. Press Ctrl+Enter to save.");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, setOpen]);
 
   if (isLoading) {
     return (

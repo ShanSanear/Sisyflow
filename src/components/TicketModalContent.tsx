@@ -8,6 +8,7 @@ import { AISuggestionsList } from "@/components/ticket/AISuggestionsList";
 import { AIRating } from "@/components/ticket/AIRating";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { announceToScreenReader } from "@/lib/utils";
 
 type PanelRef = React.ComponentRef<typeof ResizablePanel>;
 
@@ -27,6 +28,7 @@ interface TicketModalContentProps {
   onCancel: () => void;
   onAssigneeChange?: () => void;
   onAISessionChange?: (suggestions: AISuggestionsResponse | null, rating?: number | null) => void;
+  titleInputRef?: React.Ref<HTMLInputElement>;
 }
 
 export const TicketModalContent: React.FC<TicketModalContentProps> = ({
@@ -45,6 +47,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
   onCancel,
   onAssigneeChange,
   onAISessionChange,
+  titleInputRef,
 }) => {
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsResponse | null>(null);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
@@ -66,6 +69,34 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
       rightPanelRef.current?.expand();
     }
   }, [mode]);
+
+  // Handle Ctrl+Enter (or Cmd+Enter on Mac) to submit the form
+  useEffect(() => {
+    // Only handle keyboard shortcuts in create or edit mode
+    if (mode === "view") return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Ctrl+Enter or Cmd+Enter
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Only submit if form is valid (has at least title)
+        if (isFormValid && formData.title.trim().length > 0) {
+          onSave();
+        } else {
+          announceToScreenReader("Cannot save ticket. Please provide a title.", {
+            priority: "assertive",
+            role: "alert",
+            duration: 2000,
+          });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mode, isFormValid, formData.title, onSave]);
 
   const handleTogglePanel = () => {
     const panel = rightPanelRef.current;
@@ -150,6 +181,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
               isAdmin={isAdmin}
               ticket={ticket}
               onAssigneeChange={onAssigneeChange}
+              titleInputRef={titleInputRef}
             />
           </div>
           <div className="border-t bg-background p-1">
@@ -163,6 +195,7 @@ export const TicketModalContent: React.FC<TicketModalContentProps> = ({
               isValid={isFormValid}
               mode={mode}
               canEdit={canEdit}
+              showKeyboardHint={mode === "create" || mode === "edit"}
             />
           </div>
         </div>
