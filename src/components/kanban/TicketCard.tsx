@@ -135,7 +135,6 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
     ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
     ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
-    ${!canMove ? "cursor-not-allowed" : ""}
     ${isSaving ? "opacity-50 animate-pulse" : ""}
     ${isDragging ? "opacity-90" : ""}
   `;
@@ -374,7 +373,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
               aria-describedby="drag-instructions"
               aria-grabbed={isThisTicketDragging}
-              aria-disabled={isSaving || !canMove}
+              aria-disabled={isSaving}
               onClick={handleCardClick}
               onKeyDown={mergedKeyDownHandler}
             >
@@ -398,7 +397,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
           aria-describedby="drag-instructions"
           aria-grabbed={isThisTicketDragging}
-          aria-disabled={isSaving || !canMove}
+          aria-disabled={isSaving}
           onClick={handleCardClick}
           onKeyDown={mergedKeyDownHandler}
         >
