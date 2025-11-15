@@ -130,14 +130,12 @@ export function extractSupabaseError(error: unknown, operation: string): Error {
     " | "
   );
 
-  // Log the full error for debugging (in development)
-  console.error(`Supabase Error in ${operation}:`, {
-    message,
-    code,
-    details,
-    hint,
-    fullError: error,
-  });
+  // Log a clean, readable error message
+  if (isDatabaseConnectionError(error)) {
+    console.error(`${operation} failed: Database connection refused`);
+  } else {
+    console.error(`Supabase Error in ${operation}: ${message}`);
+  }
 
   return new Error(detailedMessage);
 }

@@ -44,7 +44,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ registrationSuccess = fals
       // Success - redirect will be handled by the response
       window.location.href = "/board";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      // Handle different types of errors
+      if (err instanceof Error) {
+        // Check if it's a network error
+        if (err.message.includes("fetch") || err.message.includes("Network") || err.message.includes("network")) {
+          setError(
+            "There was a problem logging you in. Please try again and if the issue persists, contact your administrator."
+          );
+        } else if (err.message.includes("Database Connection Error")) {
+          setError(
+            "There was a problem logging you in. Please try again and if the issue persists, contact your administrator."
+          );
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

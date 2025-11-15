@@ -1,8 +1,14 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerInstance, createSupabaseAdminInstance } from "../../../db/supabase.client.ts";
 import { loginSchema } from "../../../lib/validation/auth.validation.ts";
+import { isDatabaseConnectionError, createDatabaseConnectionErrorResponse } from "../../../lib/utils.ts";
+import { AuthApiError } from "@supabase/supabase-js";
 
 export const prerender = false;
+
+function isAuthApiError(error: unknown) {
+  return error instanceof AuthApiError;
+}
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -32,15 +38,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Determine if identifier is email or username
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-    let emailToUse = identifier;
+    let emailToUse: string | null = identifier;
 
     if (!isEmail) {
       // Identifier is a username, look up the corresponding email via RPC
       const { data: userId, error: rpcError } = await supabase.rpc("get_user_id_by_username", {
         p_username: identifier,
       });
+      if (rpcError) {
+        if (isDatabaseConnectionError(rpcError)) {
+          return createDatabaseConnectionErrorResponse("user lookup");
+        }
+        throw rpcError;
+      }
 
-      if (rpcError || !userId) {
+      if (!userId) {
         return new Response(JSON.stringify({ error: "Invalid username or password" }), {
           status: 401,
           headers: { "Content-Type": "application/json" },
@@ -48,37 +60,62 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       // Get the user's email from auth.users using the admin client
-      const supabaseAdmin = createSupabaseAdminInstance();
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      try {
+        const supabaseAdmin = createSupabaseAdminInstance();
+        const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        console.log("userError", userError);
+        if (userError) {
+          if (isDatabaseConnectionError(userError)) {
+            return createDatabaseConnectionErrorResponse("user lookup");
+          }
+          throw userError;
+        }
 
-      if (userError || !userData.user?.email) {
-        return new Response(JSON.stringify({ error: "Invalid username or password" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
+        if (!data?.user?.email) {
+          return new Response(JSON.stringify({ error: "Invalid username or password" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        } else {
+          emailToUse = data.user.email;
+        }
+      } catch (adminErr) {
+        console.error("Error getting user data:", adminErr);
+        if (isDatabaseConnectionError(adminErr)) {
+          return createDatabaseConnectionErrorResponse("user lookup");
+        }
+        throw adminErr;
       }
-
-      emailToUse = userData.user.email;
     }
 
+    // Attempt sign-in with proper error handling
+    let signInData: { user: { id: string; email?: string | undefined } } | null = null;
+    // try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: emailToUse,
       password,
     });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      throw error;
     }
+    signInData = data;
 
-    return new Response(JSON.stringify({ user: data.user }), {
+    return new Response(JSON.stringify({ user: signInData.user }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Sign-in error:", err);
+    if (isDatabaseConnectionError(err)) {
+      return createDatabaseConnectionErrorResponse("sign-in");
+    }
+    if (isAuthApiError(err)) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: err.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    // For other errors, return a generic internal server error
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
