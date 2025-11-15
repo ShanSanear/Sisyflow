@@ -197,7 +197,7 @@ describe("utils", () => {
       expect(result.message).toContain("Details: Test details");
       expect(result.message).toContain("Hint: Test hint");
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Supabase Error in testOperation:", expect.any(Object));
+      expect(consoleErrorSpy).toHaveBeenCalledWith("Supabase Error in testOperation: Test message");
     });
 
     it("should handle missing error properties with defaults", () => {
