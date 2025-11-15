@@ -127,12 +127,12 @@ export class UserService {
         throw new EmailAlreadyExistsError();
       }
 
-      // Sprawdź czy username już istnieje w profiles
+      // Sprawdź czy username już istnieje w profiles (case-insensitive)
       const { data: existingProfile, error: profileCheckError } = await this.supabase
         .from("profiles")
         .select("id")
-        .eq("username", validatedData.username)
-        .single();
+        .ilike("username", validatedData.username)
+        .maybeSingle();
 
       if (profileCheckError && profileCheckError.code !== POSTGREST_ERROR_CODES.NO_ROWS_RETURNED_FOR_SINGLE) {
         // PGRST116 to kod dla "no rows returned", co oznacza że username jest dostępny

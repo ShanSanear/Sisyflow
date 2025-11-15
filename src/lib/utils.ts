@@ -155,3 +155,33 @@ export function calculatePagination(offset: number, limit: number, total: number
     total,
   };
 }
+
+/**
+ * Generates a username from an email address
+ * - Extracts the part before @
+ * - Removes all non-alphanumeric characters
+ * - Preserves original case
+ * - Truncates to maxLength (default 12)
+ * @param email - Email address to generate username from
+ * @param maxLength - Maximum length of generated username (default 12)
+ * @returns Generated username
+ */
+export function generateUsernameFromEmail(email: string, maxLength = 12): string {
+  // Extract part before @
+  const emailPrefix = email.split("@")[0];
+
+  // Remove all non-alphanumeric characters, preserving case
+  const sanitized = emailPrefix.replace(/[^a-zA-Z0-9]/g, "");
+
+  // Truncate to maxLength
+  const baseUsername = sanitized.slice(0, maxLength);
+
+  // Ensure minimum length of 3 characters (database constraint)
+  if (baseUsername.length < 3) {
+    // If too short, pad with numbers
+    const padded = baseUsername + "123".slice(0, 3 - baseUsername.length);
+    return padded.slice(0, maxLength);
+  }
+
+  return baseUsername;
+}
