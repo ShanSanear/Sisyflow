@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors } from "@dnd-kit/core";
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { KanbanColumn } from "./KanbanColumn";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Keyboard } from "lucide-react";
+import { announceToScreenReader } from "@/lib/utils";
 import type { KanbanViewModel, TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
+import { KeyboardHelpTooltip } from "./KeyboardHelpTooltip";
 
 interface BoardContainerProps {
   boardState: KanbanViewModel;
@@ -28,6 +27,9 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
   onTicketClick,
   onTicketEdit,
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -66,63 +68,65 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
     })
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDragStart = (event: DragStartEvent) => {
-    // Optional: Add visual feedback when dragging starts
-    // console.log("Drag started:", event.active.id);
+    const ticketId = event.active.id as string;
+    setIsDragging(true);
+    setDraggedTicketId(ticketId);
+
+    // Find ticket info for announcement
+    let ticketTitle = "";
+    for (const column of Object.values(boardState)) {
+      const ticket = column.tickets.find((t) => t.id === ticketId);
+      if (ticket) {
+        ticketTitle = ticket.title;
+        break;
+      }
+    }
+
+    announceToScreenReader(
+      `Ticket "${ticketTitle}" grabbed. Use arrow keys to move, Space or D to drop, Escape to cancel.`
+    );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = () => {
     // Optional: Handle drag over events if needed
-    // console.log("Drag over:", event.over?.id);
+  };
+
+  const handleDragEndWithReset = (event: DragEndEvent) => {
+    setIsDragging(false);
+    setDraggedTicketId(null);
+    handleDragEnd(event);
+  };
+
+  const handleDragCancel = () => {
+    if (isDragging && draggedTicketId) {
+      // Find ticket info for announcement
+      let ticketTitle = "";
+      for (const column of Object.values(boardState)) {
+        const ticket = column.tickets.find((t) => t.id === draggedTicketId);
+        if (ticket) {
+          ticketTitle = ticket.title;
+          break;
+        }
+      }
+
+      announceToScreenReader(`Drag cancelled. Ticket "${ticketTitle}" returned to original position.`);
+    }
+    setIsDragging(false);
+    setDraggedTicketId(null);
   };
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEndWithReset}
+      onDragCancel={handleDragCancel}
+    >
       <div className="max-w-full mx-auto px-6">
         <div className="flex justify-end mb-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Keyboard className="h-4 w-4" />
-                  Keyboard Help
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-xs">
-                <div className="space-y-2">
-                  <p className="font-medium">Keyboard Navigation:</p>
-                  <ul className="text-sm space-y-1">
-                    <li>
-                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                        Tab
-                      </kbd>{" "}
-                      - Navigate between cards
-                    </li>
-                    <li>
-                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                        Space/Enter
-                      </kbd>{" "}
-                      - Start/End drag
-                    </li>
-                    <li>
-                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                        Arrow Keys
-                      </kbd>{" "}
-                      - Move card
-                    </li>
-                    <li>
-                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                        Escape
-                      </kbd>{" "}
-                      - Cancel drag
-                    </li>
-                  </ul>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <KeyboardHelpTooltip />
         </div>
         <div
           className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center"
@@ -141,14 +145,16 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
               handleTicketDelete={handleTicketDelete}
               onTicketClick={onTicketClick}
               onTicketEdit={onTicketEdit}
+              isDragging={isDragging}
+              draggedTicketId={draggedTicketId}
             />
           ))}
         </div>
-        {/* Hidden instructions for screen readers */}
-        <div id="drag-instructions" className="sr-only">
-          Use Tab to navigate between cards, Space or Enter to start dragging, arrow keys to move, and Space or Enter to
-          drop. Press Escape to cancel.
-        </div>
+      </div>
+      {/* Hidden instructions for screen readers */}
+      <div id="drag-instructions" className="sr-only">
+        Use Tab to navigate between cards, Space or G to grab a ticket, arrow keys to move between columns, Space or D
+        to drop, Escape to cancel drag, or Ctrl+Enter to open ticket modal.
       </div>
     </DndContext>
   );

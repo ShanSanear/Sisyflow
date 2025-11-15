@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDndContext } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Sparkles, MoreHorizontal, Trash2 } from "lucide-react";
 import { useUserContext } from "@/components/layout/useUserContext";
+import { announceToScreenReader } from "@/lib/utils";
 import type { TicketCardViewModel, TicketStatus } from "../views/KanbanBoardView.types";
 
 interface TicketCardProps {
@@ -31,6 +32,8 @@ interface TicketCardProps {
   onDelete?: (ticketId: string) => Promise<void>; // Handler for deleting ticket
   onClick?: (ticketId: string) => void; // Handler for clicking on ticket card
   onEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
+  isDragging?: boolean; // Whether any ticket is currently being dragged
+  draggedTicketId?: string | null; // ID of the ticket being dragged
 }
 
 export const TicketCard: React.FC<TicketCardProps> = ({
@@ -42,15 +45,24 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   onDelete,
   onClick,
   onEdit,
+  isDragging: isAnyDragging = false,
+  draggedTicketId = null,
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
     disabled: isSaving,
   });
+  const { active, cancel } = useDndContext();
 
   // Don't apply drag listeners when user can't move the ticket
   const dragListeners = canMove ? listeners : {};
   const dragAttributes = canMove ? attributes : {};
+
+  // Check if this ticket is the one being dragged
+  const isThisTicketDragging = isDragging || (isAnyDragging && draggedTicketId === ticket.id);
+  
+  // Disable Tab navigation when any ticket is being dragged (except the one being dragged)
+  const shouldDisableTab = isAnyDragging && !isThisTicketDragging;
 
   const titleRef = useRef<HTMLParagraphElement>(null);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
@@ -135,17 +147,126 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   );
 
   const handleCardClick = () => {
-    if (onClick && !isDragging) {
+    // Only open modal if not dragging
+    if (onClick && !isThisTicketDragging) {
       onClick(ticket.id);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.key === "Enter" || e.key === " ") && onClick && !isDragging) {
-      e.preventDefault();
-      onClick(ticket.id);
-    }
-  };
+  // Merge our custom keyboard handler with dnd-kit's drag listeners
+  const mergedKeyDownHandler = React.useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      const isEnter = e.key === "Enter";
+      const isSpace = e.key === " ";
+      const isG = e.key === "g" || e.key === "G";
+      const isD = e.key === "d" || e.key === "D";
+
+      // Ctrl+Enter: Open modal (only when not dragging)
+      if (isCtrlOrCmd && isEnter && onClick && !isThisTicketDragging) {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick(ticket.id);
+        announceToScreenReader(`Opening ticket "${ticket.title}" in modal.`);
+        return;
+      }
+
+      // If dragging is active and this isn't the dragged ticket, prevent all keyboard interactions
+      if (isAnyDragging && !isThisTicketDragging) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // G key: Simulate Space to start drag
+      if (isG && canMove && !isSaving && !isThisTicketDragging && !isAnyDragging) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Call dnd-kit's handler directly with a Space-like event
+        if (dragListeners.onKeyDown) {
+          // Create a new event object that looks like Space was pressed
+          const spaceLikeEvent = {
+            ...e,
+            key: " ",
+            code: "Space",
+            keyCode: 32,
+            which: 32,
+            keyIdentifier: "U+0020",
+            charCode: 32,
+            nativeEvent: {
+              ...e.nativeEvent,
+              key: " ",
+              code: "Space",
+              keyCode: 32,
+              which: 32,
+            },
+          } as React.KeyboardEvent<HTMLDivElement>;
+          dragListeners.onKeyDown(spaceLikeEvent);
+        }
+        return;
+      }
+
+      // D key: Simulate Space to end drag
+      if (isD && isThisTicketDragging && active?.id === ticket.id) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Call dnd-kit's handler directly with a Space-like event for drop
+        if (dragListeners.onKeyDown) {
+          const spaceLikeEvent = {
+            ...e,
+            key: " ",
+            code: "Space",
+            keyCode: 32,
+            which: 32,
+            keyIdentifier: "U+0020",
+            charCode: 32,
+            nativeEvent: {
+              ...e.nativeEvent,
+              key: " ",
+              code: "Space",
+              keyCode: 32,
+              which: 32,
+            },
+          } as React.KeyboardEvent<HTMLDivElement>;
+          dragListeners.onKeyDown(spaceLikeEvent);
+        }
+        return;
+      }
+
+      // Enter/Space: Open modal (only when not dragging and ticket cannot be moved)
+      if ((isEnter || isSpace) && onClick && !isThisTicketDragging && !isAnyDragging && !canMove) {
+        e.preventDefault();
+        onClick(ticket.id);
+        return;
+      }
+
+      // For Space/Enter when can move: Call dnd-kit's handler to handle drag start/end
+      if (dragListeners.onKeyDown && canMove && (isSpace || isEnter)) {
+        dragListeners.onKeyDown(e);
+        return;
+      }
+    },
+    [
+      canMove,
+      isSaving,
+      isThisTicketDragging,
+      isAnyDragging,
+      onClick,
+      ticket.id,
+      ticket.title,
+      dragListeners,
+      active?.id,
+    ]
+  );
+
+  // Merge drag listeners with our custom onKeyDown handler
+  const mergedDragListeners = React.useMemo(() => {
+    if (!canMove) return {};
+    return {
+      ...dragListeners,
+      onKeyDown: mergedKeyDownHandler,
+    };
+  }, [canMove, dragListeners, mergedKeyDownHandler]);
 
   const handleDeleteTicket = async () => {
     if (!onDelete) return;
@@ -244,16 +365,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             <div
               ref={setNodeRef}
               style={style}
-              {...dragListeners}
+              {...mergedDragListeners}
               {...dragAttributes}
               data-testid={`ticket-card-${ticket.id}`}
               className={cardClassName}
               role="button"
-              tabIndex={!isSaving ? 0 : -1}
+              tabIndex={shouldDisableTab || isSaving ? -1 : 0}
               aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
               aria-describedby="drag-instructions"
+              aria-grabbed={isThisTicketDragging}
+              aria-disabled={isSaving || !canMove}
               onClick={handleCardClick}
-              onKeyDown={handleKeyDown}
             >
               {CardContent}
             </div>
@@ -266,16 +388,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         <div
           ref={setNodeRef}
           style={style}
-          {...dragListeners}
+          {...mergedDragListeners}
           {...dragAttributes}
           data-testid={`ticket-card-${ticket.id}`}
           className={cardClassName}
           role="button"
-          tabIndex={!isSaving ? 0 : -1}
+          tabIndex={shouldDisableTab || isSaving ? -1 : 0}
           aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
           aria-describedby="drag-instructions"
+          aria-grabbed={isThisTicketDragging}
+          aria-disabled={isSaving || !canMove}
           onClick={handleCardClick}
-          onKeyDown={handleKeyDown}
         >
           {CardContent}
         </div>
