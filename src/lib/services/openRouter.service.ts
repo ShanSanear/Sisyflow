@@ -27,7 +27,8 @@ interface ErrorDetails {
 }
 
 // --- Stałe ---
-const MODEL_NAME = "mistralai/mistral-7b-instruct";
+// const MODEL_NAME = "mistralai/mistral-7b-instruct";
+const MODEL_NAME = "x-ai/grok-4-fast";
 
 /**
  * Serwis odpowiedzialny za komunikację z API OpenRouter.ai
@@ -133,48 +134,45 @@ Your final response MUST be a JSON object. The 'content' field for your suggesti
 - An 'INSERT' suggestion should be a complete, multi-line template for the user to fill out.
 - It must be ready to be copied and pasted directly into a ticket description.
 - Combine related items into a single, comprehensive suggestion.
-- **Format your response exactly like the example provided below, including bolding, lists, and blank lines for spacing.**
+- Format your response in markdown format
 
-*Good 'INSERT' example:*
-
+*Good 'INSERT' examples:*
 **Steps to Reproduce:**
-1. Go to '...'
-2. Click on '....'
-3. See error
 
+[Describe the steps to reproduce the issue]
+---
 **Expected Behavior:**
 
 [Describe what should happen]
 
+---
 **Actual Behavior:**
 
 [Describe what is happening]
-
+---
 **Device & Browser:**
 - OS: [e.g., macOS, Windows 11]
 - Browser: [e.g., Chrome, Firefox]
 - Version: [e.g., 108.0.0]
-
-
+---
 *Bad 'INSERT' examples:*
-
 - "It would be helpful to add steps to reproduce."
 - A suggestion with only "**Expected Behavior:**"
 
 
 *Bad Formatting Example (DO NOT DO THIS):*
-<bad_formatting_example>
+---
 "**Section 1:** Text**Section 2:** Text"
-</bad_formatting_example>
+---
 
 **'QUESTION' Type:**
 - A direct question to clarify requirements.
 - MUST NOT contain template-like text.
 
 *Good 'QUESTION' example:*
-<good_question_example>
+---
 "Should this feature be available for all user roles, or only for administrators?"
-</good_question_example>
+---
 
 **General Instructions:**
 - A single suggestion must be strictly 'INSERT' or 'QUESTION', not a mix.
@@ -183,7 +181,7 @@ Your final response MUST be a JSON object. The 'content' field for your suggesti
 - Provided examples are already formatted correctly, take utmost care especially when using newlines
 - Always respond only with a JSON object. No comments outside the JSON.
 - Respond in the same language as the ticket.
-- Respond with a maximum of 6 suggestions.`;
+- Respond with a minimum of 3 and maximum of 6 suggestions and at least 2 of them must be of type QUESTION.`;
 
     const userMessage = `Analyze the following ticket and documentation, then generate suggestions.
 
