@@ -82,17 +82,20 @@ export const RegisterForm: React.FC = () => {
 
           <div className="space-y-2">
             <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Username
+              Username <span className="text-gray-500 dark:text-gray-400 text-xs">(optional)</span>
             </Label>
             <Input
               id="username"
               type="text"
-              placeholder="Choose a username"
+              placeholder="Choose a username (or leave blank to auto-generate)"
               className="w-full"
               {...register("username")}
               disabled={isLoading}
             />
             {errors.username && <p className="text-sm text-red-600 dark:text-red-400">{errors.username.message}</p>}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              If not provided, a username will be generated from your email address.
+            </p>
           </div>
 
           <div className="space-y-2">

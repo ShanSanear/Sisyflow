@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerInstance, createSupabaseAdminInstance } from "../../../db/supabase.client.ts";
 import { registerSchema } from "../../../lib/validation/auth.validation.ts";
+import { generateUsernameFromEmail } from "../../../lib/utils.ts";
 
 export const prerender = false;
 
@@ -23,7 +24,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    const { email, password } = validationResult.data;
+    const { email, password, username: providedUsername } = validationResult.data;
 
     const supabase = createSupabaseServerInstance({
       cookies,
@@ -54,6 +55,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    // Generate username if not provided
+    const finalUsername = providedUsername || generateUsernameFromEmail(email, 12);
+
     // Register the new user
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -72,14 +76,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // If this is the first user, create admin profile
     if (userCount === 0 && data.user) {
-      // Generate a default username from email (before @)
-      const defaultUsername = email.split("@")[0];
-
       // Use admin client to bypass RLS for initial profile creation
       const adminSupabase = createSupabaseAdminInstance();
       const { error: profileError } = await adminSupabase.from("profiles").insert({
         id: data.user.id,
-        username: defaultUsername,
+        username: finalUsername,
         role: "ADMIN",
       });
 

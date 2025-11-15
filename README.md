@@ -11,6 +11,7 @@
     - [Setup](#setup)
     - [Build and preview](#build-and-preview)
     - [Code quality](#code-quality)
+    - [Local E2E](#local-e2e)
   - [Available scripts](#available-scripts)
   - [Project scope](#project-scope)
   - [Project status](#project-status)
@@ -26,10 +27,10 @@ Sisyflow is an MVP issue tracker focused on improving the completeness and clari
 ## Tech stack
 
 - **Frontend**: Astro 5, React 19, TypeScript 5, Tailwind CSS 4, Shadcn/ui
-- **Backend (planned)**: Supabase (PostgreSQL, auth, SDK, self-hostable)
-- **AI (planned)**: OpenRouter.ai (access to multiple model providers, budget controls)
+- **Backend**: Supabase (PostgreSQL, auth, SDK, Cloud in the beggining, self-hostable for post-MVP)
+- **AI**: OpenRouter.ai (enforced model for MVP, customized post-MVP, budget controls post MVP)
 - **CI/CD & Hosting (planned)**: GitHub Actions; Cloudflare Pages as Astro application
-- **Dev & quality**: ESLint (with React, Astro, TS rules), Prettier (with Astro plugin), Husky + lint-staged, Vitest & React Testing Library (unit/component tests), Playwright (E2E tests)
+- **Dev & quality**: ESLint (with React, Astro, TS rules), Prettier (with Astro plugin), Husky + lint-staged, Vitest & React Testing Library (unit/component tests), Playwright (E2E tests), commitlint for enforcing conventional commits
 
 ## Getting started locally
 
@@ -53,13 +54,26 @@ nvm use
 npm install
 ```
 
+4. Install supabase CLI:
+   [here](https://supabase.com/docs/guides/local-development/cli/getting-started)
+   Run below to start supabase and recreate database (with seed):
+
+```bash
+supabase start
+supabase db reset
+# or without seed, so there are no users present
+supabase db reset --no-seed
+```
+
 4. Start the dev server:
 
 ```bash
 npm run dev
 ```
 
-5. Open the app at `http://localhost:3000` unless your terminal shows a different port.
+5. Open app at `http://localhost:3000` unless your terminal shows a different port.
+
+6. If seed was used - login as `admin` with password `Qwerty1234` or one of the 1-5 testusers (`testuser1`) with the same password.
 
 ### Build and preview
 
@@ -75,6 +89,13 @@ npm run dev     # run dev server with file watch
 npm run lint      # run ESLint
 npm run lint:fix  # fix lint issues
 npm run format    # format with Prettier
+```
+
+### Local E2E
+
+```bash
+npm run dev:e2e   # run E2E server
+npm run test:e2e  # run E2E tests with that server
 ```
 
 ## Available scripts

@@ -100,11 +100,11 @@ export class ProfileService {
     const validatedCommand = updateProfileSchema.parse(command);
 
     try {
-      // Najpierw sprawdź czy nowa nazwa użytkownika nie jest już zajęta przez innego użytkownika
+      // Najpierw sprawdź czy nowa nazwa użytkownika nie jest już zajęta przez innego użytkownika (case-insensitive)
       const { data: existingUser, error: checkError } = await this.supabase
         .from("profiles")
         .select("id")
-        .eq("username", validatedCommand.username)
+        .ilike("username", validatedCommand.username)
         .neq("id", userId)
         .single();
 
