@@ -52,15 +52,15 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     id: ticket.id,
     disabled: isSaving,
   });
-  const { active, cancel } = useDndContext();
+  const { active } = useDndContext();
 
   // Don't apply drag listeners when user can't move the ticket
-  const dragListeners = canMove ? listeners : {};
+  const dragListeners = React.useMemo(() => (canMove ? (listeners ?? {}) : {}), [canMove, listeners]);
   const dragAttributes = canMove ? attributes : {};
 
   // Check if this ticket is the one being dragged
   const isThisTicketDragging = isDragging || (isAnyDragging && draggedTicketId === ticket.id);
-  
+
   // Disable Tab navigation when any ticket is being dragged (except the one being dragged)
   const shouldDisableTab = isAnyDragging && !isThisTicketDragging;
 
@@ -135,7 +135,6 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     select-none touch-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
     ${isDragging ? "shadow-xl" : "hover:shadow-md transition-shadow duration-200"}
     ${canMove && !isSaving ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
-    ${!canMove ? "cursor-not-allowed" : ""}
     ${isSaving ? "opacity-50 animate-pulse" : ""}
     ${isDragging ? "opacity-90" : ""}
   `;
@@ -260,13 +259,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   );
 
   // Merge drag listeners with our custom onKeyDown handler
-  const mergedDragListeners = React.useMemo(() => {
-    if (!canMove) return {};
-    return {
+  const mergedDragListeners = React.useMemo(
+    () => ({
       ...dragListeners,
       onKeyDown: mergedKeyDownHandler,
-    };
-  }, [canMove, dragListeners, mergedKeyDownHandler]);
+    }),
+    [dragListeners, mergedKeyDownHandler]
+  );
 
   const handleDeleteTicket = async () => {
     if (!onDelete) return;
@@ -374,8 +373,9 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
               aria-describedby="drag-instructions"
               aria-grabbed={isThisTicketDragging}
-              aria-disabled={isSaving || !canMove}
+              aria-disabled={isSaving}
               onClick={handleCardClick}
+              onKeyDown={mergedKeyDownHandler}
             >
               {CardContent}
             </div>
@@ -397,8 +397,9 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           aria-label={`${ticket.title} - ${ticket.type} ticket${ticket.assigneeName ? ` assigned to ${ticket.assigneeName}` : ""}${ticket.isAiEnhanced ? " (AI enhanced)" : ""}`}
           aria-describedby="drag-instructions"
           aria-grabbed={isThisTicketDragging}
-          aria-disabled={isSaving || !canMove}
+          aria-disabled={isSaving}
           onClick={handleCardClick}
+          onKeyDown={mergedKeyDownHandler}
         >
           {CardContent}
         </div>
