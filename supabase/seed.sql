@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION public.create_user(
 declare user_id uuid;
 encrypted_pw text;
 BEGIN user_id := gen_random_uuid();
-encrypted_pw := crypt(password, gen_salt('bf'));
+encrypted_pw := extensions.crypt(password, extensions.gen_salt('bf'));
 INSERT INTO auth.users (
         instance_id,
         id,
@@ -75,13 +75,13 @@ VALUES (
         user_id,
         username,
         CASE
-            WHEN is_admin THEN 'ADMIN'::user_role
-            ELSE 'USER'::user_role
+            WHEN is_admin THEN 'ADMIN'::public.user_role
+            ELSE 'USER'::public.user_role
         END
     );
 RETURN user_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = '';
 -- Capture user IDs in variables for further seeding
 DO $$
 DECLARE admin_id uuid;
