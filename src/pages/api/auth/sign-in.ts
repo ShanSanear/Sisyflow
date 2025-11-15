@@ -3,11 +3,100 @@ import { createSupabaseServerInstance, createSupabaseAdminInstance } from "../..
 import { loginSchema } from "../../../lib/validation/auth.validation.ts";
 import { isDatabaseConnectionError, createDatabaseConnectionErrorResponse } from "../../../lib/utils.ts";
 import { AuthApiError } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const prerender = false;
 
 function isAuthApiError(error: unknown) {
   return error instanceof AuthApiError;
+}
+
+class SignInError extends Error {
+  constructor(
+    message: string,
+    public operation: string
+  ) {
+    super(message);
+    this.name = "SignInError";
+  }
+}
+
+class DatabaseConnectionSignInError extends SignInError {
+  constructor(operation: string) {
+    super(`Database connection error during ${operation}`, operation);
+    this.name = "DatabaseConnectionSignInError";
+  }
+}
+
+class InvalidCredentialsError extends SignInError {
+  constructor() {
+    super("Invalid username or password", "credentials_validation");
+    this.name = "InvalidCredentialsError";
+  }
+}
+
+async function getEmailForSignIn(
+  identifier: string,
+  supabase: SupabaseClient,
+  supabaseAdmin: SupabaseClient
+): Promise<string> {
+  // Check if identifier is already an email
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+  if (isEmail) {
+    return identifier;
+  }
+
+  // Identifier is a username, look up the corresponding email via RPC
+  const { data: userId, error: rpcError } = await supabase.rpc("get_user_id_by_username", {
+    p_username: identifier,
+  });
+  if (rpcError) {
+    if (isDatabaseConnectionError(rpcError)) {
+      throw new DatabaseConnectionSignInError("user lookup");
+    }
+    throw rpcError;
+  }
+
+  if (!userId) {
+    throw new InvalidCredentialsError();
+  }
+
+  // Get the user's email from auth.users using the admin client
+  try {
+    const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    console.log("userError", userError);
+    if (userError) {
+      if (isDatabaseConnectionError(userError)) {
+        throw new DatabaseConnectionSignInError("user lookup");
+      }
+      throw userError;
+    }
+
+    if (!data?.user?.email) {
+      throw new InvalidCredentialsError();
+    }
+
+    return data.user.email;
+  } catch (adminErr) {
+    console.error("Error getting user data:", adminErr);
+    if (isDatabaseConnectionError(adminErr)) {
+      throw new DatabaseConnectionSignInError("user lookup");
+    }
+    throw adminErr;
+  }
+}
+
+async function performSignIn(email: string, password: string, supabase: SupabaseClient) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -36,70 +125,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: request.headers,
     });
 
-    // Determine if identifier is email or username
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-    let emailToUse: string | null = identifier;
+    const supabaseAdmin = createSupabaseAdminInstance();
 
-    if (!isEmail) {
-      // Identifier is a username, look up the corresponding email via RPC
-      const { data: userId, error: rpcError } = await supabase.rpc("get_user_id_by_username", {
-        p_username: identifier,
-      });
-      if (rpcError) {
-        if (isDatabaseConnectionError(rpcError)) {
-          return createDatabaseConnectionErrorResponse("user lookup");
-        }
-        throw rpcError;
+    let emailToUse: string;
+    try {
+      emailToUse = await getEmailForSignIn(identifier, supabase, supabaseAdmin);
+    } catch (err: unknown) {
+      if (err instanceof DatabaseConnectionSignInError) {
+        return createDatabaseConnectionErrorResponse(err.operation);
       }
-
-      if (!userId) {
-        return new Response(JSON.stringify({ error: "Invalid username or password" }), {
+      if (err instanceof InvalidCredentialsError) {
+        return new Response(JSON.stringify({ error: err.message }), {
           status: 401,
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Get the user's email from auth.users using the admin client
-      try {
-        const supabaseAdmin = createSupabaseAdminInstance();
-        const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
-        console.log("userError", userError);
-        if (userError) {
-          if (isDatabaseConnectionError(userError)) {
-            return createDatabaseConnectionErrorResponse("user lookup");
-          }
-          throw userError;
-        }
-
-        if (!data?.user?.email) {
-          return new Response(JSON.stringify({ error: "Invalid username or password" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          });
-        } else {
-          emailToUse = data.user.email;
-        }
-      } catch (adminErr) {
-        console.error("Error getting user data:", adminErr);
-        if (isDatabaseConnectionError(adminErr)) {
-          return createDatabaseConnectionErrorResponse("user lookup");
-        }
-        throw adminErr;
-      }
+      throw err;
     }
 
-    // Attempt sign-in with proper error handling
-    let signInData: { user: { id: string; email?: string | undefined } } | null = null;
-    // try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: emailToUse,
-      password,
-    });
-
-    if (error) {
-      throw error;
-    }
-    signInData = data;
+    // Perform the actual sign-in
+    const signInData = await performSignIn(emailToUse, password, supabase);
 
     return new Response(JSON.stringify({ user: signInData.user }), {
       status: 200,
