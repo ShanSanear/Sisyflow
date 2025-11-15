@@ -13,6 +13,8 @@ interface KanbanColumnProps {
   handleTicketDelete: (ticketId: string) => Promise<void>;
   onTicketClick?: (ticketId: string) => void;
   onTicketEdit?: (ticketId: string) => void; // Handler for opening ticket in edit mode directly
+  isDragging?: boolean;
+  draggedTicketId?: string | null;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -25,6 +27,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   handleTicketDelete,
   onTicketClick,
   onTicketEdit,
+  isDragging = false,
+  draggedTicketId = null,
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -61,6 +65,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             onDelete={handleTicketDelete}
             onClick={onTicketClick}
             onEdit={onTicketEdit}
+            isDragging={isDragging}
+            draggedTicketId={draggedTicketId}
           />
         ))}
         {tickets.length === 0 && (
