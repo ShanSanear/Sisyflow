@@ -80,71 +80,69 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 pt-20 pb-6">
-        <div className="max-w-full mx-auto px-6">
-          <div className="flex justify-end mb-4">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Keyboard className="h-4 w-4" />
-                    Keyboard Help
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-xs">
-                  <div className="space-y-2">
-                    <p className="font-medium">Keyboard Navigation:</p>
-                    <ul className="text-sm space-y-1">
-                      <li>
-                        <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                          Tab
-                        </kbd>{" "}
-                        - Navigate between cards
-                      </li>
-                      <li>
-                        <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                          Space/Enter
-                        </kbd>{" "}
-                        - Start/End drag
-                      </li>
-                      <li>
-                        <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                          Arrow Keys
-                        </kbd>{" "}
-                        - Move card
-                      </li>
-                      <li>
-                        <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
-                          Escape
-                        </kbd>{" "}
-                        - Cancel drag
-                      </li>
-                    </ul>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div
-            className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center"
-            role="application"
-            aria-label="Kanban board with drag and drop functionality"
-          >
-            {Object.entries(boardState).map(([status, columnData]) => (
-              <KanbanColumn
-                key={status}
-                id={status as keyof KanbanViewModel}
-                title={columnData.title}
-                tickets={columnData.tickets}
-                savingTicketId={savingTicketId}
-                canMoveTicket={canMoveTicket}
-                handleStatusChangeViaMenu={handleStatusChangeViaMenu}
-                handleTicketDelete={handleTicketDelete}
-                onTicketClick={onTicketClick}
-                onTicketEdit={onTicketEdit}
-              />
-            ))}
-          </div>
+      <div className="max-w-full mx-auto px-6">
+        <div className="flex justify-end mb-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Keyboard className="h-4 w-4" />
+                  Keyboard Help
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-medium">Keyboard Navigation:</p>
+                  <ul className="text-sm space-y-1">
+                    <li>
+                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
+                        Tab
+                      </kbd>{" "}
+                      - Navigate between cards
+                    </li>
+                    <li>
+                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
+                        Space/Enter
+                      </kbd>{" "}
+                      - Start/End drag
+                    </li>
+                    <li>
+                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
+                        Arrow Keys
+                      </kbd>{" "}
+                      - Move card
+                    </li>
+                    <li>
+                      <kbd className="px-1 py-0.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded text-xs font-mono">
+                        Escape
+                      </kbd>{" "}
+                      - Cancel drag
+                    </li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div
+          className="flex flex-col sm:flex-row gap-6 overflow-x-auto justify-start lg:justify-center"
+          role="application"
+          aria-label="Kanban board with drag and drop functionality"
+        >
+          {Object.entries(boardState).map(([status, columnData]) => (
+            <KanbanColumn
+              key={status}
+              id={status as keyof KanbanViewModel}
+              title={columnData.title}
+              tickets={columnData.tickets}
+              savingTicketId={savingTicketId}
+              canMoveTicket={canMoveTicket}
+              handleStatusChangeViaMenu={handleStatusChangeViaMenu}
+              handleTicketDelete={handleTicketDelete}
+              onTicketClick={onTicketClick}
+              onTicketEdit={onTicketEdit}
+            />
+          ))}
         </div>
         {/* Hidden instructions for screen readers */}
         <div id="drag-instructions" className="sr-only">
