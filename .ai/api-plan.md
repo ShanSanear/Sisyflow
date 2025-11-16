@@ -241,6 +241,19 @@ Wszystkie endpoints pod /api/ (Astro API routes, np. src/pages/api/tickets.ts). 
 ## 3. Authentication and Authorization
 
 - **Mechanism**: Supabase Auth with JWT tokens. All endpoints require Bearer token in Authorization header except `/api/auth/register` and `/api/auth/login`.
+
+### Password Management
+
+- **PATCH** `/api/auth/password`
+- Updates current user's password (authenticated users only).
+- Request: `{ "currentPassword": "string", "newPassword": "string" }`
+- Response: `{ "message": "Password updated successfully" }`
+- Success: 200 OK
+- Errors: 400 Bad Request (validation), 401 Unauthorized (invalid current password), 403 Forbidden (not authenticated)
+- Validations:
+  - currentPassword: required, must match user's current password
+  - newPassword: 8+ chars, must contain uppercase, lowercase, and number (same as registration)
+
 - **Implementation**:
   - Frontend: In Astro API routes (src/pages/api/...): Use supabase from context.locals.supabase (injected via middleware in src/middleware/index.ts, which handles auth from cookies/headers – token auto-set from locals.get('supabaseAccessToken') or similar). For fetch from frontend: relative paths like '/api/tickets' – middleware auto-adds auth headers (Bearer with session token from cookies). Check roles via supabase.from('profiles').select('role').eq('id', user.id).single() in backend; frontend relies on /api/profiles/me response.
   - Use Supabase SDK for token verification.

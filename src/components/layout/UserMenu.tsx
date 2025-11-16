@@ -22,7 +22,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, isLoading, onLogout })
   const [isPending, startTransition] = useTransition();
 
   const handleProfileClick = () => {
-    window.location.href = "/profile/me";
+    window.location.href = "/profile";
   };
 
   const handleLogout = () => {

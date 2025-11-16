@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiDelete, type QueryParams, NotFoundError, ConflictError, BadRequestError } from "./base";
-import type { UserDTO, CreateUserCommand, ProfileDTO } from "@/types";
+import type { UserDTO, CreateUserCommand } from "@/types";
 
 /**
  * Users API endpoints
@@ -99,13 +99,4 @@ export async function deleteUser(userId: string): Promise<void> {
     }
     throw error;
   }
-}
-
-/**
- * Gets the current user's profile
- * @returns Promise with current user profile data
- */
-export async function getCurrentUserProfile(): Promise<ProfileDTO> {
-  const response = await apiGet<ProfileDTO>("/api/profiles/me");
-  return response.data;
 }

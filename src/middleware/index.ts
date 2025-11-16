@@ -1,10 +1,5 @@
 import { createSupabaseServerInstance } from "../db/supabase.client.ts";
 import { defineMiddleware } from "astro:middleware";
-import type { User } from "../env.d.ts";
-
-interface LocalsWithUser {
-  user?: User;
-}
 
 // Public paths - Auth API endpoints & Server-Rendered Astro Pages
 const PUBLIC_PATHS = [
@@ -21,7 +16,6 @@ const PUBLIC_PATHS = [
 const ADMIN_PATHS = ["/admin"];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
-  const localsWithUser = locals as LocalsWithUser;
   // Skip auth check for public paths
   if (PUBLIC_PATHS.includes(url.pathname)) {
     return next();
@@ -41,7 +35,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
     // Get user role from profiles table
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
 
-    localsWithUser.user = {
+    locals.user = {
       email: user.email || "",
       id: user.id,
       role: profile?.role || "USER", // Default to USER if profile not found
@@ -49,7 +43,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
 
     // Check admin paths
     if (ADMIN_PATHS.some((path) => url.pathname.startsWith(path))) {
-      if (localsWithUser.user.role !== "ADMIN") {
+      if (locals.user.role !== "ADMIN") {
         return redirect("/");
       }
     }

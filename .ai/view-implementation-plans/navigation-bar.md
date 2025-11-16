@@ -118,7 +118,7 @@ Komponent będzie integrował się z jednym endpointem w celu pobrania danych o 
 - **Kliknięcie w link "Panel Administratora" (tylko Admin):** Przekierowanie do panelu administracyjnego (`/admin`).
 - **Kliknięcie w przycisk "Utwórz Ticket":** Otwarcie modala tworzenia nowego zadania.
 - **Kliknięcie w awatar:** Otwarcie menu podręcznego (`DropdownMenu`).
-- **Kliknięcie "Mój profil":** Przekierowanie na stronę profilu użytkownika (np. `/profile/me`).
+- **Kliknięcie "Mój profil":** Przekierowanie na stronę profilu użytkownika (np. `/profile`).
 - **Kliknięcie "Wyloguj":** Wywołanie funkcji `logout`, która uderza do endpointu API wylogowującego, czyści stan lokalny i przekierowuje na stronę logowania (`/login`).
 
 ## 9. Warunki i walidacja

@@ -1,6 +1,18 @@
 import { z } from "zod";
 
 /**
+ * Reusable password schema
+ */
+export const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters long")
+  .max(100, "Password cannot exceed 100 characters")
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    "Password must contain at least one lowercase letter, one uppercase letter, and one number"
+  );
+
+/**
  * Schema walidacji dla tworzenia nowego użytkownika
  * Implementuje walidację zgodnie z wymaganiami biznesowymi:
  * - email: prawidłowy format email, wymagany
@@ -16,14 +28,7 @@ export const createUserSchema = z.object({
     .max(30, "Username cannot exceed 30 characters")
     .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores and dots")
     .trim(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .max(100, "Password cannot exceed 100 characters")
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      "Password must contain at least one lowercase letter, one uppercase letter, and one number"
-    ),
+  password: passwordSchema,
   role: z.enum(["USER", "ADMIN"], {
     errorMap: () => ({ message: "Role must be either USER or ADMIN" }),
   }),
@@ -112,3 +117,16 @@ export type UserIdParamsInput = z.infer<typeof userIdParamsSchema>;
  * Typ wywnioskowany ze schematu updateProfileSchema
  */
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+/**
+ * Schema for validating user password updates (PATCH /auth/password)
+ */
+export const UpdatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: passwordSchema,
+});
+
+/**
+ * Type inferred from the UpdatePasswordSchema
+ */
+export type UpdatePasswordInput = z.infer<typeof UpdatePasswordSchema>;
