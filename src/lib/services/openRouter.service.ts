@@ -49,8 +49,8 @@ export class OpenRouterService {
     const apiKey = import.meta.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-      console.error("OPENROUTER_API_KEY nie jest ustawiony w zmiennych środowiskowych.");
-      throw new Error("OPENROUTER_API_KEY jest wymagany.");
+      console.error("OPENROUTER_API_KEY is not set in environment variables.");
+      throw new Error("OPENROUTER_API_KEY is required.");
     }
 
     this.apiKey = apiKey;

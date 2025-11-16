@@ -6,9 +6,9 @@ import { z } from "zod";
  * Używany w TicketForm dla trybów create i edit
  */
 export const ticketSchema = z.object({
-  title: z.string().min(1, "Tytuł wymagany").max(200, "Tytuł max 200 znaków"),
-  description: z.string().max(10000, "Opis max 10000 znaków").optional(),
-  type: z.enum(["BUG", "IMPROVEMENT", "TASK"], { required_error: "Typ wymagany" }),
+  title: z.string().min(1, "Title required").max(200, "Title cannot exceed 200 characters"),
+  description: z.string().max(10000, "Description cannot exceed 10000 characters").optional(),
+  type: z.enum(["BUG", "IMPROVEMENT", "TASK"], { required_error: "Type is required" }),
   assignee: z
     .object({
       id: z.string(),

@@ -144,7 +144,7 @@ Powiązane typy: `FullTicketDTO` (z reporter/assignee, ignoruj ai_enhanced dla M
 Walidacja Zod (import { z } from 'zod';):
 
 const ticketSchema = z.object({
-title: z.string().min(1, 'Tytuł wymagany').max(200, 'Tytuł max 200 znaków'),
+title: z.string().min(1, 'Title required').max(200, 'Tytuł max 200 znaków'),
 description: z.string().max(10000, 'Opis max 10000 znaków').optional(),
 type: z.enum(['Bug', 'Improvement', 'Task'], { required_error: 'Typ wymagany' })
 });
