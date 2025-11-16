@@ -6,7 +6,6 @@ Obsługa błędów będzie realizowana przez globalne powiadomienia ("toasts") d
 Tablica Kanban załaduje wszystkie tickety przy starcie, bez paginacji i "infinite scroll". Funkcjonalność "przeciągnij i upuść" zostanie zaimplementowana przy użyciu dnd-kit.
 Projekt będzie realizowany w podejściu "desktop-first". Widok na urządzeniach mobilnych dla tablicy Kanban zostanie zrealizowany poprzez horyzontalne przewijanie.
 Tworzenie, edycja i podgląd szczegółów ticketów będą odbywać się w oknach modalnych, aby nie opuszczać widoku tablicy Kanban. Modal do edycji będzie tym samym komponentem co modal do tworzenia.
-Zostanie zaimplementowany przełącznik motywu (jasny/ciemny) umieszczony w widoku "Mój profil".
 Długie tytuły ticketów na kartach będą skracane z wielokropkiem, a pełna treść będzie widoczna w tooltipie po najechaniu myszą.
 Wszelkie akcje destrukcyjne (usuwanie użytkownika/ticketa) będą wymagały dodatkowego potwierdzenia w oknie dialogowym typu AlertDialog.
 Aplikacja nie będzie implementować specjalnych widoków dla pustych stanów tablicy Kanban.
@@ -34,7 +33,7 @@ Uwierzytelnianie: Osobne widoki dla logowania i rejestracji. Aplikacja dynamiczn
 Główny widok (Tablica Kanban): Centralny punkt aplikacji wyświetlający tickety w trzech kolumnach (Otwarty, W toku, Zamknięty). Użytkownicy mogą zmieniać status ticketów metodą "przeciągnij i upuść".
 Przepływ zarządzania ticketami: Użytkownik tworzy, przegląda i edytuje tickety za pomocą okien modalnych, nie opuszczając widoku tablicy Kanban. Interakcja z AI również odbywa się w tym samym modalu.
 Panel Administratora: Dedykowany widok z nawigacją (zakładki lub menu boczne) prowadzącą do dwóch podsekcji: Zarządzanie Użytkownikami (widok tabelaryczny) i Zarządzanie Dokumentacją Projektu (pole tekstowe).
-Profil Użytkownika: Prosty widok umożliwiający zmianę nazwy użytkownika oraz przełączanie motywu kolorystycznego.
+Profil Użytkownika: Prosty widok umożliwiający zmianę nazwy użytkownika oraz jego hasła.
 c. Strategia integracji z API i zarządzania stanem
 Zarządzanie stanem: Wykorzystane zostaną wbudowane mechanizmy React: Context API do przechowywania globalnych danych (np. informacje o zalogowanym użytkowniku) oraz useState do zarządzania stanem lokalnym komponentów. MVP nie będzie korzystać z zewnętrznych bibliotek do zarządzania stanem serwera.
 Komunikacja z API: Bezpośrednie wywołania do API REST z obsługą stanów ładowania (skeleton/spinner) i błędów (toasts/inline messages).

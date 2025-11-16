@@ -46,6 +46,24 @@ export interface UpdateProfileCommand {
   username: string;
 }
 
+// User Profile ViewModel types
+// UserProfileViewModel: Used for profile form data in components
+// Derived from ProfileDTO but tailored for form editing (omits non-editable fields, adds password fields)
+export type UserProfileViewModel = Omit<ProfileDTO, "id" | "created_at" | "updated_at"> & {
+  currentPassword?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+// Type for fields that can have validation errors (excludes read-only role field)
+export type UserProfileValidatableFields = "username" | "currentPassword" | "password" | "confirmPassword";
+
+// UpdatePasswordCommand: Used in PATCH /auth/password (request)
+export interface UpdatePasswordCommand {
+  currentPassword: string;
+  newPassword: string;
+}
+
 // Ticket DTOs
 // TicketDTO: Used in GET /tickets (response)
 export type TicketDTO = Pick<

@@ -64,7 +64,6 @@ async function getEmailForSignIn(
   // Get the user's email from auth.users using the admin client
   try {
     const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
-    console.log("userError", userError);
     if (userError) {
       if (isDatabaseConnectionError(userError)) {
         throw new DatabaseConnectionSignInError("user lookup");

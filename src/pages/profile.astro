@@ -1,0 +1,8 @@
+---
+import AuthenticatedLayout from "../layouts/AuthenticatedLayout.astro";
+import UserProfileView from "../components/views/UserProfileView.tsx";
+---
+
+<AuthenticatedLayout title="User Profile">
+  <UserProfileView client:load />
+</AuthenticatedLayout>

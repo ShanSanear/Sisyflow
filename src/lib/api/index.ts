@@ -19,3 +19,6 @@ export * from "./projectDocumentation";
 
 // AI suggestion sessions endpoints
 export * from "./aiSuggestionSession";
+
+// Profile endpoints and error classes
+export * from "./profiles";
